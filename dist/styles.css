@@ -41,7 +41,7 @@
   .result-head{gap:14px}
   .badges{gap:6px}
   .badges span,.urgency{padding:6px 9px;font-size:10px;line-height:1.35}
-  .result>h2{margin:24px 0 28px;font-size:clamp(32px,10.5vw,42px);line-height:1;overflow-wrap:anywhere}
+  .result>h2{margin:24px 0 28px;font-size:clamp(32px,10.5vw,42px);line-height:1;overflow-wrap:normal;word-break:normal;hyphens:auto}
   .result-grid{width:100%;min-width:0;gap:10px}
   .panel{min-width:0;padding:20px;border-radius:16px;overflow-wrap:anywhere}
   .panel-label{margin-bottom:18px}
