@@ -1,0 +1,30 @@
+.vehicle-schematic{background:#fbfcfd;border-radius:18px;padding:10px 16px 16px;margin:18px 0;color:#475c70}
+.vehicle-plan{display:block;width:100%;height:430px;max-height:none;margin:0 auto}
+.vehicle-plan .plan-body{fill:#f3f6f8;stroke:#91a2b1;stroke-width:1.35}
+.vehicle-plan .plan-outline{fill:none;stroke:#b2bfca;stroke-width:.8}
+.vehicle-plan .plan-tyres rect{fill:#92a0ad}
+.vehicle-plan .plan-glass{fill:#d9e6ee;stroke:#bccfdc;stroke-width:.6}
+.vehicle-plan .plan-interior>*{fill:#eaf0f4;stroke:#a9b9c6;stroke-width:1}
+.vehicle-plan .plan-mirrors>*{fill:#f5f7fa;stroke:#91a2b1;stroke-width:1.2}
+.vehicle-plan .plan-component{color:#6d8191}
+.vehicle-plan .plan-component>rect,.vehicle-plan .plan-component>circle,.vehicle-plan .plan-component>path:not(.plan-wire):not(.plan-pipe){fill:#e5ebf0;stroke:#9eafbc;stroke-width:1;transition:fill .22s,stroke .22s}
+.vehicle-plan .plan-component text{fill:currentColor;stroke:none;font:500 7px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
+.vehicle-plan .plan-component[data-component^="cylinder-"] text{font-size:8px}
+.vehicle-plan .plan-component .plan-bolt{fill:#d3dee5}
+.vehicle-plan .plan-pipe{fill:none;stroke:#a5b5c2;stroke-width:2.8;stroke-linecap:round}
+.vehicle-plan .plan-wire{fill:none;stroke:#99adbd;stroke-width:1.4;stroke-dasharray:4 3}
+.vehicle-plan .plan-component.is-context>rect,.vehicle-plan .plan-component.is-context>circle,.vehicle-plan .plan-component.is-context>path:not(.plan-wire):not(.plan-pipe){fill:#fff0cc;stroke:#dfa63b;stroke-width:1.4}
+.vehicle-plan .plan-component.is-active{color:#785008}
+.vehicle-plan .plan-component.is-active>rect,.vehicle-plan .plan-component.is-active>circle,.vehicle-plan .plan-component.is-active>path:not(.plan-wire):not(.plan-pipe){fill:#ffbd42;stroke:#d78b00;stroke-width:1.8}
+.vehicle-plan .plan-component.is-active .plan-wire{stroke:#e99a00;stroke-width:2.8;stroke-dasharray:5 3}
+.vehicle-plan .plan-component.is-active .plan-pipe{stroke:#e99a00;stroke-width:4}
+.vehicle-plan .plan-direction,.vehicle-plan .plan-side{fill:#667c91;font:7px ui-monospace,Consolas,monospace;letter-spacing:1px}
+.vehicle-parts{display:flex;flex-wrap:wrap;gap:7px;min-height:30px;margin-top:4px}
+.vehicle-parts span{border:1px solid #efbc58;color:#785008;border-radius:999px;background:#fff0ce;padding:4px 10px;font-size:11px}
+.vehicle-parts .unmapped{background:#eef2f5;border-color:#c4d0d9;color:#617182}
+.plan-key{display:flex;flex-wrap:wrap;align-items:center;gap:7px 14px;font-size:9px;margin-top:14px;color:#6b7e8d}
+.plan-key span{display:inline-flex;align-items:center;gap:5px}
+.plan-key i{display:inline-block;width:9px;height:9px;border:1px solid #d78b00;border-radius:2px;background:#ffbd42}
+.plan-key i.context-key{background:#fff0cc;border-color:#dfa63b}
+@media(max-width:620px){.vehicle-plan{height:395px}.vehicle-schematic{padding:8px 10px 13px}.vehicle-card .vehicle-label{font-size:10px;letter-spacing:.04em;gap:10px}.vehicle-card .vehicle-label b{text-align:right;max-width:70%}}
+@media(prefers-reduced-motion:reduce){.vehicle-plan .plan-component>*{transition:none}}

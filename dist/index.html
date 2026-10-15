@@ -7,6 +7,7 @@
   <meta name="description" content="OBD2-Fehlercodes in verständlichem Klartext – mit Systemvisualisierung, Dringlichkeit und nächsten Schritten.">
   <title>OBD2 Klartext</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="vehicle.css">
 </head>
 <body>
   <header class="topbar">
@@ -42,21 +43,61 @@
 
       <div class="vehicle-card" aria-label="Schematische Fahrzeugansicht">
         <div class="vehicle-label"><span>Systemansicht</span><b id="vehicle-code">P0300 · Motor</b></div>
-        <svg class="car" viewBox="0 0 620 300" role="img" aria-label="Fahrzeug mit Diagnosebereichen">
-          <defs>
-            <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#20352e"/><stop offset="1" stop-color="#101d19"/></linearGradient>
-            <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-          </defs>
-          <path class="car-body" d="M83 190l30-73c7-17 20-29 38-34l111-31c27-7 55-7 82 2l99 33c20 7 35 21 43 40l22 54 42 14c15 5 25 19 25 35v15H45v-20c0-16 10-30 25-35z"/>
-          <path class="window" d="M170 105l99-28c22-6 46-6 68 1l72 24-24 66H145z"/>
-          <path class="window-line" d="M302 73v96M145 169h241"/>
-          <circle class="wheel" cx="155" cy="238" r="47"/><circle class="rim" cx="155" cy="238" r="21"/>
-          <circle class="wheel" cx="465" cy="238" r="47"/><circle class="rim" cx="465" cy="238" r="21"/>
-          <g class="zone active" data-zone="P"><rect x="392" y="116" width="82" height="68" rx="12"/><text x="433" y="156">P</text></g>
-          <g class="zone" data-zone="B"><rect x="248" y="91" width="95" height="79" rx="12"/><text x="296" y="137">B</text></g>
-          <g class="zone" data-zone="C"><circle cx="155" cy="238" r="31"/><circle cx="465" cy="238" r="31"/><text x="155" y="246">C</text></g>
-          <g class="zone network" data-zone="U"><path d="M206 198h196"/><circle cx="206" cy="198" r="8"/><circle cx="402" cy="198" r="8"/><text x="304" y="226">U</text></g>
-        </svg>
+        <div class="vehicle-schematic">
+          <svg id="vehicle-diagram" class="vehicle-plan" viewBox="0 0 360 620" role="img" aria-labelledby="vehicle-svg-title vehicle-svg-desc">
+            <title id="vehicle-svg-title">Pkw in Draufsicht</title>
+            <desc id="vehicle-svg-desc">Schematische Lage der Fahrzeugkomponenten. Die zum Fehlercode gehörenden Bauteile sind orange markiert.</desc>
+            <text class="plan-direction" x="180" y="21" text-anchor="middle">FAHRTRICHTUNG ↑</text>
+            <g class="plan-tyres"><rect x="70" y="110" width="22" height="74" rx="7"/><rect x="268" y="110" width="22" height="74" rx="7"/><rect x="70" y="464" width="22" height="74" rx="7"/><rect x="268" y="464" width="22" height="74" rx="7"/></g>
+            <path class="plan-body" d="M180 34C130 34 105 43 94 73L90 112v391c0 59 18 89 90 90s90-31 90-90V112l-4-39c-11-30-36-39-86-39Z"/>
+            <path class="plan-outline" d="M106 79h148M99 245h162M99 556h162M92 108v418M268 108v418"/>
+            <path class="plan-glass" d="m105 253 150 0-8 26H113Z"/>
+            <path class="plan-glass" d="m111 554 138 0 9 21c-41 11-69 11-156 0Z"/>
+            <g class="plan-interior"><rect x="111" y="331" width="54" height="65" rx="10"/><rect x="195" y="331" width="54" height="65" rx="10"/><rect x="111" y="432" width="138" height="48" rx="12"/><rect x="114" y="491" width="69" height="36" rx="8"/><rect x="171" y="344" width="18" height="15" rx="3"/><circle cx="139" cy="312" r="14"/><circle cx="139" cy="312" r="9"/></g>
+            <g class="plan-mirrors"><ellipse cx="83" cy="261" rx="10" ry="5"/><ellipse cx="277" cy="261" rx="10" ry="5"/></g>
+            <g class="plan-component" data-component="cooling"><title>Kühlsystem</title><rect x="119" y="48" width="122" height="13" rx="3"/></g>
+            <g class="plan-component" data-component="coolant-sensor"><title>Kühlmitteltemperatursensor</title><rect x="109" y="65" width="10" height="8" rx="2"/></g>
+            <g class="plan-component" data-component="thermostat"><title>Thermostat</title><rect x="124" y="68" width="13" height="8" rx="2"/></g>
+            <g class="plan-component" data-component="engine"><title>Motor</title><rect x="124" y="82" width="111" height="89" rx="10"/><circle class="plan-bolt" cx="132" cy="90" r="3"/><circle class="plan-bolt" cx="226" cy="90" r="3"/><circle class="plan-bolt" cx="132" cy="163" r="3"/><circle class="plan-bolt" cx="226" cy="163" r="3"/></g>
+            <g class="plan-component" data-component="cylinder-1"><title>Zylinder 1</title><circle cx="148" cy="124" r="10"/><text x="148" y="146">1</text></g>
+            <g class="plan-component" data-component="cylinder-2"><title>Zylinder 2</title><circle cx="169" cy="124" r="10"/><text x="169" y="146">2</text></g>
+            <g class="plan-component" data-component="cylinder-3"><title>Zylinder 3</title><circle cx="190" cy="124" r="10"/><text x="190" y="146">3</text></g>
+            <g class="plan-component" data-component="cylinder-4"><title>Zylinder 4</title><circle cx="211" cy="124" r="10"/><text x="211" y="146">4</text></g>
+            <g class="plan-component" data-component="fuel-rail"><title>Kraftstoffverteilung</title><rect x="140" y="99" width="80" height="5" rx="2"/></g>
+            <g class="plan-component" data-component="injector-1"><title>Einspritzventil Zylinder 1</title><rect x="145" y="104" width="6" height="8" rx="1"/></g>
+            <g class="plan-component" data-component="injector-2"><title>Einspritzventil Zylinder 2</title><rect x="166" y="104" width="6" height="8" rx="1"/></g>
+            <g class="plan-component" data-component="injector-3"><title>Einspritzventil Zylinder 3</title><rect x="187" y="104" width="6" height="8" rx="1"/></g>
+            <g class="plan-component" data-component="injector-4"><title>Einspritzventil Zylinder 4</title><rect x="208" y="104" width="6" height="8" rx="1"/></g>
+            <g class="plan-component" data-component="intake"><title>Ansaugsystem</title><rect x="244" y="83" width="17" height="36" rx="4"/><path class="plan-pipe" d="M244 126h-7"/></g>
+            <g class="plan-component" data-component="maf"><title>Luftmassenmesser</title><rect x="244" y="121" width="17" height="12" rx="2"/></g>
+            <g class="plan-component" data-component="battery"><title>Batterie</title><rect x="244" y="138" width="17" height="28" rx="3"/><text x="252.5" y="155">+ −</text></g>
+            <g class="plan-component" data-component="ecm"><title>Motorsteuergerät</title><rect x="99" y="126" width="22" height="30" rx="3"/><text x="110" y="144">ECM</text></g>
+            <g class="plan-component" data-component="alternator"><title>Lichtmaschine</title><circle cx="111" cy="104" r="12"/></g>
+            <g class="plan-component" data-component="camshaft"><title>Nockenwellensensor</title><rect x="141" y="76" width="12" height="7" rx="2"/></g>
+            <g class="plan-component" data-component="crankshaft"><title>Kurbelwellensensor</title><rect x="141" y="176" width="18" height="10" rx="2"/></g>
+            <g class="plan-component" data-component="egr"><title>Abgasrückführung</title><path d="M232 172h11v17h-11Z"/></g>
+            <g class="plan-component" data-component="transmission"><title>Getriebe</title><rect x="170" y="176" width="44" height="52" rx="6"/></g>
+            <g class="plan-component" data-component="input-speed"><title>Getriebe-Eingangsdrehzahlsensor</title><rect x="163" y="181" width="7" height="10" rx="2"/></g>
+            <g class="plan-component" data-component="vehicle-speed"><title>Geschwindigkeitssensor</title><rect x="207" y="215" width="11" height="8" rx="2"/></g>
+            <g class="plan-component" data-component="tcm"><title>Getriebesteuergerät</title><rect x="171" y="239" width="22" height="12" rx="3"/><text x="182" y="247">TCM</text></g>
+            <g class="plan-component" data-component="abs"><title>ABS-Steuergerät</title><rect x="244" y="174" width="23" height="26" rx="3"/><text x="255.5" y="190">ABS</text></g>
+            <g class="plan-component" data-component="wheel-fl"><title>Raddrehzahlsensor vorne links</title><rect x="94" y="168" width="9" height="16" rx="3"/></g>
+            <g class="plan-component" data-component="wheel-fr"><title>Raddrehzahlsensor vorne rechts</title><rect x="257" y="168" width="9" height="16" rx="3"/></g>
+            <g class="plan-component" data-component="can"><title>Kommunikationsnetz / CAN-Bus</title><path class="plan-wire" d="M110 156v88h145V200M192 228v16M182 251v72M255 244v322"/><circle cx="110" cy="244" r="2.5"/><circle cx="255" cy="244" r="2.5"/></g>
+            <g class="plan-component" data-component="exhaust"><title>Abgasstrang</title><path class="plan-pipe" d="M229 171v30h-7v39h9v167h-7v160"/></g>
+            <g class="plan-component" data-component="lambda-front"><title>Lambdasonde vor Katalysator</title><rect x="225" y="192" width="10" height="8" rx="2"/></g>
+            <g class="plan-component" data-component="cat-1"><title>Katalysator Bank 1</title><rect x="225" y="210" width="13" height="35" rx="5"/></g>
+            <g class="plan-component" data-component="cat-2"><title>Katalysator Bank 2, schematisch</title><rect x="242" y="210" width="13" height="35" rx="5"/></g>
+            <g class="plan-component" data-component="bcm"><title>Karosserieelektronik, herstellerabhängig</title><rect x="109" y="282" width="52" height="18" rx="3"/><text x="135" y="294">BCM</text></g>
+            <g class="plan-component" data-component="airbag-left"><title>Seitenairbag links</title><rect x="96" y="333" width="6" height="65" rx="3"/></g>
+            <g class="plan-component" data-component="tank"><title>Kraftstofftank / Tankentlüftung</title><rect x="113" y="487" width="72" height="42" rx="8"/></g>
+            <g class="plan-component" data-component="evap"><title>Tankentlüftung</title><rect x="120" y="537" width="33" height="12" rx="3"/></g>
+            <g class="plan-component" data-component="tank-cap"><title>Tankverschluss</title><circle cx="101" cy="503" r="4"/></g>
+            <text class="plan-side" x="55" y="370" transform="rotate(-90 55 370)">FAHRERSEITE</text>
+          </svg>
+          <div id="vehicle-parts" class="vehicle-parts" aria-live="polite"></div>
+          <div class="plan-key"><span><i></i>betroffen</span><span><i class="context-key"></i>Systembereich</span><span>Lage schematisch</span></div>
+        </div>
         <div class="legend"><span><i class="p"></i>P Antrieb</span><span><i class="b"></i>B Karosserie</span><span><i class="c"></i>C Fahrwerk</span><span><i class="u"></i>U Netzwerk</span></div>
       </div>
     </section>

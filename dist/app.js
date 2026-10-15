@@ -38,6 +38,57 @@ const codes=Object.fromEntries(raw.map(x=>[x[0],{code:x[0],title:x[1],system:x[2
 const form=document.querySelector('#code-form'), input=document.querySelector('#code-input'), suggestions=document.querySelector('#suggestions'), result=document.querySelector('#result');
 const byId=id=>document.getElementById(id);
 
+// Schematic locations represent the system named by the code, not a confirmed defective part.
+const componentMap={
+  P0100:{active:['maf'],context:['intake'],labels:['Luftmassenmesser','Ansaugung']},
+  P0101:{active:['maf'],context:['intake'],labels:['Luftmassenmesser','Ansaugung']},
+  P0115:{active:['coolant-sensor'],context:['cooling'],labels:['Kühlmitteltemperatursensor','Kühlsystem']},
+  P0128:{active:['cooling','thermostat'],labels:['Kühlsystem','Thermostatbereich']},
+  P0130:{active:['lambda-front'],context:['exhaust'],labels:['Lambdasonde · Bank 1 / Sensor 1']},
+  P0135:{active:['lambda-front'],context:['exhaust'],labels:['Lambdasondenheizung · Bank 1 / Sensor 1']},
+  P0171:{active:['intake','fuel-rail'],context:['engine'],labels:['Gemischaufbereitung','Ansaugung / Einspritzung']},
+  P0172:{active:['intake','fuel-rail'],context:['engine'],labels:['Gemischaufbereitung','Ansaugung / Einspritzung']},
+  P0201:{active:['injector-1'],context:['engine','cylinder-1'],labels:['Motor','Einspritzventil · Zylinder 1']},
+  P0202:{active:['injector-2'],context:['engine','cylinder-2'],labels:['Motor','Einspritzventil · Zylinder 2']},
+  P0300:{active:['cylinder-1','cylinder-2','cylinder-3','cylinder-4'],context:['engine'],labels:['Motor','Mehrere / nicht zugeordnete Zylinder']},
+  P0301:{active:['cylinder-1'],context:['engine'],labels:['Motor','Zylinder 1']},
+  P0302:{active:['cylinder-2'],context:['engine'],labels:['Motor','Zylinder 2']},
+  P0303:{active:['cylinder-3'],context:['engine'],labels:['Motor','Zylinder 3']},
+  P0304:{active:['cylinder-4'],context:['engine'],labels:['Motor','Zylinder 4']},
+  P0335:{active:['crankshaft'],context:['engine'],labels:['Kurbelwellensensor','Motor']},
+  P0340:{active:['camshaft'],context:['engine'],labels:['Nockenwellensensor','Motor']},
+  P0401:{active:['egr'],context:['engine','exhaust'],labels:['Abgasrückführung']},
+  P0420:{active:['cat-1'],context:['exhaust'],labels:['Katalysator · Bank 1']},
+  P0430:{active:['cat-2'],context:['exhaust'],labels:['Katalysator · Bank 2']},
+  P0442:{active:['evap','tank-cap'],context:['tank'],labels:['Tankentlüftung','Tank / Verschlussbereich']},
+  P0455:{active:['evap','tank-cap'],context:['tank'],labels:['Tankentlüftung','Tank / Verschlussbereich']},
+  P0500:{active:['vehicle-speed'],context:['transmission'],labels:['Geschwindigkeitssignal','Sensorlage fahrzeugabhängig']},
+  P0562:{active:['battery','alternator'],labels:['Batterie','Ladesystem']},
+  P0700:{active:['tcm'],context:['transmission'],labels:['Getriebesteuerung','Getriebe']},
+  P0715:{active:['input-speed'],context:['transmission'],labels:['Getriebe-Eingangsdrehzahlsensor']},
+  B0020:{active:['airbag-left'],labels:['Seitenairbag links']},
+  B1000:{context:['bcm'],active:[],labels:['Karosserieelektronik · herstellerabhängig']},
+  C0035:{active:['wheel-fl'],labels:['Raddrehzahlsensor','Vorne links']},
+  C0040:{active:['wheel-fr'],labels:['Raddrehzahlsensor','Vorne rechts']},
+  U0100:{active:['ecm','can'],labels:['Motorsteuergerät','Kommunikationsweg']},
+  U0121:{active:['abs','can'],labels:['ABS-Steuergerät','Kommunikationsweg']}
+};
+
+function updateVehicle(code){
+  const entry=componentMap[code];
+  document.querySelectorAll('[data-component]').forEach(part=>{
+    const id=part.dataset.component;
+    part.classList.toggle('is-active',!!entry?.active?.includes(id));
+    part.classList.toggle('is-context',!!entry?.context?.includes(id));
+  });
+  byId('vehicle-code').textContent=entry?`${code} · ${codes[code].system}`:'Keine Systemzuordnung';
+  byId('vehicle-svg-title').textContent=entry?`${code}: ${entry.labels.join(', ')} – Pkw in Draufsicht`:'Pkw in Draufsicht – keine Systemzuordnung';
+  byId('vehicle-svg-desc').textContent=entry?`Zum Code gehörende Bereiche: ${entry.labels.join(', ')}. Orange markiert den betroffenen Bereich, hellorange das zugehörige System. Lage und Zylindernummerierung sind schematisch und fahrzeugabhängig.`:'Kein bekanntes Ergebnis. Alle Bauteile sind neutral dargestellt.';
+  byId('vehicle-parts').replaceChildren(...(entry?entry.labels:['Keine Zuordnung']).map(label=>{
+    const tag=document.createElement('span');tag.textContent=label;if(!entry)tag.className='unmapped';return tag;
+  }));
+}
+
 function renderSuggestions(filter=''){
   const list=Object.values(codes).filter(c=>!filter||c.code.includes(filter)||c.title.toLowerCase().includes(filter.toLowerCase()));
   suggestions.innerHTML=list.map(c=>`<button type="button" class="suggestion" data-code="${c.code}"><b>${c.code}</b><span>${c.title}</span></button>`).join('')||'<p>Kein passender hinterlegter Code.</p>';
@@ -51,6 +102,7 @@ function adviceFor(c){
 }
 
 function showError(type){
+  updateVehicle(null);
   result.hidden=false; document.querySelector('#empty-state').hidden=true;
   const valid=type==='unknown';
   byId('r-code').textContent=valid?input.value.toUpperCase():'Eingabe prüfen';
@@ -72,7 +124,7 @@ function showCode(code){
   byId('r-explanation').textContent=c.explanation; byId('r-causes').innerHTML=c.causes.map((x,i)=>`<li><b>${i===0?'Häufig':i===1?'Möglich':'Seltener'}</b><span>${x}</span></li>`).join('');
   byId('r-verdict').textContent=a.verdict; byId('r-advice-title').textContent=a.title; byId('r-advice').textContent=a.text; byId('r-steps').innerHTML=a.steps.map(x=>`<li>${x}</li>`).join('');
   byId('r-tech').textContent=`${c.code} ist als ${c.origin} dem Diagnosebereich ${c.category} zugeordnet. Die Codebezeichnung weist auf ${c.system.toLowerCase()} hin; eine eindeutige Bauteildiagnose ist daraus allein nicht möglich.`;
-  byId('vehicle-code').textContent=`${c.code} · ${c.system}`; document.querySelectorAll('.zone').forEach(z=>z.classList.toggle('active',z.dataset.zone===c.code[0]));
+  updateVehicle(c.code);
   result.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
@@ -82,3 +134,4 @@ byId('show-codes').addEventListener('click',()=>{suggestions.hidden?renderSugges
 suggestions.addEventListener('click',e=>{const b=e.target.closest('[data-code]');if(!b)return;input.value=b.dataset.code;suggestions.hidden=true;showCode(b.dataset.code)});
 
 input.value='P0300';
+updateVehicle('P0300');
