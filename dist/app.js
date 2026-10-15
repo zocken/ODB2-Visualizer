@@ -220,7 +220,6 @@ input.addEventListener('input',()=>{
 input.addEventListener('focus',()=>renderSuggestions(input.value));
 input.addEventListener('keydown',event=>{if(event.key==='Escape')closeSuggestions()});
 form.addEventListener('submit',event=>{event.preventDefault();runSearch()});
-byId('show-codes').addEventListener('click',()=>{suggestions.hidden?renderSuggestions(input.value):closeSuggestions()});
 suggestions.addEventListener('click',event=>{
   const button=event.target.closest('[data-code]'); if(!button)return;
   input.value=button.dataset.code; hideError();
