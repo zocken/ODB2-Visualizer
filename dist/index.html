@@ -15,7 +15,7 @@
       <span class="brand-mark" aria-hidden="true">O₂</span>
       <span>OBD2 <b>Klartext</b></span>
     </a>
-    <div class="top-meta"><span class="live-dot"></span>32 Codes · Lernprojekt</div>
+    <div class="top-meta"><span class="live-dot"></span><span id="database-count">32 Codes</span> · Lernprojekt</div>
   </header>
 
   <main id="start">
@@ -28,14 +28,18 @@
         <form id="code-form" class="search-card" novalidate>
           <label for="code-input">OBD2-Fehlercode</label>
           <div class="search-row">
-            <input id="code-input" name="code" maxlength="5" autocomplete="off" spellcheck="false" placeholder="z. B. P0300" aria-describedby="input-help">
+            <input id="code-input" name="code" type="text" inputmode="text" maxlength="5" autocomplete="off" spellcheck="false" placeholder="z. B. P0300" aria-describedby="input-help" aria-controls="code-suggestions" aria-expanded="false">
             <button type="submit">Code erklären <span aria-hidden="true">→</span></button>
           </div>
           <div class="search-footer">
-            <span id="input-help">P, B, C oder U + vier Ziffern</span>
+            <span id="input-help">P, B, C oder U + vier Zeichen (0–9 / A–F)</span>
             <button type="button" class="text-button" id="show-codes">Verfügbare Codes</button>
           </div>
-          <div id="suggestions" class="suggestions" hidden></div>
+          <div id="code-suggestions" class="suggestions" role="listbox" aria-label="Verfügbare OBD2-Fehlercodes" hidden>
+            <div class="suggestion-head"><strong>Verfügbare Codes</strong><span>Auswahl wird ins Eingabefeld übernommen</span></div>
+            <div id="suggestion-list" class="suggestion-list"></div>
+          </div>
+          <div id="form-error" class="error-box" role="alert" hidden></div>
         </form>
 
         <div class="scope"><b>Datenbasis:</b> Pkw · Verbrenner/Hybrid · ausgewählte Karosserie-, Fahrwerk- und Netzwerkcodes</div>
@@ -121,11 +125,18 @@
       </div>
       <h2 id="r-title"></h2>
       <div class="result-grid">
-        <article class="panel system-panel"><p class="panel-label">Betroffenes System</p><h3 id="r-system"></h3><p id="r-system-copy"></p><span id="r-location" class="location"></span></article>
+        <article class="panel system-panel"><p class="panel-label">Betroffenes System</p><div id="system-icon" class="system-icon" aria-hidden="true">⚙</div><h3 id="r-system"></h3><p id="r-system-copy"></p><span id="r-location" class="location"></span></article>
         <article class="panel"><p class="panel-label">Einfach erklärt</p><p id="r-explanation" class="lead"></p><h3>Wahrscheinliche Ursachen</h3><ul id="r-causes" class="cause-list"></ul><small>Das sind Möglichkeiten – keine gesicherte Diagnose.</small></article>
         <article class="panel action-panel"><p class="panel-label">Was jetzt?</p><div class="verdict"><span>Weiterfahrt</span><b id="r-verdict"></b></div><h3 id="r-advice-title"></h3><p id="r-advice"></p><ol id="r-steps"></ol></article>
       </div>
-      <details class="details"><summary><span><small>Für Hobbyschrauber</small>Technische Einordnung anzeigen</span><b>+</b></summary><div><p id="r-tech"></p><div class="data-notes"><span><small>Datenbasis</small>Standardisierte OBD2-Bezeichnung</span><span><small>Informationsstand</small>Redaktionell aufbereitet · 15.10.2026</span><span><small>Grenze</small>Nicht fahrzeugspezifisch</span></div></div></details>
+      <div class="details detail-panel">
+        <button id="detail-toggle" class="detail-toggle" type="button" aria-expanded="false" aria-controls="technical-details"><span><small>Für Hobbyschrauber</small>Technische Details und Ursachenvergleich anzeigen</span><b aria-hidden="true">+</b></button>
+        <div id="technical-details" class="technical-details" hidden>
+          <p id="r-tech"></p>
+          <div class="cause-table-wrap"><table class="cause-table"><thead><tr><th>Einordnung</th><th>Mögliche Ursache</th><th>Typischer Hinweis</th><th>Sinnvolle Prüfung</th></tr></thead><tbody id="cause-table-body"></tbody></table></div>
+          <div class="data-notes"><span><small>Datenbasis</small>Standardisierte OBD2-Bezeichnung</span><span><small>Informationsstand</small>Redaktionell aufbereitet · 15.10.2026</span><span><small>Grenze</small>Nicht fahrzeugspezifisch</span></div>
+        </div>
+      </div>
       <div class="safety"><b>Sicherheitshinweis</b><span>Bei roter Warnleuchte, Rauch, ungewöhnlichen Geräuschen oder starkem Leistungsverlust sicher anhalten. Diese App ersetzt keine Fachdiagnose.</span></div>
     </section>
 
