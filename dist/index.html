@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07110e">
+  <meta name="description" content="OBD2-Fehlercodes in verständlichem Klartext – mit Systemvisualisierung, Dringlichkeit und nächsten Schritten.">
+  <title>OBD2 Klartext</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#start" aria-label="OBD2 Klartext Startseite">
+      <span class="brand-mark" aria-hidden="true">O₂</span>
+      <span>OBD2 <b>Klartext</b></span>
+    </a>
+    <div class="top-meta"><span class="live-dot"></span>32 Codes · Lernprojekt</div>
+  </header>
+
+  <main id="start">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Fehler verstehen. Sicher reagieren.</p>
+        <h1>Was will dein Auto<br><em>dir sagen?</em></h1>
+        <p class="intro">Gib einen OBD2-Code ein. Du erhältst zuerst eine verständliche Antwort – und auf Wunsch technische Details.</p>
+
+        <form id="code-form" class="search-card" novalidate>
+          <label for="code-input">OBD2-Fehlercode</label>
+          <div class="search-row">
+            <input id="code-input" name="code" maxlength="5" autocomplete="off" spellcheck="false" placeholder="z. B. P0300" aria-describedby="input-help">
+            <button type="submit">Code erklären <span aria-hidden="true">→</span></button>
+          </div>
+          <div class="search-footer">
+            <span id="input-help">P, B, C oder U + vier Ziffern</span>
+            <button type="button" class="text-button" id="show-codes">Verfügbare Codes</button>
+          </div>
+          <div id="suggestions" class="suggestions" hidden></div>
+        </form>
+
+        <div class="scope"><b>Datenbasis:</b> Pkw · Verbrenner/Hybrid · ausgewählte Karosserie-, Fahrwerk- und Netzwerkcodes</div>
+      </div>
+
+      <div class="vehicle-card" aria-label="Schematische Fahrzeugansicht">
+        <div class="vehicle-label"><span>Systemansicht</span><b id="vehicle-code">P0300 · Motor</b></div>
+        <svg class="car" viewBox="0 0 620 300" role="img" aria-label="Fahrzeug mit Diagnosebereichen">
+          <defs>
+            <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#20352e"/><stop offset="1" stop-color="#101d19"/></linearGradient>
+            <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <path class="car-body" d="M83 190l30-73c7-17 20-29 38-34l111-31c27-7 55-7 82 2l99 33c20 7 35 21 43 40l22 54 42 14c15 5 25 19 25 35v15H45v-20c0-16 10-30 25-35z"/>
+          <path class="window" d="M170 105l99-28c22-6 46-6 68 1l72 24-24 66H145z"/>
+          <path class="window-line" d="M302 73v96M145 169h241"/>
+          <circle class="wheel" cx="155" cy="238" r="47"/><circle class="rim" cx="155" cy="238" r="21"/>
+          <circle class="wheel" cx="465" cy="238" r="47"/><circle class="rim" cx="465" cy="238" r="21"/>
+          <g class="zone active" data-zone="P"><rect x="392" y="116" width="82" height="68" rx="12"/><text x="433" y="156">P</text></g>
+          <g class="zone" data-zone="B"><rect x="248" y="91" width="95" height="79" rx="12"/><text x="296" y="137">B</text></g>
+          <g class="zone" data-zone="C"><circle cx="155" cy="238" r="31"/><circle cx="465" cy="238" r="31"/><text x="155" y="246">C</text></g>
+          <g class="zone network" data-zone="U"><path d="M206 198h196"/><circle cx="206" cy="198" r="8"/><circle cx="402" cy="198" r="8"/><text x="304" y="226">U</text></g>
+        </svg>
+        <div class="legend"><span><i class="p"></i>P Antrieb</span><span><i class="b"></i>B Karosserie</span><span><i class="c"></i>C Fahrwerk</span><span><i class="u"></i>U Netzwerk</span></div>
+      </div>
+    </section>
+
+    <section id="empty-state" class="orientation">
+      <div><p class="eyebrow">Schnelle Orientierung</p><h2>Der erste Buchstabe zeigt den Bereich.</h2></div>
+      <div class="category-grid">
+        <article><b>P</b><h3>Antrieb</h3><p>Motor, Abgas und Getriebe</p></article>
+        <article><b>B</b><h3>Karosserie</h3><p>Airbag, Komfort, Innenraum</p></article>
+        <article><b>C</b><h3>Fahrwerk</h3><p>ABS, Lenkung, Räder</p></article>
+        <article><b>U</b><h3>Netzwerk</h3><p>Kommunikation der Steuergeräte</p></article>
+      </div>
+    </section>
+
+    <section id="result" class="result" hidden aria-live="polite">
+      <div class="result-head">
+        <div><p class="eyebrow">Sofortantwort</p><div class="badges"><span id="r-code"></span><span id="r-category"></span><span id="r-origin"></span></div></div>
+        <span id="r-urgency" class="urgency"></span>
+      </div>
+      <h2 id="r-title"></h2>
+      <div class="result-grid">
+        <article class="panel system-panel"><p class="panel-label">Betroffenes System</p><h3 id="r-system"></h3><p id="r-system-copy"></p><span id="r-location" class="location"></span></article>
+        <article class="panel"><p class="panel-label">Einfach erklärt</p><p id="r-explanation" class="lead"></p><h3>Wahrscheinliche Ursachen</h3><ul id="r-causes" class="cause-list"></ul><small>Das sind Möglichkeiten – keine gesicherte Diagnose.</small></article>
+        <article class="panel action-panel"><p class="panel-label">Was jetzt?</p><div class="verdict"><span>Weiterfahrt</span><b id="r-verdict"></b></div><h3 id="r-advice-title"></h3><p id="r-advice"></p><ol id="r-steps"></ol></article>
+      </div>
+      <details class="details"><summary><span><small>Für Hobbyschrauber</small>Technische Einordnung anzeigen</span><b>+</b></summary><div><p id="r-tech"></p><div class="data-notes"><span><small>Datenbasis</small>Standardisierte OBD2-Bezeichnung</span><span><small>Informationsstand</small>Redaktionell aufbereitet · 15.10.2026</span><span><small>Grenze</small>Nicht fahrzeugspezifisch</span></div></div></details>
+      <div class="safety"><b>Sicherheitshinweis</b><span>Bei roter Warnleuchte, Rauch, ungewöhnlichen Geräuschen oder starkem Leistungsverlust sicher anhalten. Diese App ersetzt keine Fachdiagnose.</span></div>
+    </section>
+
+    <section class="journey">
+      <div><p class="eyebrow">Der Nutzerweg</p><h2>Vom Code zur nächsten Entscheidung.</h2></div>
+      <ol><li><b>01</b><span>Code eingeben</span></li><li><b>02</b><span>Klartext verstehen</span></li><li><b>03</b><span>System zuordnen</span></li><li><b>04</b><span>Ursachen vergleichen</span></li><li><b>05</b><span>Sicher handeln</span></li></ol>
+    </section>
+  </main>
+
+  <footer><span>OBD2 Klartext</span><span>Lernprojekt · Keine Reparaturanleitung</span></footer>
+  <script src="app.js"></script>
+</body>
+</html>
