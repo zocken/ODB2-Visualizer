@@ -31,4 +31,13 @@
 .plan-key i{display:inline-block;width:9px;height:9px;border:1px solid #d78b00;border-radius:2px;background:#ffbd42}
 .plan-key i.context-key{background:#44351b;border-color:#d4a348}
 @media(max-width:620px){.vehicle-plan{height:395px}.vehicle-scan{--scan-height:395px}.vehicle-schematic{padding:8px 10px 13px}.vehicle-card .vehicle-label{font-size:10px;letter-spacing:.04em;gap:10px}.vehicle-card .vehicle-label b{text-align:right;max-width:70%}}
+@media(max-width:620px){
+  .vehicle-plan{height:clamp(320px,108vw,395px)}
+  .vehicle-scan{--scan-height:clamp(320px,108vw,395px)}
+  .vehicle-schematic{padding:6px 4px 10px}
+  .vehicle-card .vehicle-label{align-items:flex-start;gap:4px}
+  .vehicle-card .vehicle-label b{text-align:left;max-width:100%}
+  .vehicle-parts span{max-width:100%;padding:4px 8px;font-size:10px;overflow-wrap:anywhere}
+  .plan-key{gap:6px 10px;line-height:1.35}
+}
 @media(prefers-reduced-motion:reduce){.vehicle-plan .plan-component>*{transition:none}.vehicle-scan::after{animation:none;display:none}}
