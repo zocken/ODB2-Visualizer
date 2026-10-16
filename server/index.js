@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { pool, migrate } from './db.js';
 import { seed, seedFiles } from './seed.js';
 import { recentUpdates, scheduleUpdates } from './update-codes.js';
+import { recordEvents, usageSummary } from './usage.js';
 
 const PORT = Number(process.env.PORT || 8080);
 const CODE_PATTERN = /^[PBCU][0-9A-F]{4}$/;
@@ -26,6 +27,18 @@ app.disable('x-powered-by');
 app.get('/api/health', async (_req, res) => {
   const { rows: [{ count }] } = await pool.query('SELECT count(*)::int AS count FROM dtc_codes WHERE manufacturer_id IS NULL AND source_removed_at IS NULL');
   res.json({ ok: true, genericCodes: count });
+});
+
+// Anonyme Nutzungsstatistik: Ereignisse zählen (sendBeacon schickt text/plain) und Zusammenfassung abrufen.
+// Hinter dem Coolify-Proxy liefert X-Forwarded-For die Absender-IP (nur für die Spam-Begrenzung im Speicher).
+app.set('trust proxy', 'loopback, uniquelocal');
+app.post('/api/events', express.json({ type: ['application/json', 'text/plain'], limit: '2kb' }), async (req, res) => {
+  const result = await recordEvents(req.ip, req.body?.events);
+  res.status(result.limited ? 429 : 204).end();
+});
+app.get('/api/stats', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json(await usageSummary(req.query.days));
 });
 
 // Protokoll der automatischen Code-Ergänzung (nur lesend).

@@ -61,6 +61,16 @@ CREATE TABLE IF NOT EXISTS code_updates (
 ALTER TABLE code_updates ADD COLUMN IF NOT EXISTS updated integer;
 ALTER TABLE code_updates ADD COLUMN IF NOT EXISTS removed integer;
 
+-- Anonyme Nutzungsstatistik: nur Tageszähler, keine Kennungen (keine IP, kein Cookie, kein User-Agent).
+-- metric: pageview | lookup | missing | manufacturer | device; key: z. B. Code, Hersteller-Slug, mobile/desktop.
+CREATE TABLE IF NOT EXISTS usage_daily (
+  day    date NOT NULL DEFAULT current_date,
+  metric text NOT NULL,
+  key    text NOT NULL DEFAULT '',
+  count  integer NOT NULL DEFAULT 0,
+  PRIMARY KEY (day, metric, key)
+);
+
 -- active = betroffenes Bauteil, context = zugehöriges System.
 CREATE TABLE IF NOT EXISTS dtc_components (
   dtc_id       integer NOT NULL REFERENCES dtc_codes(id) ON DELETE CASCADE,

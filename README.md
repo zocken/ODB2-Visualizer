@@ -119,6 +119,15 @@ docker compose exec app node server/seed.js
 - Ein Advisory Lock verhindert parallele Läufe mehrerer Instanzen; jeder Lauf steht in der Tabelle `code_updates`.
 - Protokoll: `GET /api/updates` · manuell auslösen: `docker compose exec app npm run update-codes` · abschalten: `AUTO_UPDATE=false`
 
+## Nutzungsstatistik
+
+Anonyme Tageszähler in der Tabelle `usage_daily`: Seitenaufrufe, abgefragte Codes (gefunden / nicht gefunden), gewählte Hersteller und Geräteklasse (Handy/Desktop). Keine Cookies, kein Tracking-Speicher im Browser, keine IP-Adressen oder Browserkennungen in der Datenbank; Zähler älter als 365 Tage werden gelöscht. Die IP dient nur im Arbeitsspeicher der Begrenzung auf 60 Ereignisse pro Minute.
+
+- Erfassen: `POST /api/events` mit `{"events":[{"type":"lookup","key":"P0420"}]}` (Typen: pageview, lookup, missing, manufacturer, device)
+- Abrufen: `GET /api/stats?days=30`
+- Anzeige: **fünfmal schnell auf das Logo oben links klicken** – Kennzahlen, Seitenaufrufe pro Tag, meistgefragte und nicht gefundene Codes, Hersteller; Zeitraum 7/30/90 Tage. Das Fenster ist ein verstecktes Extra, kein Zugriffsschutz.
+- Ohne Backend (GitHub Pages) wird nichts erfasst.
+
 ## Betrieb ohne Backend
 
 Ist keine API erreichbar, lädt das Frontend `data/generic-codes.json`. Der Pages-Workflow erzeugt diese Datei mit `node server/build-static.js`. Herstellerspezifische Codes sind nur mit Datenbank verfügbar.

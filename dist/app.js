@@ -242,6 +242,8 @@ function resetTechnicalDetails(){
 async function showCode(code,{scroll=true}={}){
   let c;
   try{c=await lookup(code)}catch{showError('Die Datenbasis ist gerade nicht erreichbar. Bitte später erneut versuchen.');return}
+  // Count deliberate lookups only (not the silent refresh after a manufacturer switch).
+  if(scroll)track({type:c.missing?'missing':'lookup',key:code});
   if(c.missing){
     showError(`${code} hat ein gültiges Format, ist aber noch nicht in dieser Datenbasis enthalten.`,c.alternatives);
     return;
@@ -314,6 +316,7 @@ makerSelect.addEventListener('change',()=>{
   manufacturer=makerSelect.value;
   // The 3D view switches to the brand's typical layout (vehicle-view.js); remembered in case it loads later.
   window.vehicleBrand=manufacturer; window.setVehicleBrand?.(manufacturer);
+  if(manufacturer)track({type:'manufacturer',key:manufacturer});
   updateCount();
   // Re-run a shown result or a search that just failed (the code may exist for this brand).
   const retry=activeCode||(!byId('form-error').hidden&&/^[PBCU][0-9A-F]{4}$/.test(input.value)?input.value:'');
@@ -333,5 +336,24 @@ byId('detail-toggle').addEventListener('click',()=>{
 document.addEventListener('click',event=>{if(!form.contains(event.target))closeSuggestions()});
 
 ready.then(updateCount,()=>{byId('database-count').textContent='Datenbasis offline'});
+
+// Anonymous usage counters: daily totals only, no cookies or identifiers; only with the API backend.
+function track(...events){
+  if(source!==apiSource)return;
+  const body=JSON.stringify({events});
+  try{if(navigator.sendBeacon?.('api/events',body))return}catch{}
+  fetch('api/events',{method:'POST',body,keepalive:true,headers:{'Content-Type':'text/plain'}}).catch(()=>{});
+}
+ready.then(()=>track({type:'pageview'},{type:'device',key:window.matchMedia('(max-width: 620px)').matches?'mobile':'desktop'})).catch(()=>{});
+
+// Hidden usage statistics: five clicks on the logo within three seconds.
+let logoClicks=[];
+document.querySelector('.brand').addEventListener('click',event=>{
+  const now=Date.now();
+  logoClicks=[...logoClicks.filter(t=>now-t<3000),now];
+  if(logoClicks.length<5)return;
+  event.preventDefault(); logoClicks=[];
+  import('./stats.js?v=2').then(m=>m.openStats()).catch(()=>{});
+});
 input.value='P0300';
 updateVehicle('P0300');
