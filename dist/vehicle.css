@@ -1,7 +1,9 @@
 .vehicle-schematic{background:#020505;border:1px solid #26372f;border-radius:18px;padding:10px 16px 16px;margin:18px 0;color:#a3b4bc}
 .vehicle-scan{--scan-height:430px;position:relative;overflow:hidden;border-radius:10px;isolation:isolate}
 .vehicle-scan::after{content:"";position:absolute;pointer-events:none;z-index:1;inset:-64px 0 auto;height:64px;border-bottom:1px solid #b9f36b;background:linear-gradient(to bottom,transparent,rgba(185,243,107,.035) 45%,rgba(185,243,107,.16));filter:drop-shadow(0 3px 5px rgba(185,243,107,.35));animation:vehicle-scanner 3.2s ease-in-out infinite alternate;will-change:transform}
+.vehicle-scan::before{content:"";position:absolute;pointer-events:none;z-index:2;top:0;bottom:0;left:100%;width:64px;border-left:1px solid #b9f36b;background:linear-gradient(to right,rgba(185,243,107,.16),rgba(185,243,107,.035) 55%,transparent);filter:drop-shadow(-3px 0 5px rgba(185,243,107,.35));animation:vehicle-scanner-sideways 3.2s ease-in-out infinite alternate;will-change:left,opacity}
 @keyframes vehicle-scanner{0%{transform:translateY(0);opacity:0}6%,94%{opacity:1}100%{transform:translateY(calc(var(--scan-height) + 64px));opacity:0}}
+@keyframes vehicle-scanner-sideways{0%{left:100%;opacity:0}6%,94%{opacity:1}100%{left:-64px;opacity:0}}
 .vehicle-plan{display:block;width:100%;height:430px;max-height:none;margin:0 auto}
 .vehicle-plan .plan-body{fill:#0a1115;stroke:#7d929f;stroke-width:1.35}
 .vehicle-plan .plan-outline{fill:none;stroke:#445966;stroke-width:.8}
@@ -40,4 +42,4 @@
   .vehicle-parts span{max-width:100%;padding:4px 8px;font-size:10px;overflow-wrap:anywhere}
   .plan-key{gap:6px 10px;line-height:1.35}
 }
-@media(prefers-reduced-motion:reduce){.vehicle-plan .plan-component>*{transition:none}.vehicle-scan::after{animation:none;display:none}}
+@media(prefers-reduced-motion:reduce){.vehicle-plan .plan-component>*{transition:none}.vehicle-scan::before,.vehicle-scan::after{animation:none;display:none}}
