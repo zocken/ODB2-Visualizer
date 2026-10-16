@@ -6,6 +6,8 @@ let activeCode='';
 // Selected manufacturer slug; '' = standard codes only (initial choice).
 let manufacturer='';
 const makerQuery=(prefix)=>manufacturer?`${prefix}manufacturer=${encodeURIComponent(manufacturer)}`:'';
+// Suggestions are loaded page by page while scrolling the list.
+const PAGE_SIZE=40;
 
 // Data comes from the API (Docker/DB) or, without a backend (GitHub Pages), from a static export of the seed data.
 // Schematic locations represent the system named by the code, not a confirmed defective part.
@@ -19,7 +21,13 @@ function normalize(d){
 const apiSource={
   async init(){const r=await fetch('api/health');if(!r.ok)throw new Error('API nicht verfügbar');this.count=(await r.json()).genericCodes},
   async manufacturers(){const r=await fetch('api/manufacturers');return r.ok?r.json():[]},
-  async search(term){const r=await fetch(`api/codes?q=${encodeURIComponent(term)}&limit=12${makerQuery('&')}`);if(!r.ok)throw new Error('Suche fehlgeschlagen');return r.json()},
+  // Returns one page of matches plus the total number of matches.
+  async search(term,offset=0){
+    const r=await fetch(`api/codes?q=${encodeURIComponent(term)}&limit=${PAGE_SIZE}&offset=${offset}${makerQuery('&')}`);
+    if(!r.ok)throw new Error('Suche fehlgeschlagen');
+    const items=await r.json();
+    return {items,total:Number(r.headers.get('X-Total-Count'))||offset+items.length};
+  },
   async get(code){
     const r=await fetch(`api/codes/${code}${makerQuery('?')}`);
     if(r.status===404)return {missing:true,alternatives:(await r.json()).alternatives||[]};
@@ -34,9 +42,10 @@ const staticSource={
     this.codes=new Map((await r.json()).codes.filter(c=>!c.manufacturer).map(c=>[c.code,normalize(c)]));this.count=this.codes.size;
   },
   async manufacturers(){return []},
-  async search(term){
+  async search(term,offset=0){
     term=term.trim().toUpperCase();
-    return [...this.codes.values()].filter(c=>c.code.startsWith(term)).sort((a,b)=>a.code.localeCompare(b.code)).slice(0,12);
+    const all=[...this.codes.values()].filter(c=>c.code.startsWith(term)).sort((a,b)=>a.code.localeCompare(b.code));
+    return {items:all.slice(offset,offset+PAGE_SIZE),total:all.length};
   },
   async get(code){
     return this.codes.get(code)||{missing:true,alternatives:[...this.codes.keys()].filter(candidate=>candidate[0]===code[0]).slice(0,4)};
@@ -112,34 +121,62 @@ function highlightSuggestion(index){
   if(highlighted>=0)input.setAttribute('aria-activedescendant',options[highlighted].id);else input.removeAttribute('aria-activedescendant');
 }
 
-let suggestionRequest=0;
+function suggestionButton(c,index){
+  const button=document.createElement('button');
+  button.type='button'; button.className='suggestion'; button.dataset.code=c.code; button.setAttribute('role','option');
+  button.id=`suggestion-${index}`; button.tabIndex=-1; button.setAttribute('aria-selected','false');
+  const code=document.createElement('b'); code.textContent=c.code;
+  const copy=document.createElement('span'); copy.textContent=c.title;
+  const area=document.createElement('small'); area.textContent=c.system;
+  if(c.manufacturerName){const brand=document.createElement('em');brand.textContent=c.manufacturerName;area.prepend(brand,' · ')}
+  button.append(code,copy,area);
+  return button;
+}
+
+// Paging state of the open list: further pages load while scrolling (or arrowing) towards the end.
+const suggestionCount=document.querySelector('.suggestion-head strong');
+let suggestionRequest=0, page={filter:'',loaded:0,total:0,loading:false};
+function updateSuggestionCount(){
+  suggestionCount.textContent=page.total>page.loaded?`Treffer · ${formatCount(page.loaded)} von ${formatCount(page.total)}`:page.total?`${formatCount(page.total)} Treffer`:'Passende Treffer';
+}
+
 async function renderSuggestions(filter=''){
   const request=++suggestionRequest;
-  let list;
-  try{await ready;list=await source.search(filter)}catch{list=[]}
+  let result;
+  try{await ready;result=await source.search(filter,0)}catch{result={items:[],total:0}}
   if(request!==suggestionRequest)return;
+  page={filter,loaded:result.items.length,total:result.total,loading:false};
   suggestionList.replaceChildren();
-  if(!list.length){
+  if(!result.items.length){
     const empty=document.createElement('p');
     empty.className='suggestion-empty';
     empty.textContent='Kein passender hinterlegter Code.';
     suggestionList.append(empty);
   }else{
-    list.forEach((c,index)=>{
-      const button=document.createElement('button');
-      button.type='button'; button.className='suggestion'; button.dataset.code=c.code; button.setAttribute('role','option');
-      button.id=`suggestion-${index}`; button.tabIndex=-1; button.setAttribute('aria-selected','false');
-      const code=document.createElement('b'); code.textContent=c.code;
-      const copy=document.createElement('span'); copy.textContent=c.title;
-      const area=document.createElement('small'); area.textContent=c.system;
-      if(c.manufacturerName){const brand=document.createElement('em');brand.textContent=c.manufacturerName;area.prepend(brand,' · ')}
-      button.append(code,copy,area); suggestionList.append(button);
-    });
+    suggestionList.append(...result.items.map((c,index)=>suggestionButton(c,index)));
   }
+  updateSuggestionCount();
   highlighted=-1; input.removeAttribute('aria-activedescendant');
   suggestions.hidden=false;
+  suggestions.scrollTop=0;
   input.setAttribute('aria-expanded','true');
 }
+
+async function loadMoreSuggestions(){
+  if(page.loading||page.loaded>=page.total)return;
+  const request=suggestionRequest;
+  page.loading=true;
+  let result;
+  try{result=await source.search(page.filter,page.loaded)}catch{page.loading=false;return}
+  if(request!==suggestionRequest)return;
+  suggestionList.append(...result.items.map((c,index)=>suggestionButton(c,page.loaded+index)));
+  page.loaded+=result.items.length;
+  page.loading=false;
+  updateSuggestionCount();
+}
+suggestions.addEventListener('scroll',()=>{
+  if(suggestions.scrollTop+suggestions.clientHeight>=suggestions.scrollHeight-120)loadMoreSuggestions();
+});
 
 function causeGuide(cause,c){
   const text=cause.toLowerCase();
@@ -255,6 +292,7 @@ input.addEventListener('keydown',event=>{
     event.preventDefault();
     if(!open){renderSuggestions(input.value);return}
     highlightSuggestion(highlighted+(event.key==='ArrowDown'?1:-1));
+    if(highlighted>=page.loaded-5)loadMoreSuggestions();
     return;
   }
   // Enter on a highlighted option takes it over and shows the result right away.

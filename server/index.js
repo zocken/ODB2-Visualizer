@@ -43,21 +43,25 @@ app.get('/api/manufacturers', async (_req, res) => {
   res.json(rows);
 });
 
-// Vorschlagsliste: Codes, die mit der Eingabe beginnen. Mit Hersteller genau ein Treffer je Code,
-// die Herstellervariante hat Vorrang vor dem Standardcode.
+// Vorschlagsliste: Codes, die mit der Eingabe beginnen, seitenweise (limit/offset).
+// Mit Hersteller genau ein Treffer je Code, die Herstellervariante hat Vorrang vor dem Standardcode.
+// Die Gesamtzahl der Treffer steht im Header X-Total-Count.
 app.get('/api/codes', async (req, res) => {
   const q = String(req.query.q || '').trim().toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 5);
   const limit = Math.min(Math.max(Number(req.query.limit) || 12, 1), 100);
+  const offset = Math.max(Number(req.query.offset) || 0, 0);
   const manufacturer = req.query.manufacturer ? String(req.query.manufacturer) : null;
-  const { rows } = await pool.query(
-    `SELECT DISTINCT ON (d.code) d.code, d.title, d.system, m.slug AS manufacturer, m.name AS "manufacturerName"
-     FROM dtc_codes d LEFT JOIN manufacturers m ON m.id = d.manufacturer_id
-     WHERE (d.manufacturer_id IS NULL OR m.slug = $3) AND d.source_removed_at IS NULL
-       AND d.code LIKE $1 || '%'
-     ORDER BY d.code, d.manufacturer_id IS NULL
-     LIMIT $2`,
-    [q, limit, manufacturer],
-  );
+  const filter = `FROM dtc_codes d LEFT JOIN manufacturers m ON m.id = d.manufacturer_id
+     WHERE (d.manufacturer_id IS NULL OR m.slug = $2) AND d.source_removed_at IS NULL AND d.code LIKE $1 || '%'`;
+  const [{ rows }, { rows: [{ total }] }] = await Promise.all([
+    pool.query(
+      `SELECT DISTINCT ON (d.code) d.code, d.title, d.system, m.slug AS manufacturer, m.name AS "manufacturerName"
+       ${filter} ORDER BY d.code, d.manufacturer_id IS NULL LIMIT $3 OFFSET $4`,
+      [q, manufacturer, limit, offset],
+    ),
+    pool.query(`SELECT count(DISTINCT d.code)::int AS total ${filter}`, [q, manufacturer]),
+  ]);
+  res.set('X-Total-Count', String(total));
   res.json(rows);
 });
 

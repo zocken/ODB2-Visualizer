@@ -51,7 +51,7 @@ Oberhalb des Codefelds wählt man den Hersteller. Startwert ist **„Nur Standar
 ## API
 
 - `GET /api/health` – Status und Anzahl der herstellerunabhängigen Codes
-- `GET /api/codes?q=<text>&limit=12[&manufacturer=<slug>]` – Suche über Code, Titel und System; mit Hersteller ein Treffer je Code (Herstellervariante vor Standardcode)
+- `GET /api/codes?q=<Code-Anfang>&limit=40&offset=0[&manufacturer=<slug>]` – Codes, die mit der Eingabe beginnen, seitenweise; Gesamtzahl im Header `X-Total-Count`; mit Hersteller ein Treffer je Code (Herstellervariante vor Standardcode)
 - `GET /api/codes/<CODE>[?manufacturer=<slug>]` – Detail; `404` mit `alternatives`, wenn unbekannt
 - `GET /api/manufacturers` – Hersteller mit sichtbaren Codes inkl. Anzahl (füllt die Herstellerauswahl)
 - `GET /api/updates` – die letzten Läufe des nächtlichen Code-Abgleichs (angelegt, aktualisiert, entfernt)
