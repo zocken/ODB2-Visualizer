@@ -41,15 +41,15 @@ function readCodes(file) {
 const FAMILIES = [
   { re: /misfire/i, system: 'Motor & Verbrennung', location: 'Motor', context: ['engine'], cylinders: true, urgency: 'Rot' },
   // Vor Getriebe/Kraftstoff prüfen, sonst greifen "Clutch" bzw. "Fuel" (A/C Clutch, Cruise Control).
-  { re: /a\/c|refrigerant|hvac/i, system: 'Klimaanlage', location: 'Klimakreislauf', urgency: 'Grün' },
-  { re: /cruise control/i, system: 'Tempomat', location: 'Lenkrad / Steuergerät', urgency: 'Grün' },
-  { re: /glow plug/i, system: 'Vorglühanlage', location: 'Motor – Zylinderkopf', context: ['engine'], cylinders: true },
+  { re: /a\/c|refrigerant|hvac/i, system: 'Klimaanlage', location: 'Klimakreislauf', active: ['ac-compressor'], urgency: 'Grün' },
+  { re: /cruise control/i, system: 'Tempomat', location: 'Lenkrad / Steuergerät', context: ['steering'], urgency: 'Grün' },
+  { re: /glow plug/i, system: 'Vorglühanlage', location: 'Motor – Zylinderkopf', active: ['glow-plugs'], context: ['engine'] },
   { re: /ignition coil|ignition [a-l] |spark/i, system: 'Zündung', location: 'Motor – Zündanlage', context: ['engine'], cylinders: true },
   { re: /injector|injection/i, system: 'Einspritzung', location: 'Motor – Einspritzanlage', active: ['fuel-rail'], context: ['engine'], injectors: true },
-  { re: /knock/i, system: 'Klopfregelung', location: 'Motorblock', context: ['engine'] },
+  { re: /knock/i, system: 'Klopfregelung', location: 'Motorblock', active: ['knock-sensor'], context: ['engine'] },
   { re: /crankshaft/i, system: 'Motorsynchronisation', location: 'Unterer Motorbereich', active: ['crankshaft'], context: ['engine'], urgency: 'Rot' },
   { re: /camshaft|valve timing|intake valve|exhaust valve|rocker/i, system: 'Ventilsteuerung', location: 'Zylinderkopf', active: ['camshaft'], context: ['engine'] },
-  { re: /o2 sensor|ho2s|oxygen sensor|air-fuel ratio/i, system: 'Abgasregelung', location: 'Abgasstrang', active: ['lambda-front'], context: ['exhaust'] },
+  { re: /o2 sensor|ho2s|oxygen sensor|air-fuel ratio/i, system: 'Abgasregelung', location: 'Abgasstrang', active: ['lambda-front'], context: ['exhaust'], lambdaRear: true },
   { re: /catalyst|catalytic/i, system: 'Abgasnachbehandlung', location: 'Abgasstrang', active: ['cat-1'], context: ['exhaust'], bank2: ['cat-2'] },
   { re: /particulate|dpf|reductant|nox|aftertreatment|scr/i, system: 'Abgasnachbehandlung (Diesel)', location: 'Abgasstrang', active: ['exhaust'] },
   { re: /egr|exhaust gas recirculation/i, system: 'Abgasrückführung', location: 'AGR-System am Motor', active: ['egr'], context: ['engine', 'exhaust'] },
@@ -59,22 +59,25 @@ const FAMILIES = [
   { re: /fuel level/i, system: 'Kraftstoffanzeige', location: 'Kraftstofftank', active: ['tank'], urgency: 'Grün' },
   { re: /fuel/i, system: 'Kraftstoffversorgung', location: 'Kraftstoffsystem', active: ['fuel-rail'], context: ['engine'] },
   { re: /mass or volume air flow|mass air flow|\bmaf\b/i, system: 'Luftversorgung', location: 'Ansaugtrakt', active: ['maf'], context: ['intake'] },
-  { re: /turbo|supercharger|boost|wastegate|charge air/i, system: 'Aufladung', location: 'Turbolader / Ladeluftstrecke', active: ['intake'], context: ['engine'] },
-  { re: /pedal position|accelerator/i, system: 'Fahrpedal', location: 'Fußraum Fahrerseite', context: ['ecm'], urgency: 'Rot' },
-  { re: /manifold absolute|barometric|intake air|intake manifold|throttle|idle/i, system: 'Luftversorgung', location: 'Ansaugtrakt', active: ['intake'], context: ['engine'] },
+  { re: /charge air cooler|intercooler/i, system: 'Aufladung', location: 'Ladeluftstrecke', active: ['charge-air-cooler'], context: ['turbo'] },
+  { re: /turbo|supercharger|boost|wastegate|charge air/i, system: 'Aufladung', location: 'Turbolader / Ladeluftstrecke', active: ['turbo'], context: ['intake', 'charge-air-cooler'] },
+  { re: /pedal position|accelerator/i, system: 'Fahrpedal', location: 'Fußraum Fahrerseite', active: ['pedal'], context: ['ecm'], urgency: 'Rot' },
+  { re: /throttle|idle air|idle control/i, system: 'Luftversorgung', location: 'Drosselklappe / Ansaugtrakt', active: ['throttle'], context: ['intake'] },
+  { re: /manifold absolute|barometric|intake air|intake manifold|idle/i, system: 'Luftversorgung', location: 'Ansaugtrakt', active: ['intake'], context: ['engine'] },
   { re: /thermostat/i, system: 'Motorkühlung', location: 'Kühlkreislauf', active: ['thermostat'], context: ['cooling'] },
   { re: /coolant temperature/i, system: 'Motorkühlung', location: 'Kühlkreislauf', active: ['coolant-sensor'], context: ['cooling'] },
   { re: /coolant|radiator|cooling fan|\bfan\b/i, system: 'Motorkühlung', location: 'Kühlkreislauf', active: ['cooling'], context: ['engine'] },
-  { re: /oil pressure/i, system: 'Motorschmierung', location: 'Motor', active: ['engine'], urgency: 'Rot' },
+  { re: /oil pressure/i, system: 'Motorschmierung', location: 'Motor', active: ['oil-pressure'], context: ['engine'], urgency: 'Rot' },
   { re: /\boil\b/i, system: 'Motorschmierung', location: 'Motor', active: ['engine'] },
   { re: /input.*speed|turbine speed/i, system: 'Automatikgetriebe', location: 'Getriebegehäuse', active: ['input-speed'], context: ['transmission'] },
   { re: /transmission|shift|gear|torque converter|clutch|output.*speed|intermediate shaft|park position/i, system: 'Getriebe', location: 'Getriebe und Steuergerät', active: ['transmission'], context: ['tcm'] },
   { re: /vehicle speed/i, system: 'Geschwindigkeitserfassung', location: 'Getriebe oder Radnabe', active: ['vehicle-speed'], context: ['transmission'] },
   { re: /wheel speed/i, system: 'ABS & Fahrstabilität', location: 'Radbereich', active: ['abs'], urgency: 'Rot', wheels: true },
   { re: /brake|\babs\b|stability|yaw|acceleration sensor|traction/i, system: 'Bremse & Fahrstabilität', location: 'Bremssystem', active: ['abs'], urgency: 'Rot' },
-  { re: /steering/i, system: 'Lenkung', location: 'Lenkung / Vorderachse', urgency: 'Rot' },
+  { re: /steering/i, system: 'Lenkung', location: 'Lenkung / Vorderachse', active: ['steering'], urgency: 'Rot' },
   { re: /airbag|deployment|restraint|pretensioner|occupant|knee bolster|seat belt/i, system: 'Rückhaltesystem', location: 'Innenraum', context: ['bcm'], urgency: 'Rot', airbag: true },
-  { re: /hybrid|\bev\b|drive motor|inverter|contactor|high voltage|dc\/dc|battery pack|charger|cell/i, system: 'Hybrid-/Elektroantrieb', location: 'Hochvolt-System', context: ['battery'], urgency: 'Rot' },
+  { re: /drive motor|inverter|motor generator/i, system: 'Hybrid-/Elektroantrieb', location: 'Elektromotor / Leistungselektronik', active: ['e-motor'], context: ['hv-battery'], urgency: 'Rot' },
+  { re: /hybrid|\bev\b|contactor|high voltage|dc\/dc|battery pack|charger|cell/i, system: 'Hybrid-/Elektroantrieb', location: 'Hochvolt-System', active: ['hv-battery'], urgency: 'Rot' },
   { re: /battery|generator|alternator|charging|system voltage|starter/i, system: 'Bordnetz', location: 'Batterie und Ladesystem', active: ['battery', 'alternator'] },
   { re: /lost communication|invalid data|communication bus|\bcan\b|\bbus\b/i, system: 'Steuergeräte-Netzwerk', location: 'CAN-Netzwerk', active: ['can'], network: true },
   { re: /control module|ecm|pcm|processor|memory|programming|reference voltage|supply voltage|power relay|software/i, system: 'Steuergerät / Elektronik', location: 'Motorsteuergerät', active: ['ecm'] },
@@ -116,9 +119,13 @@ function describe(code, en, brand) {
   if (family.cylinders && cylinder >= 1 && cylinder <= 4) active = [`cylinder-${cylinder}`];
   if (family.injectors && cylinder >= 1 && cylinder <= 4) active = [`injector-${cylinder}`];
   if (family.bank2 && /bank 2/i.test(en)) active = family.bank2;
+  // Sensor 2/3 sitzen hinter dem Katalysator.
+  if (family.lambdaRear && /sensor [23]\b/i.test(en)) active = ['lambda-rear'];
   if (family.wheels) {
     if (/left front|front left|\blf\b/i.test(en)) active = ['wheel-fl'];
     else if (/right front|front right|\brf\b/i.test(en)) active = ['wheel-fr'];
+    else if (/left rear|rear left|\blr\b/i.test(en)) active = ['wheel-rl'];
+    else if (/right rear|rear right|\brr\b/i.test(en)) active = ['wheel-rr'];
   }
   if (family.airbag && /left side|side.*left/i.test(en)) active = ['airbag-left'];
   if (family.network) {

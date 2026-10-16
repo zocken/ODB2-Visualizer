@@ -152,6 +152,62 @@
     {
       "id": "tank-cap",
       "label": "Tankverschluss"
+    },
+    {
+      "id": "charge-air-cooler",
+      "label": "Ladeluftkühler"
+    },
+    {
+      "id": "throttle",
+      "label": "Drosselklappe"
+    },
+    {
+      "id": "turbo",
+      "label": "Turbolader"
+    },
+    {
+      "id": "glow-plugs",
+      "label": "Glühkerzen"
+    },
+    {
+      "id": "knock-sensor",
+      "label": "Klopfsensor"
+    },
+    {
+      "id": "oil-pressure",
+      "label": "Öldrucksensor"
+    },
+    {
+      "id": "ac-compressor",
+      "label": "Klimakompressor"
+    },
+    {
+      "id": "steering",
+      "label": "Lenkung"
+    },
+    {
+      "id": "pedal",
+      "label": "Fahrpedal"
+    },
+    {
+      "id": "lambda-rear",
+      "label": "Lambdasonde nach Katalysator"
+    },
+    {
+      "id": "hv-battery",
+      "label": "Hochvoltbatterie"
+    },
+    {
+      "id": "e-motor",
+      "label": "Elektromotor / Leistungselektronik"
+    },
+    {
+      "id": "wheel-rl",
+      "label": "Raddrehzahlsensor hinten links"
+    },
+    {
+      "id": "wheel-rr",
+      "label": "Raddrehzahlsensor hinten rechts"
     }
   ],
   "codes": [
