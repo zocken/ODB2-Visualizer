@@ -1,0 +1,17 @@
+# Betriebssystem und Editoren
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Lokale Vorschau und temporäre Dateien
+*.log
+*.tmp
+.cache/
+node_modules/
+
+# Lokale Zugangsdaten dürfen nie versioniert werden
+.env
+.env.*
+!.env.example
+

@@ -9,6 +9,8 @@
   .result-grid>*{min-width:0}
 }
 
+.source-note{margin-top:12px;padding:15px 16px;border:1px solid #d5d9d1;border-radius:12px;background:#f7f8f3;color:#4d5b54;font-size:12px}.source-note b{color:#101b16}.source-note p{margin:6px 0 0}.source-note a{color:#345f24;font-weight:800;text-underline-offset:2px}
+
 @media(max-width:620px){
   html{scroll-padding-top:64px}
   .topbar{height:64px;padding:0 16px}
