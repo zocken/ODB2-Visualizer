@@ -7,7 +7,7 @@ let activeCode='';
 // Schematic locations represent the system named by the code, not a confirmed defective part.
 function normalize(d){
   const v=d.vehicle||d;
-  return {code:d.code,title:d.title,system:d.system,urgency:d.urgency,explanation:d.explanation,causes:d.causes,location:d.location,
+  return {code:d.code,title:d.title,titleEn:d.titleEn||null,source:d.source||'redaktionell',system:d.system,urgency:d.urgency,explanation:d.explanation,causes:d.causes,location:d.location,
     category:categoryNames[d.code[0]],origin:d.manufacturer?.name?`herstellerspezifisch · ${d.manufacturer.name}`:d.code[1]==='0'?'Standardcode':'herstellerspezifisch',
     vehicle:{active:v.active||[],context:v.context||[],labels:v.labels||[]}};
 }
@@ -174,7 +174,7 @@ async function showCode(code){
   byId('r-causes').replaceChildren(...details.map(item=>{const li=document.createElement('li'),rank=document.createElement('b'),cause=document.createElement('span');rank.textContent=item.rank;cause.textContent=item.cause;li.append(rank,cause);return li}));
   byId('r-verdict').textContent=a.verdict; byId('r-advice-title').textContent=a.title; byId('r-advice').textContent=a.text;
   byId('r-steps').replaceChildren(...a.steps.map(step=>{const li=document.createElement('li');li.textContent=step;return li}));
-  byId('r-tech').textContent=`${c.code} ist als ${c.origin} dem Diagnosebereich ${c.category} zugeordnet. Der Code beschreibt eine erkannte Abweichung in ${c.system.toLowerCase()}, benennt aber nicht automatisch ein defektes Bauteil. Messwerte, Begleitcodes und fahrzeugspezifische Herstellerangaben müssen gemeinsam bewertet werden.`;
+  byId('r-tech').textContent=`${c.code} ist als ${c.origin} dem Diagnosebereich ${c.category} zugeordnet. Der Code beschreibt eine erkannte Abweichung in ${c.system.toLowerCase()}, benennt aber nicht automatisch ein defektes Bauteil. Messwerte, Begleitcodes und fahrzeugspezifische Herstellerangaben müssen gemeinsam bewertet werden.${c.source!=='redaktionell'?` Originalbezeichnung: ${c.titleEn||c.title}. Quelle: ${c.source}; Erklärung und Ursachen sind automatisch erzeugt und nicht redaktionell geprüft.`:''}`;
   renderCauseTable(details); resetTechnicalDetails(); updateVehicle(c);
   result.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
 }

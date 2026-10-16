@@ -33,6 +33,9 @@ CREATE TABLE IF NOT EXISTS dtc_codes (
 
 CREATE INDEX IF NOT EXISTS dtc_codes_code_idx ON dtc_codes (code);
 
+-- Originalbezeichnung importierter Codes (englisch), Titel ist die deutsche Fassung.
+ALTER TABLE dtc_codes ADD COLUMN IF NOT EXISTS title_en text;
+
 CREATE TABLE IF NOT EXISTS dtc_causes (
   dtc_id   integer NOT NULL REFERENCES dtc_codes(id) ON DELETE CASCADE,
   position smallint NOT NULL,

@@ -1,13 +1,13 @@
 import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { pool, migrate } from './db.js';
-import { seed } from './seed.js';
+import { seed, seedFiles } from './seed.js';
 
 const PORT = Number(process.env.PORT || 8080);
 const CODE_PATTERN = /^[PBCU][0-9A-F]{4}$/;
 
 const DETAIL_SQL = `
-  SELECT d.code, d.title, d.system, d.urgency, d.explanation, d.location, d.source,
+  SELECT d.code, d.title, d.title_en AS "titleEn", d.system, d.urgency, d.explanation, d.location, d.source,
          d.vehicle_labels AS labels,
          CASE WHEN m.id IS NULL THEN NULL ELSE json_build_object('slug', m.slug, 'name', m.name) END AS manufacturer,
          COALESCE((SELECT array_agg(cause ORDER BY position) FROM dtc_causes WHERE dtc_id = d.id), '{}') AS causes,
@@ -73,7 +73,9 @@ app.use((error, _req, res, _next) => {
 await migrate();
 if (process.env.AUTO_SEED !== 'false') {
   const { rows: [{ count }] } = await pool.query('SELECT count(*)::int AS count FROM dtc_codes');
-  if (count === 0) console.log(`Leere Datenbank: ${await seed()} Basiscodes importiert.`);
+  if (count === 0) {
+    for (const file of await seedFiles()) console.log(`Leere Datenbank: ${await seed(file)} Codes aus ${file} importiert.`);
+  }
 }
 
 const server = app.listen(PORT, () => console.log(`OBD2 Klartext läuft auf Port ${PORT}`));

@@ -6,3 +6,5 @@ dist/data
 .env.*
 *.md
 .openai
+db/source
+tools

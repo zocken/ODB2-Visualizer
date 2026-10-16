@@ -51,6 +51,23 @@ Seed-Dateien haben das Format von `db/seed/generic-codes.json`. Herstellerspezif
 DATABASE_URL=postgres://… npm run seed -- db/seed/<datei>.json
 ```
 
+## Importierte Codes (Wal33D/dtc-database)
+
+Neben den 32 redaktionell geschriebenen Basiscodes enthält die Datenbank importierte Codes aus [Wal33D/dtc-database](https://github.com/Wal33D/dtc-database) (MIT, Quellstand `04c43d7`, Rohdaten und Lizenz in `db/source/wal33d/`):
+
+- `db/seed/sae-generic-wal33d.json` – 2000 herstellerunabhängige Codes (P0, P2, U0, C0, B0), gleichmäßig über die Codebereiche verteilt; nur Codes, deren Titel vollständig übersetzt werden konnte
+- `db/seed/manufacturer-wal33d.json` – 6.770 herstellerspezifische Codes für 32 Marken; Titel deutsch, wo das Glossar vollständig greift, sonst englisch (`other_codes.txt` ohne Markenzuordnung ist nicht enthalten)
+
+Titel werden mit `tools/glossary.js` übersetzt, der englische Originaltitel steht in `title_en`. Erklärung, Ursachen, Dringlichkeit und Bauteilzuordnung erzeugt `tools/import-wal33d.js` aus Vorlagen je Codefamilie. Diese Texte sind **nicht redaktionell geprüft**; die App weist in den technischen Details darauf hin.
+
+Neu erzeugen und importieren:
+
+```text
+node tools/import-wal33d.js 2000
+docker compose up --build -d
+docker compose exec app node server/seed.js
+```
+
 ## Betrieb ohne Backend
 
 Ist keine API erreichbar, lädt das Frontend `data/generic-codes.json`. Der Pages-Workflow erzeugt diese Datei mit `node server/build-static.js`. Herstellerspezifische Codes sind nur mit Datenbank verfügbar.
