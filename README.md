@@ -34,6 +34,7 @@ Ein Code kann einmal herstellerunabhängig und zusätzlich pro Hersteller existi
 - `GET /api/codes?q=<text>&limit=12[&manufacturer=<slug>]` – Suche über Code, Titel und System
 - `GET /api/codes/<CODE>[?manufacturer=<slug>]` – Detail; `404` mit `alternatives`, wenn unbekannt
 - `GET /api/manufacturers` – hinterlegte Hersteller
+- `GET /api/updates` – die letzten Läufe der automatischen Code-Ergänzung
 
 ## Lokaler Start mit Docker
 
@@ -58,7 +59,7 @@ Neben den 32 redaktionell geschriebenen Basiscodes enthält die Datenbank import
 - `db/seed/sae-generic-wal33d.json` – 2000 herstellerunabhängige Codes (P0, P2, U0, C0, B0), gleichmäßig über die Codebereiche verteilt; nur Codes, deren Titel vollständig übersetzt werden konnte
 - `db/seed/manufacturer-wal33d.json` – 6.770 herstellerspezifische Codes für 32 Marken; Titel deutsch, wo das Glossar vollständig greift, sonst englisch (`other_codes.txt` ohne Markenzuordnung ist nicht enthalten)
 
-Titel werden mit `tools/glossary.js` übersetzt, der englische Originaltitel steht in `title_en`. Erklärung, Ursachen, Dringlichkeit und Bauteilzuordnung erzeugt `tools/import-wal33d.js` aus Vorlagen je Codefamilie. Diese Texte sind **nicht redaktionell geprüft**; die App weist in den technischen Details darauf hin.
+Titel werden mit `server/glossary.js` übersetzt, der englische Originaltitel steht in `title_en`. Erklärung, Ursachen, Dringlichkeit und Bauteilzuordnung erzeugt `server/wal33d.js` aus Vorlagen je Codefamilie. Diese Texte sind **nicht redaktionell geprüft**; die App weist in den technischen Details darauf hin.
 
 Neu erzeugen und importieren:
 
@@ -67,6 +68,16 @@ node tools/import-wal33d.js 2000
 docker compose up --build -d
 docker compose exec app node server/seed.js
 ```
+
+## Wöchentliche Code-Ergänzung
+
+`server/update-codes.js` lädt den aktuellen Stand von Wal33D/dtc-database, wandelt ihn mit `server/wal33d.js` und `server/glossary.js` um und legt **nur fehlende** Pkw-Codes an (generisch und herstellerspezifisch). Vorhandene und redaktionelle Einträge werden nie überschrieben.
+
+- Der Server prüft stündlich, ob der letzte erfolgreiche Lauf mindestens `UPDATE_INTERVAL_DAYS` (Standard 7) Tage zurückliegt. Nach Neustart oder Ruhezustand (z. B. Render Free) wird ein fälliger Lauf nachgeholt; nach einem Fehler frühestens nach 6 Stunden erneut.
+- Nutzfahrzeug-spezifische Codes (Nebenabtrieb/PTO, Druckluftbremse, Retarder, Tachograf …) und Einträge ohne Markenzuordnung werden übersprungen.
+- Titel sind deutsch, wo das Glossar vollständig greift, sonst englisch.
+- Ein Advisory Lock verhindert parallele Läufe mehrerer Instanzen; jeder Lauf steht in der Tabelle `code_updates`.
+- Protokoll: `GET /api/updates` · manuell auslösen: `docker compose exec app npm run update-codes` · abschalten: `AUTO_UPDATE=false`
 
 ## Betrieb ohne Backend
 

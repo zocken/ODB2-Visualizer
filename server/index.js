@@ -2,6 +2,7 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { pool, migrate } from './db.js';
 import { seed, seedFiles } from './seed.js';
+import { recentUpdates, scheduleUpdates } from './update-codes.js';
 
 const PORT = Number(process.env.PORT || 8080);
 const CODE_PATTERN = /^[PBCU][0-9A-F]{4}$/;
@@ -25,6 +26,11 @@ app.disable('x-powered-by');
 app.get('/api/health', async (_req, res) => {
   const { rows: [{ count }] } = await pool.query('SELECT count(*)::int AS count FROM dtc_codes WHERE manufacturer_id IS NULL');
   res.json({ ok: true, genericCodes: count });
+});
+
+// Protokoll der automatischen Code-Ergänzung (nur lesend).
+app.get('/api/updates', async (_req, res) => {
+  res.json(await recentUpdates());
 });
 
 app.get('/api/manufacturers', async (_req, res) => {
@@ -79,6 +85,9 @@ if (process.env.AUTO_SEED !== 'false') {
 }
 
 const server = app.listen(PORT, () => console.log(`OBD2 Klartext läuft auf Port ${PORT}`));
+if (process.env.AUTO_UPDATE !== 'false') {
+  scheduleUpdates({ intervalDays: Number(process.env.UPDATE_INTERVAL_DAYS || 7) });
+}
 for (const signal of ['SIGTERM', 'SIGINT']) {
   process.on(signal, () => server.close(() => pool.end().then(() => process.exit(0))));
 }

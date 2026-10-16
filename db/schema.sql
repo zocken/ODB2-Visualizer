@@ -43,6 +43,18 @@ CREATE TABLE IF NOT EXISTS dtc_causes (
   PRIMARY KEY (dtc_id, position)
 );
 
+-- Protokoll der automatischen Code-Ergänzung (server/update-codes.js).
+CREATE TABLE IF NOT EXISTS code_updates (
+  id          serial PRIMARY KEY,
+  status      text NOT NULL CHECK (status IN ('läuft', 'erfolgreich', 'fehlgeschlagen')),
+  started_at  timestamptz NOT NULL DEFAULT now(),
+  finished_at timestamptz,
+  source_sha  text,
+  checked     integer,
+  inserted    integer,
+  message     text
+);
+
 -- active = betroffenes Bauteil, context = zugehöriges System.
 CREATE TABLE IF NOT EXISTS dtc_components (
   dtc_id       integer NOT NULL REFERENCES dtc_codes(id) ON DELETE CASCADE,
