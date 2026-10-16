@@ -43,20 +43,20 @@ app.get('/api/manufacturers', async (_req, res) => {
   res.json(rows);
 });
 
-// Vorschlagsliste: Suche über Code, Titel und System. Mit Hersteller genau ein Treffer je Code,
+// Vorschlagsliste: Codes, die mit der Eingabe beginnen. Mit Hersteller genau ein Treffer je Code,
 // die Herstellervariante hat Vorrang vor dem Standardcode.
 app.get('/api/codes', async (req, res) => {
-  const q = String(req.query.q || '').trim().slice(0, 60);
+  const q = String(req.query.q || '').trim().toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 5);
   const limit = Math.min(Math.max(Number(req.query.limit) || 12, 1), 100);
   const manufacturer = req.query.manufacturer ? String(req.query.manufacturer) : null;
   const { rows } = await pool.query(
     `SELECT DISTINCT ON (d.code) d.code, d.title, d.system, m.slug AS manufacturer, m.name AS "manufacturerName"
      FROM dtc_codes d LEFT JOIN manufacturers m ON m.id = d.manufacturer_id
      WHERE (d.manufacturer_id IS NULL OR m.slug = $3) AND d.source_removed_at IS NULL
-       AND ($1 = '' OR d.code ILIKE '%' || $1 || '%' OR d.title ILIKE '%' || $1 || '%' OR d.system ILIKE '%' || $1 || '%')
+       AND d.code LIKE $1 || '%'
      ORDER BY d.code, d.manufacturer_id IS NULL
      LIMIT $2`,
-    [q.replace(/[%_\\]/g, '\\$&'), limit, manufacturer],
+    [q, limit, manufacturer],
   );
   res.json(rows);
 });

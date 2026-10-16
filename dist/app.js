@@ -35,8 +35,8 @@ const staticSource={
   },
   async manufacturers(){return []},
   async search(term){
-    term=term.trim().toLowerCase();
-    return [...this.codes.values()].filter(c=>!term||c.code.toLowerCase().includes(term)||c.title.toLowerCase().includes(term)||c.system.toLowerCase().includes(term)).slice(0,12);
+    term=term.trim().toUpperCase();
+    return [...this.codes.values()].filter(c=>c.code.startsWith(term)).sort((a,b)=>a.code.localeCompare(b.code)).slice(0,12);
   },
   async get(code){
     return this.codes.get(code)||{missing:true,alternatives:[...this.codes.keys()].filter(candidate=>candidate[0]===code[0]).slice(0,4)};
@@ -92,6 +92,16 @@ function updateVehicle(c){
 function closeSuggestions(){
   suggestions.hidden=true;
   input.setAttribute('aria-expanded','false');
+  highlightSuggestion(-1);
+}
+
+// Keyboard selection inside the listbox (focus stays in the input, aria-activedescendant points to the option).
+let highlighted=-1;
+function highlightSuggestion(index){
+  const options=[...suggestionList.querySelectorAll('[role=option]')];
+  highlighted=options.length?Math.max(-1,Math.min(index,options.length-1)):-1;
+  options.forEach((option,i)=>{const on=i===highlighted;option.classList.toggle('is-highlighted',on);option.setAttribute('aria-selected',String(on));if(on)option.scrollIntoView({block:'nearest'})});
+  if(highlighted>=0)input.setAttribute('aria-activedescendant',options[highlighted].id);else input.removeAttribute('aria-activedescendant');
 }
 
 let suggestionRequest=0;
@@ -107,9 +117,10 @@ async function renderSuggestions(filter=''){
     empty.textContent='Kein passender hinterlegter Code.';
     suggestionList.append(empty);
   }else{
-    list.forEach(c=>{
+    list.forEach((c,index)=>{
       const button=document.createElement('button');
       button.type='button'; button.className='suggestion'; button.dataset.code=c.code; button.setAttribute('role','option');
+      button.id=`suggestion-${index}`; button.tabIndex=-1; button.setAttribute('aria-selected','false');
       const code=document.createElement('b'); code.textContent=c.code;
       const copy=document.createElement('span'); copy.textContent=c.title;
       const area=document.createElement('small'); area.textContent=c.system;
@@ -117,6 +128,7 @@ async function renderSuggestions(filter=''){
       button.append(code,copy,area); suggestionList.append(button);
     });
   }
+  highlighted=-1; input.removeAttribute('aria-activedescendant');
   suggestions.hidden=false;
   input.setAttribute('aria-expanded','true');
 }
@@ -228,7 +240,22 @@ input.addEventListener('input',()=>{
   renderSuggestions(input.value);
 });
 input.addEventListener('focus',()=>renderSuggestions(input.value));
-input.addEventListener('keydown',event=>{if(event.key==='Escape')closeSuggestions()});
+input.addEventListener('keydown',event=>{
+  const open=!suggestions.hidden;
+  if(event.key==='Escape'){closeSuggestions();return}
+  if(event.key==='ArrowDown'||event.key==='ArrowUp'){
+    event.preventDefault();
+    if(!open){renderSuggestions(input.value);return}
+    highlightSuggestion(highlighted+(event.key==='ArrowDown'?1:-1));
+    return;
+  }
+  // Enter on a highlighted option takes it over and shows the result right away.
+  if(event.key==='Enter'&&open&&highlighted>=0){
+    event.preventDefault();
+    const code=suggestionList.querySelectorAll('[role=option]')[highlighted].dataset.code;
+    input.value=code; closeSuggestions(); showCode(code);
+  }
+});
 form.addEventListener('submit',event=>{event.preventDefault();runSearch()});
 suggestions.addEventListener('click',event=>{
   const button=event.target.closest('[data-code]'); if(!button)return;
