@@ -1,0 +1,34 @@
+# Deployment mit Coolify (Build Pack "Docker Compose").
+# - Keine Host-Ports: Coolifys Proxy routet die Domain auf Port 8080 des app-Containers,
+#   dadurch keine Konflikte mit anderen Projekten auf demselben Server.
+# - SERVICE_USER_* / SERVICE_PASSWORD_* erzeugt Coolify beim ersten Deployment selbst.
+# - Domain in Coolify beim Service "app" eintragen (z. B. https://obd2.example.de:8080 → Port 8080).
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: obd2
+      POSTGRES_USER: ${SERVICE_USER_POSTGRES}
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+    volumes:
+      - obd2-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d obd2"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgres://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@db:5432/obd2
+      AUTO_UPDATE: ${AUTO_UPDATE:-true}
+      UPDATE_INTERVAL_DAYS: ${UPDATE_INTERVAL_DAYS:-7}
+    expose:
+      - "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  obd2-db-data:
