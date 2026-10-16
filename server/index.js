@@ -16,7 +16,7 @@ const DETAIL_SQL = `
          COALESCE((SELECT array_agg(component_id) FROM dtc_components WHERE dtc_id = d.id AND role = 'context'), '{}') AS context
   FROM dtc_codes d
   LEFT JOIN manufacturers m ON m.id = d.manufacturer_id
-  WHERE d.code = $1 AND (d.manufacturer_id IS NULL OR m.slug = $2)
+  WHERE d.code = $1 AND (d.manufacturer_id IS NULL OR m.slug = $2) AND d.source_removed_at IS NULL
   ORDER BY d.manufacturer_id IS NULL  -- Herstellervariante vor generischem Eintrag
   LIMIT 1`;
 
@@ -24,7 +24,7 @@ const app = express();
 app.disable('x-powered-by');
 
 app.get('/api/health', async (_req, res) => {
-  const { rows: [{ count }] } = await pool.query('SELECT count(*)::int AS count FROM dtc_codes WHERE manufacturer_id IS NULL');
+  const { rows: [{ count }] } = await pool.query('SELECT count(*)::int AS count FROM dtc_codes WHERE manufacturer_id IS NULL AND source_removed_at IS NULL');
   res.json({ ok: true, genericCodes: count });
 });
 
@@ -46,7 +46,7 @@ app.get('/api/codes', async (req, res) => {
   const { rows } = await pool.query(
     `SELECT d.code, d.title, d.system, m.slug AS manufacturer
      FROM dtc_codes d LEFT JOIN manufacturers m ON m.id = d.manufacturer_id
-     WHERE (d.manufacturer_id IS NULL OR m.slug = $3)
+     WHERE (d.manufacturer_id IS NULL OR m.slug = $3) AND d.source_removed_at IS NULL
        AND ($1 = '' OR d.code ILIKE '%' || $1 || '%' OR d.title ILIKE '%' || $1 || '%' OR d.system ILIKE '%' || $1 || '%')
      ORDER BY d.code, d.manufacturer_id NULLS LAST
      LIMIT $2`,
@@ -62,7 +62,7 @@ app.get('/api/codes/:code', async (req, res) => {
   const { rows } = await pool.query(DETAIL_SQL, [code, manufacturer]);
   if (rows.length) return res.json(rows[0]);
   const { rows: alternatives } = await pool.query(
-    `SELECT code FROM dtc_codes WHERE manufacturer_id IS NULL AND left(code, 1) = $1 ORDER BY code LIMIT 4`,
+    `SELECT code FROM dtc_codes WHERE manufacturer_id IS NULL AND source_removed_at IS NULL AND left(code, 1) = $1 ORDER BY code LIMIT 4`,
     [code[0]],
   );
   res.status(404).json({ error: 'Code nicht in der Datenbasis', alternatives: alternatives.map((r) => r.code) });

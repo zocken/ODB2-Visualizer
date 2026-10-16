@@ -34,7 +34,7 @@ Ein Code kann einmal herstellerunabhängig und zusätzlich pro Hersteller existi
 - `GET /api/codes?q=<text>&limit=12[&manufacturer=<slug>]` – Suche über Code, Titel und System
 - `GET /api/codes/<CODE>[?manufacturer=<slug>]` – Detail; `404` mit `alternatives`, wenn unbekannt
 - `GET /api/manufacturers` – hinterlegte Hersteller
-- `GET /api/updates` – die letzten Läufe der automatischen Code-Ergänzung
+- `GET /api/updates` – die letzten Läufe des automatischen Code-Abgleichs (angelegt, aktualisiert, entfernt)
 
 ## Lokaler Start mit Docker
 
@@ -69,9 +69,20 @@ docker compose up --build -d
 docker compose exec app node server/seed.js
 ```
 
-## Wöchentliche Code-Ergänzung
+## Wöchentlicher Code-Abgleich
 
-`server/update-codes.js` lädt den aktuellen Stand von Wal33D/dtc-database, wandelt ihn mit `server/wal33d.js` und `server/glossary.js` um und legt **nur fehlende** Pkw-Codes an (generisch und herstellerspezifisch). Vorhandene und redaktionelle Einträge werden nie überschrieben.
+`server/update-codes.js` lädt den aktuellen Stand von Wal33D/dtc-database, wandelt ihn mit `server/wal33d.js` und `server/glossary.js` um und gleicht die Pkw-Codes (generisch und herstellerspezifisch) ab:
+
+| Fall | Verhalten |
+|---|---|
+| Code fehlt in der Datenbank | wird angelegt |
+| Importierter Code hat sich geändert | wird samt Ursachen und Bauteilen aktualisiert (Erkennung über `content_hash`; greift auch nach Änderungen an Glossar oder Zuordnungsregeln) |
+| Importierter Code fehlt in der Quelle | wird mit `source_removed_at` markiert und in der API ausgeblendet, nicht gelöscht; taucht er wieder auf, wird er wieder sichtbar |
+| Eintrag mit anderer Quelle (z. B. `redaktionell`) | wird nie verändert |
+
+**Handkorrekturen schützen:** Wer einen importierten Code von Hand verbessert, setzt `source = 'redaktionell'` – dann überschreibt der Abgleich ihn nicht mehr.
+
+**Sicherung:** Würde ein Lauf mehr als 10 % der importierten Codes als entfernt markieren (z. B. bei unvollständiger Quelle), wird die Markierung zurückgerollt und der Lauf als fehlgeschlagen protokolliert.
 
 - Der Server prüft stündlich, ob der letzte erfolgreiche Lauf mindestens `UPDATE_INTERVAL_DAYS` (Standard 7) Tage zurückliegt. Nach Neustart oder Ruhezustand (z. B. Render Free) wird ein fälliger Lauf nachgeholt; nach einem Fehler frühestens nach 6 Stunden erneut.
 - Nutzfahrzeug-spezifische Codes (Nebenabtrieb/PTO, Druckluftbremse, Retarder, Tachograf …) und Einträge ohne Markenzuordnung werden übersprungen.

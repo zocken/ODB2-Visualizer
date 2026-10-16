@@ -1,10 +1,14 @@
-// Automatische Ergänzung fehlender Pkw-Codes aus github.com/Wal33D/dtc-database (MIT).
-// Lädt den aktuellen Stand der Quelle, wandelt ihn mit server/wal33d.js um und legt nur
-// Codes an, die noch nicht in der Datenbank stehen. Vorhandene Einträge bleiben unverändert.
+// Automatischer Abgleich der Pkw-Codes mit github.com/Wal33D/dtc-database (MIT).
+// Lädt den aktuellen Stand der Quelle, wandelt ihn mit server/wal33d.js um und
+//   – legt fehlende Codes an,
+//   – aktualisiert importierte Codes, deren erzeugter Inhalt sich geändert hat (content_hash),
+//   – markiert importierte Codes, die nicht mehr in der Quelle stehen (source_removed_at; ausgeblendet, nicht gelöscht).
+// Einträge mit anderer Quelle (z. B. "redaktionell") werden nie verändert.
 //
 // Manuell: npm run update-codes
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { pool, migrate } from './db.js';
+import { pool, migrate, withTransaction } from './db.js';
 import { importData } from './seed.js';
 import { BRANDS, GENERIC_FILES, REPO, SOURCE, entry, isPassengerCar, parseCodes } from './wal33d.js';
 
@@ -16,6 +20,11 @@ const MAX_FILE_BYTES = 2_000_000;
 const MIN_EXPECTED_CODES = 1000; // Schutz gegen unvollständige oder leere Quelle
 // Generische Bereiche nach SAE J2012 (P3000–P33FF sind herstellerspezifisch).
 const GENERIC_RANGE = /^(P0|P2|P3[4-9A-F]|[BCU][03])/;
+// Nur Einträge dieser Quelle darf der Abgleich ändern oder als entfernt markieren.
+const UPDATABLE = `${REPO}%`;
+
+// Prüfwert über den erzeugten Inhalt ohne Quellangabe, damit ein neuer Quellstand allein keine Änderung auslöst.
+const contentHash = ({ source, ...content }) => createHash('sha256').update(JSON.stringify(content)).digest('hex');
 
 async function fetchText(url) {
   const response = await fetch(url, {
@@ -51,11 +60,34 @@ async function loadSource() {
       if (generic && !GENERIC_RANGE.test(code)) continue;
       if (!isPassengerCar(en)) { skipped++; continue; }
       const { translated, ...e } = generic ? entry(code, en) : entry(code, en, brand, slug);
-      data.codes.push({ ...e, source });
+      data.codes.push({ ...e, source, contentHash: contentHash(e) });
     }
   }
   if (data.codes.length < MIN_EXPECTED_CODES) throw new Error(`Quelle unvollständig (${data.codes.length} Codes)`);
   return { sha, data, skipped };
+}
+
+// Markiert importierte Codes, die im aktuellen Quellstand fehlen. Rückgabe: Anzahl neu markierter Codes.
+// Sicherung: Betrifft ein Lauf mehr als MAX_REMOVED_SHARE der importierten Codes, wird zurückgerollt.
+const MAX_REMOVED_SHARE = 0.1;
+async function markRemoved(codes) {
+  return withTransaction(async (db) => {
+    const { rowCount } = await db.query(
+      `UPDATE dtc_codes d SET source_removed_at = now()
+       WHERE d.source LIKE $3 AND d.source_removed_at IS NULL
+         AND NOT EXISTS (
+           SELECT 1 FROM unnest($1::text[], $2::text[]) AS s(code, slug)
+           LEFT JOIN manufacturers m ON m.slug = s.slug
+           WHERE s.code = d.code AND m.id IS NOT DISTINCT FROM d.manufacturer_id
+         )`,
+      [codes.map((c) => c.code), codes.map((c) => c.manufacturer), UPDATABLE],
+    );
+    const { rows: [{ total }] } = await db.query('SELECT count(*)::int AS total FROM dtc_codes WHERE source LIKE $1', [UPDATABLE]);
+    if (rowCount > total * MAX_REMOVED_SHARE) {
+      throw new Error(`Entfernt-Markierung abgebrochen: ${rowCount} von ${total} Codes fehlen in der Quelle`);
+    }
+    return rowCount;
+  });
 }
 
 export async function runUpdate() {
@@ -66,13 +98,15 @@ export async function runUpdate() {
     const { rows: [run] } = await client.query(`INSERT INTO code_updates (status) VALUES ('läuft') RETURNING id`);
     try {
       const { sha, data, skipped } = await loadSource();
-      const inserted = await importData(data, { onlyMissing: true });
+      const { inserted, updated } = await importData(data, { mode: 'sync', updatable: UPDATABLE });
+      const removed = await markRemoved(data.codes);
       await client.query(
-        `UPDATE code_updates SET status = 'erfolgreich', finished_at = now(), source_sha = $2, checked = $3, inserted = $4, message = $5
+        `UPDATE code_updates SET status = 'erfolgreich', finished_at = now(), source_sha = $2, checked = $3,
+           inserted = $4, updated = $5, removed = $6, message = $7
          WHERE id = $1`,
-        [run.id, sha, data.codes.length, inserted, `${skipped} Nutzfahrzeug-Codes übersprungen`],
+        [run.id, sha, data.codes.length, inserted, updated, removed, `${skipped} Nutzfahrzeug-Codes übersprungen`],
       );
-      return { status: 'erfolgreich', sha, checked: data.codes.length, inserted, skipped };
+      return { status: 'erfolgreich', sha, checked: data.codes.length, inserted, updated, removed, skipped };
     } catch (error) {
       await client.query(
         `UPDATE code_updates SET status = 'fehlgeschlagen', finished_at = now(), message = $2 WHERE id = $1`,
@@ -114,7 +148,7 @@ export function scheduleUpdates({ intervalDays = 7, retryHours = 6 } = {}) {
 export async function recentUpdates(limit = 10) {
   const { rows } = await pool.query(
     `SELECT id, status, started_at AS "startedAt", finished_at AS "finishedAt", source_sha AS "sourceSha",
-            checked, inserted, message
+            checked, inserted, updated, removed, message
      FROM code_updates ORDER BY id DESC LIMIT $1`,
     [limit],
   );

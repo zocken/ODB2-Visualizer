@@ -35,6 +35,10 @@ CREATE INDEX IF NOT EXISTS dtc_codes_code_idx ON dtc_codes (code);
 
 -- Originalbezeichnung importierter Codes (englisch), Titel ist die deutsche Fassung.
 ALTER TABLE dtc_codes ADD COLUMN IF NOT EXISTS title_en text;
+-- Prüfwert des automatisch erzeugten Inhalts: Abweichung = Code wurde in der Quelle geändert.
+ALTER TABLE dtc_codes ADD COLUMN IF NOT EXISTS content_hash text;
+-- Gesetzt, wenn ein importierter Code nicht mehr in der Quelle steht (wird ausgeblendet, nicht gelöscht).
+ALTER TABLE dtc_codes ADD COLUMN IF NOT EXISTS source_removed_at timestamptz;
 
 CREATE TABLE IF NOT EXISTS dtc_causes (
   dtc_id   integer NOT NULL REFERENCES dtc_codes(id) ON DELETE CASCADE,
@@ -54,6 +58,8 @@ CREATE TABLE IF NOT EXISTS code_updates (
   inserted    integer,
   message     text
 );
+ALTER TABLE code_updates ADD COLUMN IF NOT EXISTS updated integer;
+ALTER TABLE code_updates ADD COLUMN IF NOT EXISTS removed integer;
 
 -- active = betroffenes Bauteil, context = zugehöriges System.
 CREATE TABLE IF NOT EXISTS dtc_components (

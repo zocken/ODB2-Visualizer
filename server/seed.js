@@ -14,30 +14,42 @@ export async function seedFiles() {
 }
 
 export async function seed(file = DEFAULT_SEED) {
-  return importData(JSON.parse(await readFile(file, 'utf8')));
+  const { inserted, updated } = await importData(JSON.parse(await readFile(file, 'utf8')));
+  return inserted + updated;
 }
 
-// Schreibt Daten im Seed-Format. onlyMissing: vorhandene Codes bleiben unverändert,
-// es werden nur neue (Code, Hersteller)-Kombinationen angelegt. Rückgabe: Anzahl geschriebener Codes.
-export async function importData(data, { onlyMissing = false } = {}) {
+const UPDATE_COLUMNS = `
+  title = EXCLUDED.title, title_en = EXCLUDED.title_en, system = EXCLUDED.system, urgency = EXCLUDED.urgency,
+  explanation = EXCLUDED.explanation, location = EXCLUDED.location, vehicle_labels = EXCLUDED.vehicle_labels,
+  source = EXCLUDED.source, content_hash = EXCLUDED.content_hash, source_removed_at = NULL, updated_at = now()`;
+
+// Schreibt Daten im Seed-Format. Modi:
+//   upsert – Seed-Dateien: alles anlegen oder überschreiben
+//   sync   – automatische Aktualisierung: neue Codes anlegen; vorhandene nur ändern, wenn ihre
+//            Quelle dem Muster `updatable` entspricht (LIKE) und sich der Inhalt (content_hash)
+//            geändert hat oder der Code zuvor als entfernt markiert war. Andere Einträge bleiben unberührt.
+export async function importData(data, { mode = 'upsert', updatable = null } = {}) {
+  const sync = mode === 'sync';
+  if (sync && !updatable) throw new Error('sync benötigt ein Quellmuster (updatable)');
   return withTransaction(async (db) => {
     for (const c of data.components || []) {
       await db.query(
         `INSERT INTO vehicle_components (id, label) VALUES ($1, $2)
-         ON CONFLICT (id) DO ${onlyMissing ? 'NOTHING' : 'UPDATE SET label = EXCLUDED.label'}`,
+         ON CONFLICT (id) DO ${sync ? 'NOTHING' : 'UPDATE SET label = EXCLUDED.label'}`,
         [c.id, c.label],
       );
     }
     for (const m of data.manufacturers || []) {
       await db.query(
         `INSERT INTO manufacturers (slug, name) VALUES ($1, $2)
-         ON CONFLICT (slug) DO ${onlyMissing ? 'NOTHING' : 'UPDATE SET name = EXCLUDED.name'}`,
+         ON CONFLICT (slug) DO ${sync ? 'NOTHING' : 'UPDATE SET name = EXCLUDED.name'}`,
         [m.slug, m.name],
       );
     }
     const { rows: manufacturerRows } = await db.query('SELECT id, slug FROM manufacturers');
     const manufacturerIds = new Map(manufacturerRows.map((m) => [m.slug, m.id]));
-    let written = 0;
+    let inserted = 0;
+    let updated = 0;
     for (const c of data.codes || []) {
       let manufacturerId = null;
       if (c.manufacturer) {
@@ -45,19 +57,19 @@ export async function importData(data, { onlyMissing = false } = {}) {
         if (!manufacturerId) throw new Error(`Unbekannter Hersteller "${c.manufacturer}" bei ${c.code}`);
       }
       const { rows } = await db.query(
-        `INSERT INTO dtc_codes (code, manufacturer_id, title, title_en, system, urgency, explanation, location, vehicle_labels, source)
-         VALUES ($1, $2, $3, $10, $4, $5, $6, $7, $8, $9)
-         ON CONFLICT (code, manufacturer_id) DO ${onlyMissing ? 'NOTHING' : `UPDATE SET
-           title = EXCLUDED.title, title_en = EXCLUDED.title_en, system = EXCLUDED.system, urgency = EXCLUDED.urgency,
-           explanation = EXCLUDED.explanation, location = EXCLUDED.location,
-           vehicle_labels = EXCLUDED.vehicle_labels, source = EXCLUDED.source, updated_at = now()`}
-         RETURNING id`,
+        `INSERT INTO dtc_codes (code, manufacturer_id, title, title_en, system, urgency, explanation, location, vehicle_labels, source, content_hash)
+         VALUES ($1, $2, $3, $10, $4, $5, $6, $7, $8, $9, $11)
+         ON CONFLICT (code, manufacturer_id) DO UPDATE SET ${UPDATE_COLUMNS}
+         ${sync ? `WHERE dtc_codes.source LIKE $12
+           AND (dtc_codes.content_hash IS DISTINCT FROM EXCLUDED.content_hash OR dtc_codes.source_removed_at IS NOT NULL)` : ''}
+         RETURNING id, (xmax = 0) AS inserted`,
         [c.code, manufacturerId, c.title, c.system, c.urgency, c.explanation, c.location,
-          c.vehicle?.labels || [], c.source || 'redaktionell', c.titleEn || null],
+          c.vehicle?.labels || [], c.source || 'redaktionell', c.titleEn || null, c.contentHash || null,
+          ...(sync ? [updatable] : [])],
       );
-      if (!rows.length) continue; // bereits vorhanden (nur bei onlyMissing)
+      if (!rows.length) continue; // unverändert oder geschützt (nur bei sync)
       const { id } = rows[0];
-      written++;
+      if (rows[0].inserted) inserted++; else updated++;
       await db.query('DELETE FROM dtc_causes WHERE dtc_id = $1', [id]);
       for (const [position, cause] of (c.causes || []).entries()) {
         await db.query('INSERT INTO dtc_causes (dtc_id, position, cause) VALUES ($1, $2, $3)', [id, position, cause]);
@@ -72,7 +84,7 @@ export async function importData(data, { onlyMissing = false } = {}) {
         }
       }
     }
-    return written;
+    return { inserted, updated };
   });
 }
 
