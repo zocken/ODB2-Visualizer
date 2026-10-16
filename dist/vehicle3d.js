@@ -1,17 +1,19 @@
-// Drehbare 3D-Fahrzeugansicht (Three.js). Die Lage der Bauteile in der Ebene stammt aus dem
-// 2D-Plan (SVG, data-component); Höhe und Form legt SPEC fest. So bleiben beide Ansichten deckungsgleich
-// und alle Code-Zuordnungen funktionieren ohne Änderung.
+// Drehbare 3D-Fahrzeugansicht (Three.js) mit austauschbaren Bauformen.
+// Die Grundform (Lage der Bauteile) stammt aus dem 2D-Plan (SVG, data-component); Höhe und Form legt SPEC fest.
+// Bauformen (vehicle3d-layouts.js) überschreiben Karosserie, Antriebsstrang und die Lage der Antriebsbauteile.
+// Alle Bauteil-IDs bleiben gleich, daher funktionieren die Code-Zuordnungen in jeder Bauform.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/RoomEnvironment.js';
-import { addVehicleDecor, COMPONENT_DETAILS } from './vehicle3d-details.js';
+import { addVehicleDecor, COMPONENT_DETAILS, profileShape } from './vehicle3d-details.js';
+import { LAYOUTS, PROFILES, FALLBACK, EXTRA_LABELS } from './vehicle3d-layouts.js';
 
 // SVG-Plan (viewBox 360×620, Front oben, Fahrerseite links) → Meter. +x = Fahrerseite, +z = Front.
 const SX = 0.01, SZ = 0.0078, CX = 180, CY = 313;
 const toX = (svgX) => (CX - svgX) * SX;
 const toZ = (svgY) => (CY - svgY) * SZ;
 
-// Höhe (Mitte, m), Bauhöhe und Form je Bauteil. Ohne Eintrag: flacher Kasten im Motorraum.
+// Höhe (Mitte, m), Bauhöhe und Form je Bauteil der Grundform. Ohne Eintrag: flacher Kasten im Motorraum.
 const SPEC = {
   'cooling': { y: 0.72, h: 0.42 },
   'charge-air-cooler': { y: 0.42, h: 0.16 },
@@ -66,11 +68,9 @@ const COLORS = { base: 0x6e8f9a, active: 0xffb62e, context: 0xc9963a, edge: 0x9f
 
 function svgPathPoints(pathEl, step = 6) {
   // Teilpfade (M …) getrennt abtasten, damit Sprünge nicht verbunden werden.
-  const d = pathEl.getAttribute('d');
-  const parts = d.split(/(?=M)/).filter((p) => p.trim());
-  const ns = 'http://www.w3.org/2000/svg';
+  const parts = pathEl.getAttribute('d').split(/(?=M)/).filter((p) => p.trim());
   return parts.map((part) => {
-    const p = document.createElementNS(ns, 'path');
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     p.setAttribute('d', part);
     pathEl.ownerSVGElement.appendChild(p);
     const length = p.getTotalLength();
@@ -82,33 +82,99 @@ function svgPathPoints(pathEl, step = 6) {
   });
 }
 
-function bodyGeometry() {
-  // Seitenprofil (z = Länge, y = Höhe), entlang der Breite extrudiert.
-  const s = new THREE.Shape();
-  const P = (z, y) => [-z, y];
-  s.moveTo(...P(-2.15, 0.32));
-  s.lineTo(...P(2.05, 0.32));
-  s.quadraticCurveTo(...P(2.25, 0.34), ...P(2.25, 0.55));
-  s.quadraticCurveTo(...P(2.24, 0.72), ...P(2.05, 0.78));
-  s.lineTo(...P(1.0, 0.95));
-  s.quadraticCurveTo(...P(0.62, 1.04), ...P(0.35, 1.36));
-  s.quadraticCurveTo(...P(-0.4, 1.47), ...P(-1.25, 1.4));
-  s.quadraticCurveTo(...P(-1.75, 1.26), ...P(-1.95, 1.02));
-  s.lineTo(...P(-2.2, 0.98));
-  s.quadraticCurveTo(...P(-2.28, 0.7), ...P(-2.2, 0.45));
-  s.quadraticCurveTo(...P(-2.18, 0.32), ...P(-2.15, 0.32));
+// Grundform aus dem SVG-Plan lesen: Bauteil-Definitionen in Metern.
+function readPlan(svg) {
+  const defs = new Map();
+  for (const g of svg.querySelectorAll('[data-component]')) {
+    const id = g.dataset.component;
+    const spec = SPEC[id] || { y: 0.62, h: 0.06 };
+    const box = g.getBBox();
+    const def = {
+      label: g.querySelector('title')?.textContent || id,
+      shape: spec.shape || 'box',
+      x: toX(box.x + box.width / 2), z: toZ(box.y + box.height / 2),
+      w: Math.max(box.width * SX, 0.03), d: Math.max(box.height * SZ, 0.03),
+      y: spec.y ?? 0.62, h: spec.h ?? 0.06, r: spec.r,
+    };
+    if (def.shape === 'tube') {
+      def.paths = svgPathPoints(g.querySelector('path')).map((pts) => pts.map((p) => [toX(p.x), spec.y, toZ(p.y)]));
+    } else if (def.shape === 'steering') {
+      const rack = g.querySelector('rect').getBBox();
+      const ring = g.querySelector('circle');
+      def.rack = { x: toX(rack.x + rack.width / 2), z: toZ(rack.y + rack.height / 2), w: rack.width * SX };
+      def.ring = { x: toX(+ring.getAttribute('cx')), z: toZ(+ring.getAttribute('cy')) };
+    } else if (def.shape === 'dots') {
+      def.points = [...g.querySelectorAll('circle')].map((c) => ({ x: toX(+c.getAttribute('cx')), z: toZ(+c.getAttribute('cy')) }));
+    } else if (def.shape === 'cylV' || def.shape === 'cylX' || def.shape === 'cylZ') {
+      def.r = Math.min(def.w, def.d) / 2;
+      def.len = def.shape === 'cylX' ? Math.max(def.w, 0.08) : Math.max(def.d, 0.08);
+    }
+    defs.set(id, def);
+  }
+  return defs;
+}
+
+// Geometrie zu einer Definition erzeugen. add(geometry, position, rotation, color)
+function buildShape(def, add) {
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  switch (def.shape) {
+    case 'none': return;
+    case 'tube':
+      for (const path of def.paths) {
+        const curve = new THREE.CatmullRomCurve3(path.map((p) => V(...p)), false, 'catmullrom', 0.05);
+        add(new THREE.TubeGeometry(curve, Math.max(10, path.length * 3), def.r ?? 0.02, 8, false), V(0, 0, 0), null, def.color);
+      }
+      return;
+    case 'steering': {
+      add(new THREE.BoxGeometry(def.rack.w, 0.05, 0.05), V(def.rack.x, 0.45, def.rack.z));
+      add(new THREE.TorusGeometry(0.17, 0.018, 10, 36), V(def.ring.x, 0.98, def.ring.z), [Math.PI * 0.3, 0, 0]);
+      add(new THREE.CylinderGeometry(0.018, 0.018, 0.7, 10), V(def.ring.x, 0.75, def.ring.z + 0.25), [Math.PI * 0.3, 0, 0]);
+      return;
+    }
+    case 'dots':
+      for (const p of def.points) add(new THREE.CylinderGeometry(0.018, 0.018, def.h, 10), V(p.x, def.y, p.z), null, def.color);
+      return;
+    case 'cylV':
+      add(new THREE.CylinderGeometry(def.r, def.r, def.h, 24), V(def.x, def.y, def.z), def.rotation, def.color);
+      return;
+    case 'cylX':
+      add(new THREE.CylinderGeometry(def.r, def.r, def.len ?? def.w, 24), V(def.x, def.y, def.z), def.rotation ?? [0, 0, Math.PI / 2], def.color);
+      return;
+    case 'cylZ':
+      add(new THREE.CylinderGeometry(def.r, def.r, def.len ?? def.d, 24), V(def.x, def.y, def.z), def.rotation ?? [Math.PI / 2, 0, 0], def.color);
+      return;
+    case 'engine':
+      add(new THREE.BoxGeometry(def.w, def.h, def.d), V(def.x, def.y, def.z));
+      add(new THREE.BoxGeometry(def.w * 0.86, 0.07, def.d * 0.6), V(def.x, def.y + def.h / 2 + 0.035, def.z));
+      return;
+    default:
+      add(new THREE.BoxGeometry(def.w, def.h, def.d), V(def.x, def.y, def.z), def.rotation, def.color);
+  }
+}
+
+function bodyGeometry(profile) {
   const width = 1.62;
-  const g = new THREE.ExtrudeGeometry(s, { depth: width, bevelEnabled: true, bevelThickness: 0.07, bevelSize: 0.07, bevelSegments: 5, curveSegments: 28 });
+  const g = new THREE.ExtrudeGeometry(profileShape(profile.outline), { depth: width, bevelEnabled: true, bevelThickness: 0.07, bevelSize: 0.07, bevelSegments: 5, curveSegments: 28 });
   g.rotateY(Math.PI / 2);
   g.translate(-width / 2, 0, 0);
   return g;
 }
 
 function makeMaterial() {
-  return new THREE.MeshStandardMaterial({ color: COLORS.base, roughness: 0.45, metalness: 0.3, transparent: true, opacity: 0.95, emissive: 0x000000 });
+  const m = new THREE.MeshStandardMaterial({ color: COLORS.base, roughness: 0.45, metalness: 0.3, transparent: true, opacity: 0.95, emissive: 0x000000 });
+  m.userData.own = true;
+  return m;
 }
 
-export function createVehicle3D({ container, svg, onHover }) {
+function disposeTree(object) {
+  object.traverse((o) => {
+    o.geometry?.dispose();
+    const materials = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
+    for (const m of materials) if (m.userData?.own) m.dispose();
+  });
+}
+
+export function createVehicle3D({ container, svg, onHover, layout = 'fwd4' }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -123,10 +189,8 @@ export function createVehicle3D({ container, svg, onHover }) {
     side: new THREE.Vector3(8.3, 1.2, 0),
     front: new THREE.Vector3(0, 1.45, 7.2),
   };
-  camera.position.copy(views['3d']);
-  // Bei schmalen (hohen) Bühnen wie auf dem Handy weiter wegrücken, damit das Auto ganz ins Bild passt.
-  // Abstand so wählen, dass die je Blickrichtung sichtbare Fahrzeugausdehnung (Radius) in den engeren Bildwinkel passt.
-  // [vertikaler, horizontaler] Radius des Fahrzeugs je Blickrichtung (m)
+  // Abstand so wählen, dass das Fahrzeug je Blickrichtung in den engeren Bildwinkel passt:
+  // [vertikaler, horizontaler] Radius in Metern.
   const VIEW_FIT = { '3d': [1.5, 2.4], top: [2.4, 1.1], side: [0.95, 2.45], front: [1.35, 1.45] };
   const fitDistance = (name) => {
     const v = THREE.MathUtils.degToRad(camera.fov) / 2;
@@ -135,7 +199,9 @@ export function createVehicle3D({ container, svg, onHover }) {
     return Math.max(rv / Math.sin(v), rh / Math.sin(h));
   };
   const viewPosition = (name) => views[name].clone().normalize().multiplyScalar(fitDistance(name));
+  camera.position.copy(views['3d']);
   let userMoved = false;
+  let cameraTween = null;
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.target.set(0, 0.6, -0.05);
@@ -164,98 +230,78 @@ export function createVehicle3D({ container, svg, onHover }) {
   key.shadow.radius = 4;
   key.shadow.bias = -0.0005;
   scene.add(key);
+  const rim = new THREE.DirectionalLight(0xb9f36b, 0.45);
+  rim.position.set(-5, 3, -6);
+  scene.add(rim);
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.ShadowMaterial({ opacity: 0.45 }));
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
   scene.add(ground);
-  const rim = new THREE.DirectionalLight(0xb9f36b, 0.45);
-  rim.position.set(-5, 3, -6);
-  scene.add(rim);
   const grid = new THREE.GridHelper(9, 36, 0x24443a, 0x13261f);
   grid.material.transparent = true;
   grid.material.opacity = 0.55;
   scene.add(grid);
-  const shadow = new THREE.Mesh(new THREE.CircleGeometry(2.6, 48), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.18 }));
-  shadow.rotation.x = -Math.PI / 2;
-  shadow.scale.set(0.55, 1.05, 1);
-  shadow.position.y = 0.002;
-  scene.add(shadow);
 
-  // Karosserie: gläsern mit Konturlinien, damit das Innenleben sichtbar bleibt
-  const body = bodyGeometry();
-  scene.add(new THREE.Mesh(body, new THREE.MeshPhysicalMaterial({ color: 0x9fc4b8, transparent: true, opacity: 0.11, roughness: 0.15, depthWrite: false, side: THREE.DoubleSide })));
-  scene.add(new THREE.LineSegments(new THREE.EdgesGeometry(body, 22), new THREE.LineBasicMaterial({ color: COLORS.edge, transparent: true, opacity: 0.7 })));
-
-  // Räder, Fahrwerk, Scheiben, Leuchten, Innenraum
-  addVehicleDecor(scene);
-
-  // Bauteile aus dem SVG-Plan aufbauen
+  // Fahrzeug (Karosserie, Dekor, Bauteile) – wird beim Bauformwechsel neu aufgebaut
+  const base = readPlan(svg);
+  const vehicle = new THREE.Group();
+  scene.add(vehicle);
   const parts = new Map(); // id → { group, materials[], label }
   const pickables = [];
-  for (const g of svg.querySelectorAll('[data-component]')) {
-    const id = g.dataset.component;
-    const spec = SPEC[id] || { y: 0.62, h: 0.06 };
-    const label = g.querySelector('title')?.textContent || id;
-    const group = new THREE.Group();
-    group.userData = { id, label };
-    const materials = [];
-    const add = (geometry, position, rotation, baseColor) => {
-      const material = makeMaterial();
-      if (baseColor !== undefined) { material.userData.baseColor = baseColor; material.color.setHex(baseColor); }
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.copy(position);
-      if (rotation) mesh.rotation.set(...rotation);
-      mesh.castShadow = true;
-      mesh.userData = { id, label };
-      group.add(mesh);
-      materials.push(material);
-      pickables.push(mesh);
-      return mesh;
-    };
-    const box = g.getBBox();
-    const cx = toX(box.x + box.width / 2), cz = toZ(box.y + box.height / 2);
-    const w = Math.max(box.width * SX, 0.03), d = Math.max(box.height * SZ, 0.03);
+  let currentLayout = null;
 
-    if (spec.shape === 'tube') {
-      const path = g.querySelector('path');
-      for (const pts of svgPathPoints(path)) {
-        const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(toX(p.x), spec.y, toZ(p.y))), false, 'catmullrom', 0.05);
-        add(new THREE.TubeGeometry(curve, Math.max(8, pts.length * 2), spec.r, 8, false), new THREE.Vector3());
-      }
-    } else if (spec.shape === 'steering') {
-      const rack = g.querySelector('rect').getBBox();
-      add(new THREE.BoxGeometry(rack.width * SX, 0.05, 0.05), new THREE.Vector3(toX(rack.x + rack.width / 2), 0.45, toZ(rack.y + rack.height / 2)));
-      const ring = g.querySelector('circle');
-      const rx = toX(+ring.getAttribute('cx')), rz = toZ(+ring.getAttribute('cy'));
-      add(new THREE.TorusGeometry(0.17, 0.018, 10, 36), new THREE.Vector3(rx, 0.98, rz), [Math.PI * 0.3, 0, 0]);
-      const column = new THREE.CylinderGeometry(0.018, 0.018, 0.7, 10);
-      add(column, new THREE.Vector3(rx, 0.75, rz + 0.25), [Math.PI * 0.3, 0, 0]);
-    } else if (spec.shape === 'dots') {
-      for (const c of g.querySelectorAll('circle')) {
-        add(new THREE.CylinderGeometry(0.018, 0.018, spec.h, 10), new THREE.Vector3(toX(+c.getAttribute('cx')), spec.y, toZ(+c.getAttribute('cy'))));
-      }
-    } else if (spec.shape === 'cylV') {
-      const r = Math.min(w, d) / 2;
-      add(new THREE.CylinderGeometry(r, r, spec.h, 24), new THREE.Vector3(cx, spec.y, cz));
-    } else if (spec.shape === 'cylX' || spec.shape === 'cylZ') {
-      const r = Math.min(w, d) / 2;
-      const len = spec.shape === 'cylX' ? Math.max(w, 0.08) : Math.max(d, 0.08);
-      const mesh = add(new THREE.CylinderGeometry(r, r, len, 24), new THREE.Vector3(cx, spec.y, cz));
-      if (spec.shape === 'cylX') mesh.rotation.z = Math.PI / 2; else mesh.rotation.x = Math.PI / 2;
-    } else if (spec.shape === 'engine') {
-      const block = add(new THREE.BoxGeometry(w, spec.h, d), new THREE.Vector3(cx, spec.y, cz));
-      block.geometry.translate(0, 0, 0);
-      add(new THREE.BoxGeometry(w * 0.86, 0.07, d * 0.6), new THREE.Vector3(cx, spec.y + spec.h / 2 + 0.035, cz)); // Zylinderkopfhaube
-    } else if (spec.shape !== 'none') {
-      add(new THREE.BoxGeometry(w, spec.h ?? 0.06, d), new THREE.Vector3(cx, spec.y ?? 0.62, cz));
+  function build(layoutId) {
+    const L = LAYOUTS[layoutId] || LAYOUTS.fwd4;
+    currentLayout = LAYOUTS[layoutId] ? layoutId : 'fwd4';
+    disposeTree(vehicle);
+    vehicle.clear();
+    parts.clear();
+    pickables.length = 0;
+
+    const profile = PROFILES[L.profile];
+    const body = bodyGeometry(profile);
+    const glass = new THREE.MeshPhysicalMaterial({ color: 0x9fc4b8, transparent: true, opacity: 0.11, roughness: 0.15, depthWrite: false, side: THREE.DoubleSide });
+    const edges = new THREE.LineBasicMaterial({ color: COLORS.edge, transparent: true, opacity: 0.7 });
+    glass.userData.own = edges.userData.own = true;
+    vehicle.add(new THREE.Mesh(body, glass), new THREE.LineSegments(new THREE.EdgesGeometry(body, 22), edges));
+    addVehicleDecor(vehicle, profile, L.drivetrain);
+
+    const defs = new Map(base);
+    for (const [id, override] of Object.entries(L.overrides || {})) {
+      const from = base.get(id) || {};
+      defs.set(id, { ...from, label: from.label || EXTRA_LABELS[id] || id, ...override });
     }
-    // Zusatzformen (z. B. Rippen, Schläuche, Leitungen), die mit dem Bauteil aufleuchten
-    COMPONENT_DETAILS[id]?.({
-      add: (geometry, position, rotation, baseColor) => add(geometry, new THREE.Vector3(...position), rotation, baseColor),
-      cx, cz, w, d, spec,
-    });
-    scene.add(group);
-    parts.set(id, { group, materials, label });
+
+    for (const [id, def] of defs) {
+      const group = new THREE.Group();
+      const materials = [];
+      const add = (geometry, position, rotation, color) => {
+        const material = makeMaterial();
+        if (color !== undefined) { material.userData.baseColor = color; material.color.setHex(color); }
+        const m = new THREE.Mesh(geometry, material);
+        m.position.copy(position);
+        if (rotation) m.rotation.set(...rotation);
+        m.castShadow = true;
+        m.userData = { id, label: def.label };
+        group.add(m);
+        materials.push(material);
+        pickables.push(m);
+        return m;
+      };
+      buildShape(def, add);
+      // Zusatzformen: eigene der Bauform oder die der Grundform (sofern passend)
+      if (L.details?.[id]) {
+        L.details[id]({ def, add: (shape, extra) => buildShape({ ...extra, shape }, add) });
+      } else if (!L.skipDetails?.includes(id) && COMPONENT_DETAILS[id]) {
+        COMPONENT_DETAILS[id]({
+          add: (geometry, position, rotation, color) => add(geometry, new THREE.Vector3(...position), rotation, color),
+          cx: def.x, cz: def.z, w: def.w, d: def.d, spec: { y: def.y, h: def.h },
+        });
+      }
+      vehicle.add(group);
+      parts.set(id, { group, materials, label: def.label });
+    }
+    highlight(state);
   }
 
   // Schwebende Beschriftungen für markierte Bauteile
@@ -264,9 +310,19 @@ export function createVehicle3D({ container, svg, onHover }) {
   container.appendChild(labelLayer);
   let labelEls = [];
 
-  let state = { active: [], context: [] };
-  function highlight({ active = [], context = [], labels = [] } = {}) {
-    state = { active, context };
+  // Bauteile, die die Bauform nicht hat, auf das übergeordnete Bauteil abbilden
+  const resolve = (id) => (parts.has(id) ? id : parts.has(FALLBACK[id]) ? FALLBACK[id] : null);
+
+  let state = { active: [], context: [], labels: [] };
+  let shown = { active: [], context: [] };
+  function highlight(next = {}) {
+    state = { active: next.active || [], context: next.context || [], labels: next.labels || [] };
+    // Sind alle Zylinder der Grundform (1–4) betroffen, gilt das für alle Zylinder der Bauform (z. B. 6 oder 8).
+    const allCylinders = ['cylinder-1', 'cylinder-2', 'cylinder-3', 'cylinder-4'].every((id) => state.active.includes(id));
+    const requested = allCylinders ? [...state.active, ...[...parts.keys()].filter((id) => id.startsWith('cylinder-'))] : state.active;
+    const active = [...new Set(requested.map(resolve).filter(Boolean))];
+    const context = [...new Set(state.context.map(resolve).filter((id) => id && !active.includes(id)))];
+    shown = { active, context };
     const any = active.length > 0 || context.length > 0;
     for (const [id, part] of parts) {
       const isActive = active.includes(id), isContext = !isActive && context.includes(id);
@@ -281,7 +337,7 @@ export function createVehicle3D({ container, svg, onHover }) {
     labelLayer.replaceChildren();
     // Bis zu zwei Bauteile einzeln beschriften, mehr als zwei mit einem gemeinsamen Label.
     const groups = active.length > 2
-      ? [{ ids: active, text: labels.find((l) => !context.some((id) => parts.get(id)?.label === l)) || `${active.length} Bauteile` }]
+      ? [{ ids: active, text: state.labels.find((l) => !context.some((id) => parts.get(id)?.label === l)) || `${active.length} Bauteile` }]
       : active.map((id) => ({ ids: [id], text: parts.get(id)?.label || id }));
     labelEls = groups.map(({ ids, text }) => {
       const el = document.createElement('span');
@@ -299,14 +355,14 @@ export function createVehicle3D({ container, svg, onHover }) {
     const rect = renderer.domElement.getBoundingClientRect();
     pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
     raycaster.setFromCamera(pointer, camera);
-    const hit = raycaster.intersectObjects(pickables, false).find((h) => h.object.material.opacity > 0.5) || raycaster.intersectObjects(pickables, false)[0];
+    const hits = raycaster.intersectObjects(pickables, false);
+    const hit = hits.find((h) => h.object.material.opacity > 0.5) || hits[0];
     renderer.domElement.style.cursor = hit ? 'pointer' : 'grab';
     onHover?.(hit ? hit.object.userData.label : null, event.clientX - rect.left, event.clientY - rect.top);
   });
   renderer.domElement.addEventListener('pointerleave', () => onHover?.(null));
 
   // Kamerafahrten zu Schnellansichten
-  let cameraTween = null;
   function setView(name) {
     if (!views[name]) return;
     userMoved = true; // gewählte Ansicht nicht durch spätere Größenänderungen überschreiben
@@ -345,14 +401,14 @@ export function createVehicle3D({ container, svg, onHover }) {
       needsRender = true;
     }
     const moving = controls.update() || controls.autoRotate;
-    const pulsing = state.active.length > 0 && !reducedMotion;
+    const pulsing = shown.active.length > 0 && !reducedMotion;
     if (pulsing) {
       const k = 0.65 + 0.45 * Math.sin(time / 260);
-      for (const id of state.active) for (const m of parts.get(id)?.materials || []) m.emissiveIntensity = k;
+      for (const id of shown.active) for (const m of parts.get(id)?.materials || []) m.emissiveIntensity = k;
     }
     if (!(moving || pulsing || needsRender)) return;
     renderer.render(scene, camera);
-    // Beschriftungen an die projizierte Bauteilmitte setzen
+    // Beschriftungen an die projizierte Bauteilmitte setzen, innerhalb der Bühne gehalten
     const { clientWidth: w, clientHeight: h } = container;
     for (const { ids, el } of labelEls) {
       centerBox.makeEmpty();
@@ -361,7 +417,6 @@ export function createVehicle3D({ container, svg, onHover }) {
       centerBox.getCenter(projected);
       projected.y = centerBox.max.y + 0.05;
       projected.project(camera);
-      // Mitte der Beschriftung innerhalb der Bühne halten
       const half = el.offsetWidth / 2 + 6;
       const px = Math.min(Math.max(((projected.x + 1) / 2) * w, half), w - half);
       el.style.transform = `translate(${px}px, ${((1 - projected.y) / 2) * h}px) translate(-50%, -130%)`;
@@ -369,6 +424,12 @@ export function createVehicle3D({ container, svg, onHover }) {
     needsRender = false;
   });
 
+  build(layout);
   resize();
-  return { highlight, setView, labels: Object.fromEntries([...parts].map(([id, p]) => [id, p.label])) };
+  return {
+    highlight,
+    setView,
+    setLayout(id) { if (id !== currentLayout) build(id); },
+    get layout() { return currentLayout; },
+  };
 }

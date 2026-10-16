@@ -68,16 +68,21 @@ function strut(x, z, height = 0.42) {
   return g;
 }
 
-// Seitenfenster als Fläche im Seitenprofil (z, y), außen an der Karosserie.
-function sideWindows(halfWidth) {
+// Fläche aus Profilbefehlen (z, y): M = Start, L = Linie, Q = Kurve.
+export function profileShape(commands) {
   const s = new THREE.Shape();
   const P = (z, y) => [-z, y];
-  s.moveTo(...P(0.92, 1.0));
-  s.quadraticCurveTo(...P(0.62, 1.12), ...P(0.4, 1.32));
-  s.quadraticCurveTo(...P(-0.35, 1.41), ...P(-1.18, 1.35));
-  s.quadraticCurveTo(...P(-1.6, 1.22), ...P(-1.78, 1.02));
-  s.lineTo(...P(0.92, 1.0));
-  const geo = new THREE.ShapeGeometry(s, 16);
+  for (const [op, ...v] of commands) {
+    if (op === 'M') s.moveTo(...P(v[0], v[1]));
+    else if (op === 'L') s.lineTo(...P(v[0], v[1]));
+    else if (op === 'Q') s.quadraticCurveTo(...P(v[0], v[1]), ...P(v[2], v[3]));
+  }
+  return s;
+}
+
+// Seitenfenster außen an der Karosserie.
+function sideWindows(commands, halfWidth) {
+  const geo = new THREE.ShapeGeometry(profileShape(commands), 16);
   const group = new THREE.Group();
   for (const sideX of [halfWidth, -halfWidth]) {
     const m = new THREE.Mesh(geo, mat.glass);
@@ -88,35 +93,63 @@ function sideWindows(halfWidth) {
   return group;
 }
 
-export function addVehicleDecor(scene) {
+// Antriebsstrang je Antriebsart: fwd (Front), rwd (Heck), awd (Allrad)
+function drivetrain(decor, type) {
+  const halfShafts = (z) => {
+    decor.add(mesh(new THREE.CylinderGeometry(0.022, 0.022, 1.5, 12), mat.chassis, [0, WHEEL_R, z], [0, 0, Math.PI / 2]));
+    for (const sx of [0.62, -0.62]) decor.add(mesh(new THREE.SphereGeometry(0.045, 16, 12), mat.dark, [sx, WHEEL_R, z]));
+  };
+  const differential = (z) => {
+    const diff = mesh(new THREE.SphereGeometry(0.13, 20, 16), mat.chassis, [0, WHEEL_R, z]);
+    diff.scale.set(1, 0.85, 1);
+    decor.add(diff);
+  };
+  const propShaft = (zFrom, zTo, y = 0.33) => decor.add(mesh(new THREE.CylinderGeometry(0.035, 0.035, zFrom - zTo, 14), mat.chassis, [0, y, (zFrom + zTo) / 2], [Math.PI / 2, 0, 0]));
+  if (type === 'fwd') {
+    halfShafts(FRONT_Z);
+    decor.add(mesh(new THREE.BoxGeometry(1.36, 0.08, 0.08), mat.chassis, [0, WHEEL_R, REAR_Z])); // Verbundlenkerachse
+    for (const sx of [0.6, -0.6]) decor.add(mesh(new THREE.BoxGeometry(0.06, 0.06, 0.5), mat.chassis, [sx, WHEEL_R, REAR_Z + 0.25]));
+  }
+  if (type === 'rwd' || type === 'awd') {
+    propShaft(0.1, REAR_Z + 0.12);
+    differential(REAR_Z);
+    halfShafts(REAR_Z);
+    for (const sx of [0.45, -0.45]) decor.add(mesh(new THREE.BoxGeometry(0.06, 0.06, 0.55), mat.chassis, [sx, 0.3, REAR_Z + 0.1])); // Hinterachsträger
+  }
+  if (type === 'awd') {
+    halfShafts(FRONT_Z);
+    differential(FRONT_Z);
+    decor.add(mesh(new THREE.BoxGeometry(0.22, 0.2, 0.22), mat.chassis, [0.05, 0.4, 0.0])); // Verteilergetriebe
+    propShaft(FRONT_Z - 0.1, 0.0, 0.36);
+  }
+}
+
+export function addVehicleDecor(scene, profile, drivetrainType = 'fwd') {
   const decor = new THREE.Group();
 
-  // Räder, Federbeine, Achsen, Hilfsrahmen
+  // Räder, Federbeine, Hilfsrahmen, Schweller, Antriebsstrang
   for (const [x, z] of [[TRACK, FRONT_Z], [-TRACK, FRONT_Z], [TRACK, REAR_Z], [-TRACK, REAR_Z]]) {
     decor.add(wheel(x, z));
     decor.add(strut(Math.sign(x) * 0.6, z));
   }
-  decor.add(mesh(new THREE.CylinderGeometry(0.022, 0.022, 1.5, 12), mat.chassis, [0, WHEEL_R, FRONT_Z], [0, 0, Math.PI / 2])); // Antriebswellen
-  for (const sx of [0.62, -0.62]) decor.add(mesh(new THREE.SphereGeometry(0.045, 16, 12), mat.dark, [sx, WHEEL_R, FRONT_Z])); // Gelenke
-  decor.add(mesh(new THREE.BoxGeometry(1.36, 0.08, 0.08), mat.chassis, [0, WHEEL_R, REAR_Z])); // Verbundlenkerachse
-  for (const sx of [0.6, -0.6]) decor.add(mesh(new THREE.BoxGeometry(0.06, 0.06, 0.5), mat.chassis, [sx, WHEEL_R, REAR_Z + 0.25]));
-  for (const sx of [0.42, -0.42]) decor.add(mesh(new THREE.BoxGeometry(0.06, 0.06, 1.0), mat.chassis, [sx, 0.32, 1.45])); // Hilfsrahmen
+  for (const sx of [0.42, -0.42]) decor.add(mesh(new THREE.BoxGeometry(0.06, 0.06, 1.0), mat.chassis, [sx, 0.32, 1.45]));
   decor.add(mesh(new THREE.BoxGeometry(0.9, 0.05, 0.06), mat.chassis, [0, 0.32, 1.0]));
-  for (const sx of [0.62, -0.62]) decor.add(mesh(new THREE.BoxGeometry(0.06, 0.07, 2.2), mat.chassis, [sx, 0.3, -0.25])); // Schweller
+  for (const sx of [0.62, -0.62]) decor.add(mesh(new THREE.BoxGeometry(0.06, 0.07, 2.2), mat.chassis, [sx, 0.3, -0.25]));
+  drivetrain(decor, drivetrainType);
 
-  // Scheiben, Leuchten, Spiegel, Grill, Türfugen
-  decor.add(sideWindows(0.882));
-  const windshield = new THREE.PlaneGeometry(1.42, 0.5);
-  decor.add(mesh(windshield, mat.glass, [0, 1.17, 0.66], [-0.95, 0, 0], false));
-  decor.add(mesh(new THREE.PlaneGeometry(1.36, 0.36), mat.glass, [0, 1.2, -1.6], [0.85, Math.PI, 0], false));
+  // Scheiben, Leuchten, Spiegel, Grill, Türfugen nach Karosserieprofil
+  decor.add(sideWindows(profile.windows, 0.882));
+  const ws = profile.windshield, rw = profile.rearWindow;
+  decor.add(mesh(new THREE.PlaneGeometry(1.42, ws.height), mat.glass, [0, ws.y, ws.z], [ws.tilt, 0, 0], false));
+  decor.add(mesh(new THREE.PlaneGeometry(1.36, rw.height), mat.glass, [0, rw.y, rw.z], [rw.tilt, Math.PI, 0], false));
   for (const sx of [0.58, -0.58]) {
-    decor.add(mesh(new THREE.BoxGeometry(0.3, 0.07, 0.05), mat.headlight, [sx, 0.7, 2.23], [0, 0, 0], false));
-    decor.add(mesh(new THREE.BoxGeometry(0.28, 0.08, 0.04), mat.taillight, [sx, 0.88, -2.25], [0, 0, 0], false));
-    decor.add(mesh(new THREE.BoxGeometry(0.06, 0.08, 0.14), mat.dark, [Math.sign(sx) * 0.97, 1.03, 0.82]));
+    decor.add(mesh(new THREE.BoxGeometry(0.3, 0.07, 0.05), mat.headlight, [sx, profile.headlightY, profile.front - 0.02], [0, 0, 0], false));
+    decor.add(mesh(new THREE.BoxGeometry(0.28, 0.08, 0.04), mat.taillight, [sx, profile.taillightY, profile.rear], [0, 0, 0], false));
+    decor.add(mesh(new THREE.BoxGeometry(0.06, 0.08, 0.14), mat.dark, [Math.sign(sx) * 0.97, ws.y - 0.14, ws.z + 0.16]));
   }
-  decor.add(mesh(new THREE.BoxGeometry(0.62, 0.12, 0.03), mat.dark, [0, 0.55, 2.27], [0, 0, 0], false));
+  decor.add(mesh(new THREE.BoxGeometry(0.62, 0.12, 0.03), mat.dark, [0, 0.55, profile.front + 0.02], [0, 0, 0], false));
   const seams = [];
-  for (const sideX of [0.885, -0.885]) for (const z of [0.88, -0.28, -1.3]) seams.push(sideX, 0.38, z, sideX, 1.0, z);
+  for (const sideX of [0.885, -0.885]) for (const z of profile.seams) seams.push(sideX, 0.38, z, sideX, 1.0, z);
   const seamGeo = new THREE.BufferGeometry();
   seamGeo.setAttribute('position', new THREE.Float32BufferAttribute(seams, 3));
   decor.add(new THREE.LineSegments(seamGeo, mat.line));

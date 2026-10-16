@@ -269,6 +269,8 @@ suggestions.addEventListener('click',event=>{
 // Switching the manufacturer refreshes the shown result, the vehicle preview and open suggestions.
 makerSelect.addEventListener('change',()=>{
   manufacturer=makerSelect.value;
+  // The 3D view switches to the brand's typical layout (vehicle-view.js); remembered in case it loads later.
+  window.vehicleBrand=manufacturer; window.setVehicleBrand?.(manufacturer);
   updateCount();
   // Re-run a shown result or a search that just failed (the code may exist for this brand).
   const retry=activeCode||(!byId('form-error').hidden&&/^[PBCU][0-9A-F]{4}$/.test(input.value)?input.value:'');

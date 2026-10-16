@@ -1,6 +1,7 @@
-// Startet die 3D-Ansicht und schaltet zwischen 3D und 2D-Plan um.
+// Startet die 3D-Ansicht, schaltet zwischen 3D und 2D-Plan um und wählt die Bauform.
 // Ohne WebGL (oder bei Fehlern) bleibt der 2D-Plan unverändert aktiv.
 import { createVehicle3D } from './vehicle3d.js';
+import { LAYOUTS, BRAND_LAYOUT } from './vehicle3d-layouts.js';
 
 const svg = document.getElementById('vehicle-diagram');
 const scan = document.querySelector('.vehicle-scan');
@@ -9,6 +10,8 @@ const toolbar = document.getElementById('view-toolbar');
 const tip = host.querySelector('.vehicle-3d-tip');
 const modeButton = toolbar.querySelector('[data-mode-toggle]');
 const viewButtons = [...toolbar.querySelectorAll('[data-view]')];
+const layoutPick = toolbar.querySelector('.layout-pick');
+const layoutSelect = document.getElementById('layout-select');
 
 function webglAvailable() {
   try {
@@ -45,11 +48,19 @@ if (webglAvailable()) {
     window.vehicle3d = viewer;
     if (window.vehicleState) viewer.highlight(window.vehicleState);
 
+    // Bauform: folgt dem gewählten Hersteller, bis der Nutzer selbst eine wählt (gilt bis zum nächsten Herstellerwechsel).
+    layoutSelect.append(...Object.entries(LAYOUTS).map(([id, layout]) => new Option(layout.name, id)));
+    const applyLayout = (id) => { viewer.setLayout(id); layoutSelect.value = viewer.layout; };
+    window.setVehicleBrand = (slug) => applyLayout(BRAND_LAYOUT[slug] || 'fwd4');
+    window.setVehicleBrand(window.vehicleBrand || '');
+    layoutSelect.addEventListener('change', () => applyLayout(layoutSelect.value));
+
     const setMode = (mode) => {
       const is3d = mode === '3d';
       host.hidden = !is3d;
       scan.hidden = is3d;
       viewButtons.forEach((b) => { b.hidden = !is3d; });
+      layoutPick.hidden = !is3d;
       modeButton.textContent = is3d ? '2D-Plan' : '3D-Ansicht';
       modeButton.setAttribute('aria-pressed', String(!is3d));
       storeMode(mode);
