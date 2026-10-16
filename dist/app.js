@@ -58,10 +58,19 @@ function lookup(code){
   return lookups.get(key);
 }
 
+let makers=new Map();
+const formatCount=n=>Number(n).toLocaleString('de-DE');
+// Header count follows the selection: standard codes, plus the chosen brand's codes.
+function updateCount(){
+  const maker=makers.get(manufacturer);
+  byId('database-count').textContent=maker?`${formatCount(source.count)} Standard + ${formatCount(maker.codes)} ${maker.name}`:`${formatCount(source.count)} Standardcodes`;
+}
+
 // Fills the manufacturer select with all brands that currently have codes; hidden without a backend.
 ready.then(()=>source.manufacturers()).then(list=>{
   if(!list.length)return;
-  makerSelect.append(...list.map(m=>{const option=document.createElement('option');option.value=m.slug;option.textContent=`${m.name} (${m.codes})`;return option}));
+  makers=new Map(list.map(m=>[m.slug,m]));
+  makerSelect.append(...list.map(m=>{const option=document.createElement('option');option.value=m.slug;option.textContent=`${m.name} (${formatCount(m.codes)})`;return option}));
   byId('maker-row').hidden=false;
 }).catch(()=>{});
 
@@ -230,6 +239,7 @@ suggestions.addEventListener('click',event=>{
 // Switching the manufacturer refreshes the shown result, the vehicle preview and open suggestions.
 makerSelect.addEventListener('change',()=>{
   manufacturer=makerSelect.value;
+  updateCount();
   // Re-run a shown result or a search that just failed (the code may exist for this brand).
   const retry=activeCode||(!byId('form-error').hidden&&/^[PBCU][0-9A-F]{4}$/.test(input.value)?input.value:'');
   hideError();
@@ -247,6 +257,6 @@ byId('detail-toggle').addEventListener('click',()=>{
 });
 document.addEventListener('click',event=>{if(!form.contains(event.target))closeSuggestions()});
 
-ready.then(()=>{byId('database-count').textContent=`${source.count} Codes`},()=>{byId('database-count').textContent='Datenbasis offline'});
+ready.then(updateCount,()=>{byId('database-count').textContent='Datenbasis offline'});
 input.value='P0300';
 updateVehicle('P0300');
