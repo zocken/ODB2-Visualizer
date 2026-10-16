@@ -22,6 +22,15 @@ export const PROFILES = {
     rearWindow: { y: 1.17, z: -1.48, tilt: 1.0, height: 0.4 },
     front: 2.34, rear: -2.39, headlightY: 0.68, taillightY: 0.86, seams: [0.8, -0.35, -1.25],
   },
+  suv: {
+    outline: [['M', -2.3, 0.42], ['L', 2.15, 0.42], ['Q', 2.37, 0.44, 2.37, 0.7], ['Q', 2.36, 0.92, 2.2, 0.99], ['L', 1.05, 1.1],
+      ['Q', 0.75, 1.2, 0.5, 1.6], ['Q', -0.3, 1.73, -1.95, 1.69], ['Q', -2.26, 1.6, -2.31, 1.3], ['L', -2.33, 0.62],
+      ['Q', -2.34, 0.43, -2.3, 0.42]],
+    windows: [['M', 0.98, 1.16], ['Q', 0.72, 1.26, 0.53, 1.55], ['Q', -0.3, 1.65, -1.9, 1.61], ['Q', -2.12, 1.52, -2.16, 1.2], ['L', 0.98, 1.16]],
+    windshield: { y: 1.36, z: 0.76, tilt: -0.9, height: 0.55 },
+    rearWindow: { y: 1.42, z: -2.29, tilt: 0.15, height: 0.5 },
+    front: 2.37, rear: -2.34, headlightY: 0.86, taillightY: 1.12, seams: [0.95, -0.35, -1.4],
+  },
 };
 
 const cylinderRow = (count, { x = 0, z0, dz, y = 0.97, r = 0.062, axis = 'z', prefix = 'cylinder' }) =>
@@ -108,9 +117,94 @@ export const LAYOUTS = {
   },
 };
 
+// V8 längs (SUV/Pick-up, Allrad): Bank 1 links (Zylinder 1-3-5-7), Bank 2 rechts (2-4-6-8).
+const V8_Z = [1.62, 1.4, 1.18, 0.96];
+const v8Bank = (bank) => {
+  const sx = bank === 1 ? 1 : -1;
+  return Object.fromEntries(V8_Z.flatMap((z, i) => {
+    const n = bank === 1 ? 1 + i * 2 : 2 + i * 2;
+    const zz = bank === 1 ? z : z - 0.06;
+    return [
+      [`cylinder-${n}`, { shape: 'cylV', x: sx * 0.22, z: zz, y: 0.98, h: 0.06, r: 0.055, rotation: [0, 0, -sx * 0.5] }],
+      [`injector-${n}`, { shape: 'box', x: sx * 0.12, z: zz, w: 0.04, d: 0.04, y: 1.02, h: 0.08, rotation: [0, 0, -sx * 0.5] }],
+    ];
+  }));
+};
+const v8Exhaust = (sx) => [[sx * 0.32, 0.62, 1.5], [sx * 0.38, 0.42, 1.1], [sx * 0.32, 0.28, 0.7], [sx * 0.3, 0.26, 0.2], [sx * 0.3, 0.26, -1.3], [sx * 0.46, 0.28, -1.85], [sx * 0.5, 0.28, -2.32]];
+
+LAYOUTS.v8 = {
+  name: 'SUV/Pick-up · V8 längs · Allrad',
+  profile: 'suv',
+  drivetrain: 'awd',
+  skipDetails: ['engine', 'intake', 'exhaust', 'transmission', 'steering'],
+  overrides: {
+    engine: { shape: 'engine', x: 0, z: 1.27, w: 0.62, d: 0.9, y: 0.68, h: 0.4 },
+    ...v8Bank(1),
+    ...v8Bank(2),
+    'fuel-rail': { shape: 'box', x: 0.13, z: 1.27, w: 0.035, d: 0.8, y: 1.07, h: 0.035 },
+    'glow-plugs': { shape: 'dots', points: [...V8_Z.map((z) => ({ x: 0.31, z })), ...V8_Z.map((z) => ({ x: -0.31, z: z - 0.06 }))], y: 0.95, h: 0.06 },
+    intake: { shape: 'box', x: 0, z: 1.26, w: 0.24, d: 0.74, y: 1.05, h: 0.14 },
+    throttle: { shape: 'cylZ', x: 0, z: 1.75, r: 0.055, len: 0.1, y: 1.02 },
+    maf: { shape: 'cylZ', x: 0.25, z: 2.0, r: 0.05, len: 0.14, y: 0.98 },
+    turbo: { shape: 'cylX', x: -0.46, z: 1.05, r: 0.07, len: 0.14, y: 0.62 },
+    egr: { shape: 'box', x: -0.18, z: 1.72, w: 0.1, d: 0.1, y: 0.96, h: 0.1 },
+    camshaft: { shape: 'box', x: 0, z: 1.8, w: 0.08, d: 0.05, y: 0.95, h: 0.05 },
+    crankshaft: { shape: 'box', x: 0.1, z: 1.8, w: 0.08, d: 0.05, y: 0.42, h: 0.06 },
+    'knock-sensor': { shape: 'box', x: 0, z: 1.15, w: 0.06, d: 0.05, y: 0.94, h: 0.05 },
+    'oil-pressure': { shape: 'box', x: 0.06, z: 1.72, w: 0.05, d: 0.05, y: 0.86, h: 0.05 },
+    alternator: { shape: 'cylX', x: 0.33, z: 1.82, r: 0.1, len: 0.12, y: 0.74 },
+    'ac-compressor': { shape: 'cylX', x: -0.33, z: 1.82, r: 0.09, len: 0.12, y: 0.56 },
+    thermostat: { shape: 'box', x: 0, z: 1.84, w: 0.1, d: 0.06, y: 0.92, h: 0.07 },
+    'coolant-sensor': { shape: 'box', x: 0.09, z: 1.84, w: 0.07, d: 0.05, y: 0.96, h: 0.05 },
+    transmission: { shape: 'box', x: 0, z: 0.38, w: 0.36, d: 0.76, y: 0.48, h: 0.32 },
+    'input-speed': { shape: 'box', x: 0.15, z: 0.72, w: 0.05, d: 0.05, y: 0.52, h: 0.06 },
+    'vehicle-speed': { shape: 'box', x: 0.05, z: 0.02, w: 0.05, d: 0.05, y: 0.45, h: 0.06 },
+    tcm: { shape: 'box', x: -0.2, z: 0.38, w: 0.06, d: 0.2, y: 0.48, h: 0.05 },
+    exhaust: { shape: 'tube', r: 0.032, paths: [v8Exhaust(1), v8Exhaust(-1)] },
+    'cat-1': { shape: 'box', x: 0.3, z: 0.42, w: 0.14, d: 0.32, y: 0.26, h: 0.12 },
+    'cat-2': { shape: 'box', label: 'Katalysator Bank 2', x: -0.3, z: 0.42, w: 0.14, d: 0.32, y: 0.26, h: 0.12 },
+    'lambda-front': { shape: 'cylV', x: 0.31, z: 0.72, r: 0.02, y: 0.29, h: 0.1 },
+    'lambda-front-2': { shape: 'cylV', x: -0.31, z: 0.72, r: 0.02, y: 0.29, h: 0.1 },
+    'lambda-rear': { shape: 'cylV', x: 0.3, z: 0.12, r: 0.02, y: 0.29, h: 0.1 },
+    'lambda-rear-2': { shape: 'cylV', x: -0.3, z: 0.12, r: 0.02, y: 0.29, h: 0.1 },
+    steering: { shape: 'steering', rack: { x: 0, z: 1.6, w: 0.72 }, ring: { x: 0.41, z: 0.0 } },
+  },
+  details: {
+    engine({ add, def }) {
+      for (const sx of [1, -1]) add('box', { x: sx * 0.24, z: def.z - 0.03, w: 0.16, d: def.d * 0.95, y: 0.92, h: 0.1, rotation: [0, 0, -sx * 0.5] }); // Zylinderköpfe
+      add('box', { x: def.x, z: def.z, w: def.w * 0.7, d: def.d * 0.85, y: def.y - def.h / 2 - 0.06, h: 0.12 }); // Ölwanne
+      for (const sx of [1, -1]) for (const [i, z] of V8_Z.entries()) { // Krümmer je Bank
+        const zz = sx === 1 ? z : z - 0.06;
+        add('tube', { r: 0.017, paths: [[[sx * 0.3, 0.84, zz], [sx * 0.38, 0.72, zz - 0.02], [sx * 0.34, 0.62, 1.5 - i * 0.02]]] });
+      }
+    },
+    'fuel-rail'({ add, def }) {
+      add('box', { x: -0.13, z: def.z - 0.06, w: def.w, d: def.d, y: def.y, h: def.h }); // zweite Leiste (Bank 2)
+    },
+    intake({ add }) {
+      for (const sx of [1, -1]) for (const z of V8_Z) add('tube', { r: 0.016, paths: [[[sx * 0.06, 1.08, sx === 1 ? z : z - 0.06], [sx * 0.14, 1.05, sx === 1 ? z : z - 0.06], [sx * 0.19, 1.0, sx === 1 ? z : z - 0.06]]] });
+      add('box', { x: 0.25, z: 1.95, w: 0.24, d: 0.22, y: 0.94, h: 0.16 }); // Luftfilterkasten
+    },
+    exhaust({ add }) {
+      for (const sx of [1, -1]) {
+        add('box', { x: sx * 0.34, z: -1.65, w: 0.24, d: 0.5, y: 0.28, h: 0.16 }); // Schalldämpfer je Strang
+        add('cylZ', { x: sx * 0.5, z: -2.3, r: 0.04, len: 0.14, y: 0.28 }); // Endrohre
+      }
+    },
+    transmission({ add, def }) {
+      add('cylZ', { x: def.x, z: def.z + def.d / 2 + 0.06, r: 0.22, len: 0.12, y: def.y + 0.05 });
+    },
+    steering({ add }) {
+      for (const sx of [1, -1]) add('cylX', { x: sx * 0.53, z: 1.55, r: 0.013, len: 0.34, y: 0.46 });
+    },
+  },
+};
+
 // Typische Bauform je Hersteller (Slug aus der Datenbank). Nicht aufgeführte Marken: Grundform.
 export const BRAND_LAYOUT = {
   bmw: 'rwd6', mercedes: 'rwd6', jaguar: 'rwd6',
+  chevy: 'v8', gmc: 'v8', cadillac: 'v8', gm: 'v8', ford: 'v8', lincoln: 'v8', mercury: 'v8',
+  dodge: 'v8', chrysler: 'v8', jeep: 'v8', plymouth: 'v8', pontiac: 'v8', buick: 'v8', oldsmobile: 'v8',
 };
 
 // Bauteile, die eine Bauform nicht hat, werden auf das übergeordnete Bauteil markiert.
