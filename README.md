@@ -28,12 +28,16 @@ Ab Version 12 kommen die Codes aus einer PostgreSQL-Datenbank. Das Schema ist au
 
 Ein Code kann einmal herstellerunabhängig und zusätzlich pro Hersteller existieren. Die API liefert bei `?manufacturer=<slug>` die Herstellervariante und sonst den generischen Eintrag.
 
+## Herstellerauswahl
+
+Oberhalb des Codefelds wählt man den Hersteller. Startwert ist **„Nur Standardcodes“**. Mit einem Hersteller stehen dessen Codes zusätzlich zu den Standardcodes zur Verfügung; gibt es einen Code in beiden Varianten, gilt die Herstellerbedeutung. Die Liste enthält automatisch alle Hersteller, für die Codes in der Datenbank stehen. Ohne Backend (GitHub Pages) ist die Auswahl ausgeblendet.
+
 ## API
 
 - `GET /api/health` – Status und Anzahl der herstellerunabhängigen Codes
-- `GET /api/codes?q=<text>&limit=12[&manufacturer=<slug>]` – Suche über Code, Titel und System
+- `GET /api/codes?q=<text>&limit=12[&manufacturer=<slug>]` – Suche über Code, Titel und System; mit Hersteller ein Treffer je Code (Herstellervariante vor Standardcode)
 - `GET /api/codes/<CODE>[?manufacturer=<slug>]` – Detail; `404` mit `alternatives`, wenn unbekannt
-- `GET /api/manufacturers` – hinterlegte Hersteller
+- `GET /api/manufacturers` – Hersteller mit sichtbaren Codes inkl. Anzahl (füllt die Herstellerauswahl)
 - `GET /api/updates` – die letzten Läufe des nächtlichen Code-Abgleichs (angelegt, aktualisiert, entfernt)
 
 ## Produktivbetrieb (Coolify)

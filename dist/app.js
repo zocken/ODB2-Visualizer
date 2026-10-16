@@ -1,7 +1,11 @@
 const categoryNames={P:'Antrieb',B:'Karosserie',C:'Fahrwerk',U:'Netzwerk'};
 const form=document.querySelector('#code-form'), input=document.querySelector('#code-input'), suggestions=document.querySelector('#code-suggestions'), suggestionList=document.querySelector('#suggestion-list'), result=document.querySelector('#result');
 const byId=id=>document.getElementById(id);
+const makerSelect=byId('maker-select');
 let activeCode='';
+// Selected manufacturer slug; '' = standard codes only (initial choice).
+let manufacturer='';
+const makerQuery=(prefix)=>manufacturer?`${prefix}manufacturer=${encodeURIComponent(manufacturer)}`:'';
 
 // Data comes from the API (Docker/DB) or, without a backend (GitHub Pages), from a static export of the seed data.
 // Schematic locations represent the system named by the code, not a confirmed defective part.
@@ -14,9 +18,10 @@ function normalize(d){
 
 const apiSource={
   async init(){const r=await fetch('api/health');if(!r.ok)throw new Error('API nicht verfügbar');this.count=(await r.json()).genericCodes},
-  async search(term){const r=await fetch(`api/codes?q=${encodeURIComponent(term)}&limit=12`);if(!r.ok)throw new Error('Suche fehlgeschlagen');return r.json()},
+  async manufacturers(){const r=await fetch('api/manufacturers');return r.ok?r.json():[]},
+  async search(term){const r=await fetch(`api/codes?q=${encodeURIComponent(term)}&limit=12${makerQuery('&')}`);if(!r.ok)throw new Error('Suche fehlgeschlagen');return r.json()},
   async get(code){
-    const r=await fetch(`api/codes/${code}`);
+    const r=await fetch(`api/codes/${code}${makerQuery('?')}`);
     if(r.status===404)return {missing:true,alternatives:(await r.json()).alternatives||[]};
     if(!r.ok)throw new Error('Abfrage fehlgeschlagen');
     return normalize(await r.json());
@@ -28,6 +33,7 @@ const staticSource={
     const r=await fetch('data/generic-codes.json');if(!r.ok)throw new Error('Keine Datenbasis gefunden');
     this.codes=new Map((await r.json()).codes.filter(c=>!c.manufacturer).map(c=>[c.code,normalize(c)]));this.count=this.codes.size;
   },
+  async manufacturers(){return []},
   async search(term){
     term=term.trim().toLowerCase();
     return [...this.codes.values()].filter(c=>!term||c.code.toLowerCase().includes(term)||c.title.toLowerCase().includes(term)||c.system.toLowerCase().includes(term)).slice(0,12);
@@ -47,9 +53,17 @@ const ready=(async()=>{
 
 const lookups=new Map();
 function lookup(code){
-  if(!lookups.has(code))lookups.set(code,ready.then(()=>source.get(code)).catch(error=>{lookups.delete(code);throw error}));
-  return lookups.get(code);
+  const key=`${manufacturer}|${code}`;
+  if(!lookups.has(key))lookups.set(key,ready.then(()=>source.get(code)).catch(error=>{lookups.delete(key);throw error}));
+  return lookups.get(key);
 }
+
+// Fills the manufacturer select with all brands that currently have codes; hidden without a backend.
+ready.then(()=>source.manufacturers()).then(list=>{
+  if(!list.length)return;
+  makerSelect.append(...list.map(m=>{const option=document.createElement('option');option.value=m.slug;option.textContent=`${m.name} (${m.codes})`;return option}));
+  byId('maker-row').hidden=false;
+}).catch(()=>{});
 
 function updateVehicle(c){
   const entry=c?.vehicle?.labels?.length?c.vehicle:null, code=c?.code;
@@ -90,6 +104,7 @@ async function renderSuggestions(filter=''){
       const code=document.createElement('b'); code.textContent=c.code;
       const copy=document.createElement('span'); copy.textContent=c.title;
       const area=document.createElement('small'); area.textContent=c.system;
+      if(c.manufacturerName){const brand=document.createElement('em');brand.textContent=c.manufacturerName;area.prepend(brand,' · ')}
       button.append(code,copy,area); suggestionList.append(button);
     });
   }
@@ -158,7 +173,7 @@ function resetTechnicalDetails(){
   byId('detail-toggle').querySelector('b').textContent='+';
 }
 
-async function showCode(code){
+async function showCode(code,{scroll=true}={}){
   let c;
   try{c=await lookup(code)}catch{showError('Die Datenbasis ist gerade nicht erreichbar. Bitte später erneut versuchen.');return}
   if(c.missing){
@@ -176,7 +191,7 @@ async function showCode(code){
   byId('r-steps').replaceChildren(...a.steps.map(step=>{const li=document.createElement('li');li.textContent=step;return li}));
   byId('r-tech').textContent=`${c.code} ist als ${c.origin} dem Diagnosebereich ${c.category} zugeordnet. Der Code beschreibt eine erkannte Abweichung in ${c.system.toLowerCase()}, benennt aber nicht automatisch ein defektes Bauteil. Messwerte, Begleitcodes und fahrzeugspezifische Herstellerangaben müssen gemeinsam bewertet werden.${c.source!=='redaktionell'?` Originalbezeichnung: ${c.titleEn||c.title}. Quelle: ${c.source}; Erklärung und Ursachen sind automatisch erzeugt und nicht redaktionell geprüft.`:''}`;
   renderCauseTable(details); resetTechnicalDetails(); updateVehicle(c);
-  result.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  if(scroll)result.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
 }
 
 function runSearch(){
@@ -211,6 +226,16 @@ suggestions.addEventListener('click',event=>{
   input.value=button.dataset.code; hideError();
   if(activeCode!==input.value){result.hidden=true;byId('empty-state').hidden=false;activeCode=''}
   previewVehicle(input.value); closeSuggestions(); input.focus();
+});
+// Switching the manufacturer refreshes the shown result, the vehicle preview and open suggestions.
+makerSelect.addEventListener('change',()=>{
+  manufacturer=makerSelect.value;
+  // Re-run a shown result or a search that just failed (the code may exist for this brand).
+  const retry=activeCode||(!byId('form-error').hidden&&/^[PBCU][0-9A-F]{4}$/.test(input.value)?input.value:'');
+  hideError();
+  if(retry)showCode(retry,{scroll:false});
+  else previewVehicle(input.value);
+  if(!suggestions.hidden)renderSuggestions(input.value);
 });
 byId('form-error').addEventListener('click',event=>{
   const button=event.target.closest('[data-alternative]'); if(!button)return;

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#07110e">
   <meta name="description" content="OBD2-Fehlercodes in verständlichem Klartext – mit Systemvisualisierung, Dringlichkeit und nächsten Schritten.">
   <title>OBD2 Klartext</title>
-  <link rel="stylesheet" href="styles.css?v=11">
+  <link rel="stylesheet" href="styles.css?v=15">
   <link rel="stylesheet" href="vehicle.css?v=13">
 </head>
 <body>
@@ -26,6 +26,13 @@
         <p class="intro">Gib einen OBD2-Code ein. Du erhältst zuerst eine verständliche Antwort – und auf Wunsch technische Details.</p>
 
         <form id="code-form" class="search-card" novalidate>
+          <div id="maker-row" class="maker-row" hidden>
+            <label for="maker-select">Hersteller</label>
+            <select id="maker-select" name="manufacturer" aria-describedby="maker-help">
+              <option value="">Nur Standardcodes</option>
+            </select>
+            <span id="maker-help" class="maker-help">Herstellercodes ergänzen die Standardcodes</span>
+          </div>
           <label for="code-input">OBD2-Fehlercode</label>
           <div class="search-row">
             <input id="code-input" name="code" type="text" inputmode="text" maxlength="5" autocomplete="off" spellcheck="false" placeholder="z. B. P0300" aria-describedby="input-help" aria-controls="code-suggestions" aria-expanded="false">
@@ -161,6 +168,6 @@
   </main>
 
   <footer><span>OBD2 Klartext</span><span>Lernprojekt · Keine Reparaturanleitung</span></footer>
-  <script src="app.js?v=13"></script>
+  <script src="app.js?v=14"></script>
 </body>
 </html>

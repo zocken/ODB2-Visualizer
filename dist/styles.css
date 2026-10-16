@@ -83,3 +83,15 @@
   .panel{padding:18px}
   footer{padding-left:12px;padding-right:12px}
 }
+
+/* Herstellerauswahl */
+.maker-row{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px 12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #d9ddd4}
+.search-card .maker-row label{margin:0;white-space:nowrap}
+.maker-row select{min-width:0;width:100%;background:#fff;border:2px solid transparent;border-radius:12px;padding:10px 14px;font:700 15px/1.2 inherit;color:#0b1512;cursor:pointer;outline:none}
+.maker-row select:focus{border-color:#72ad33}
+.maker-help{grid-column:2;font-size:11px;color:#61706a}
+.suggestion small em{font-style:normal;font-weight:800;color:#41622a}
+@media(max-width:620px){.maker-row{grid-template-columns:1fr}.maker-help{grid-column:1}}
+
+/* hidden-Attribut hat Vorrang vor display-Regeln (z. B. .error-box, .maker-row) */
+[hidden]{display:none!important}

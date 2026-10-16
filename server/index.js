@@ -33,22 +33,28 @@ app.get('/api/updates', async (_req, res) => {
   res.json(await recentUpdates());
 });
 
+// Nur Hersteller mit sichtbaren Codes – neue Marken aus dem Code-Abgleich erscheinen automatisch.
 app.get('/api/manufacturers', async (_req, res) => {
-  const { rows } = await pool.query('SELECT slug, name FROM manufacturers ORDER BY name');
+  const { rows } = await pool.query(
+    `SELECT m.slug, m.name, count(*)::int AS codes
+     FROM manufacturers m JOIN dtc_codes d ON d.manufacturer_id = m.id AND d.source_removed_at IS NULL
+     GROUP BY m.id ORDER BY m.name`,
+  );
   res.json(rows);
 });
 
-// Vorschlagsliste: Suche über Code, Titel und System.
+// Vorschlagsliste: Suche über Code, Titel und System. Mit Hersteller genau ein Treffer je Code,
+// die Herstellervariante hat Vorrang vor dem Standardcode.
 app.get('/api/codes', async (req, res) => {
   const q = String(req.query.q || '').trim().slice(0, 60);
   const limit = Math.min(Math.max(Number(req.query.limit) || 12, 1), 100);
   const manufacturer = req.query.manufacturer ? String(req.query.manufacturer) : null;
   const { rows } = await pool.query(
-    `SELECT d.code, d.title, d.system, m.slug AS manufacturer
+    `SELECT DISTINCT ON (d.code) d.code, d.title, d.system, m.slug AS manufacturer, m.name AS "manufacturerName"
      FROM dtc_codes d LEFT JOIN manufacturers m ON m.id = d.manufacturer_id
      WHERE (d.manufacturer_id IS NULL OR m.slug = $3) AND d.source_removed_at IS NULL
        AND ($1 = '' OR d.code ILIKE '%' || $1 || '%' OR d.title ILIKE '%' || $1 || '%' OR d.system ILIKE '%' || $1 || '%')
-     ORDER BY d.code, d.manufacturer_id NULLS LAST
+     ORDER BY d.code, d.manufacturer_id IS NULL
      LIMIT $2`,
     [q.replace(/[%_\\]/g, '\\$&'), limit, manufacturer],
   );
@@ -62,8 +68,10 @@ app.get('/api/codes/:code', async (req, res) => {
   const { rows } = await pool.query(DETAIL_SQL, [code, manufacturer]);
   if (rows.length) return res.json(rows[0]);
   const { rows: alternatives } = await pool.query(
-    `SELECT code FROM dtc_codes WHERE manufacturer_id IS NULL AND source_removed_at IS NULL AND left(code, 1) = $1 ORDER BY code LIMIT 4`,
-    [code[0]],
+    `SELECT DISTINCT d.code FROM dtc_codes d LEFT JOIN manufacturers m ON m.id = d.manufacturer_id
+     WHERE (d.manufacturer_id IS NULL OR m.slug = $2) AND d.source_removed_at IS NULL AND left(d.code, 1) = $1
+     ORDER BY d.code LIMIT 4`,
+    [code[0], manufacturer],
   );
   res.status(404).json({ error: 'Code nicht in der Datenbasis', alternatives: alternatives.map((r) => r.code) });
 });
