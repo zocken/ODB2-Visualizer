@@ -34,7 +34,7 @@ Ein Code kann einmal herstellerunabhängig und zusätzlich pro Hersteller existi
 - `GET /api/codes?q=<text>&limit=12[&manufacturer=<slug>]` – Suche über Code, Titel und System
 - `GET /api/codes/<CODE>[?manufacturer=<slug>]` – Detail; `404` mit `alternatives`, wenn unbekannt
 - `GET /api/manufacturers` – hinterlegte Hersteller
-- `GET /api/updates` – die letzten Läufe des automatischen Code-Abgleichs (angelegt, aktualisiert, entfernt)
+- `GET /api/updates` – die letzten Läufe des nächtlichen Code-Abgleichs (angelegt, aktualisiert, entfernt)
 
 ## Produktivbetrieb (Coolify)
 
@@ -78,7 +78,7 @@ docker compose up --build -d
 docker compose exec app node server/seed.js
 ```
 
-## Wöchentlicher Code-Abgleich
+## Nächtlicher Code-Abgleich
 
 `server/update-codes.js` lädt den aktuellen Stand von Wal33D/dtc-database, wandelt ihn mit `server/wal33d.js` und `server/glossary.js` um und gleicht die Pkw-Codes (generisch und herstellerspezifisch) ab:
 
@@ -93,7 +93,7 @@ docker compose exec app node server/seed.js
 
 **Sicherung:** Würde ein Lauf mehr als 10 % der importierten Codes als entfernt markieren (z. B. bei unvollständiger Quelle), wird die Markierung zurückgerollt und der Lauf als fehlgeschlagen protokolliert.
 
-- Der Server prüft stündlich, ob der letzte erfolgreiche Lauf mindestens `UPDATE_INTERVAL_DAYS` (Standard 7) Tage zurückliegt. Nach Neustart oder Ruhezustand (z. B. Render Free) wird ein fälliger Lauf nachgeholt; nach einem Fehler frühestens nach 6 Stunden erneut.
+- Der Abgleich läuft **täglich nachts**: Der Server prüft alle 15 Minuten und startet einmal pro Kalendertag im Fenster ab `UPDATE_HOUR` (Standard 3 Uhr) für 3 Stunden, Zeitzone `UPDATE_TIMEZONE` (Standard Europe/Berlin, inkl. Sommerzeit). Nach einem Fehler wird im selben Fenster frühestens nach 1 Stunde erneut versucht; außerhalb des Fensters (z. B. Neustart tagsüber) wartet er bis zur nächsten Nacht.
 - Nutzfahrzeug-spezifische Codes (Nebenabtrieb/PTO, Druckluftbremse, Retarder, Tachograf …) und Einträge ohne Markenzuordnung werden übersprungen.
 - Titel sind deutsch, wo das Glossar vollständig greift, sonst englisch.
 - Ein Advisory Lock verhindert parallele Läufe mehrerer Instanzen; jeder Lauf steht in der Tabelle `code_updates`.

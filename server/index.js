@@ -86,7 +86,10 @@ if (process.env.AUTO_SEED !== 'false') {
 
 const server = app.listen(PORT, () => console.log(`OBD2 Klartext läuft auf Port ${PORT}`));
 if (process.env.AUTO_UPDATE !== 'false') {
-  scheduleUpdates({ intervalDays: Number(process.env.UPDATE_INTERVAL_DAYS || 7) });
+  scheduleUpdates({
+    hour: Number(process.env.UPDATE_HOUR || 3),
+    timeZone: process.env.UPDATE_TIMEZONE || 'Europe/Berlin',
+  });
 }
 for (const signal of ['SIGTERM', 'SIGINT']) {
   process.on(signal, () => server.close(() => pool.end().then(() => process.exit(0))));

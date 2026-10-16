@@ -23,7 +23,8 @@ services:
     environment:
       DATABASE_URL: postgres://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@db:5432/obd2
       AUTO_UPDATE: ${AUTO_UPDATE:-true}
-      UPDATE_INTERVAL_DAYS: ${UPDATE_INTERVAL_DAYS:-7}
+      UPDATE_HOUR: ${UPDATE_HOUR:-3}
+      UPDATE_TIMEZONE: ${UPDATE_TIMEZONE:-Europe/Berlin}
     expose:
       - "8080"
     depends_on:

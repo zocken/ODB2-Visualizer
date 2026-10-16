@@ -121,10 +121,27 @@ export async function runUpdate() {
   }
 }
 
-// Prüft stündlich, ob der letzte erfolgreiche Lauf älter als intervalDays ist.
-// Nach einem Neustart oder Ruhezustand wird ein fälliger Lauf beim nächsten Check nachgeholt;
-// nach einem Fehler wird frühestens nach retryHours erneut versucht.
-export function scheduleUpdates({ intervalDays = 7, retryHours = 6 } = {}) {
+// Datum (YYYY-MM-DD) und Stunde eines Zeitpunkts in der angegebenen Zeitzone.
+function localParts(date, timeZone) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+    timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23',
+  }).formatToParts(date).map((p) => [p.type, p.value]));
+  return { day: `${parts.year}-${parts.month}-${parts.day}`, hour: Number(parts.hour) };
+}
+
+// Fällig ist ein Lauf einmal pro Kalendertag im Nachtfenster [hour, hour + windowHours)
+// der Zeitzone – nicht, wenn heute schon ein erfolgreicher Lauf stattfand, und nach einem
+// Fehler frühestens nach retryHours erneut.
+export function isUpdateDue(now, { lastSuccess, lastFailure }, { hour = 3, windowHours = 3, timeZone = 'Europe/Berlin', retryHours = 1 } = {}) {
+  const current = localParts(now, timeZone);
+  if (current.hour < hour || current.hour >= hour + windowHours) return false;
+  if (lastSuccess && localParts(lastSuccess, timeZone).day === current.day) return false;
+  if (lastFailure && now - lastFailure < retryHours * HOUR) return false;
+  return true;
+}
+
+// Prüft alle 15 Minuten, ob der nächtliche Lauf fällig ist.
+export function scheduleUpdates(options = {}) {
   const check = async () => {
     try {
       const { rows: [state] } = await pool.query(
@@ -132,9 +149,7 @@ export function scheduleUpdates({ intervalDays = 7, retryHours = 6 } = {}) {
                 max(started_at) FILTER (WHERE status <> 'erfolgreich') AS last_failure
          FROM code_updates`,
       );
-      const now = Date.now();
-      if (state.last_success && now - state.last_success.getTime() < intervalDays * 24 * HOUR) return;
-      if (state.last_failure && now - state.last_failure.getTime() < retryHours * HOUR) return;
+      if (!isUpdateDue(new Date(), { lastSuccess: state.last_success, lastFailure: state.last_failure }, options)) return;
       const result = await runUpdate();
       console.log('Code-Update:', JSON.stringify(result));
     } catch (error) {
@@ -142,7 +157,7 @@ export function scheduleUpdates({ intervalDays = 7, retryHours = 6 } = {}) {
     }
   };
   setTimeout(check, 30_000).unref();
-  setInterval(check, HOUR).unref();
+  setInterval(check, HOUR / 4).unref();
 }
 
 export async function recentUpdates(limit = 10) {
