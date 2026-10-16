@@ -20,6 +20,18 @@ Ab Version 12 kommen die Codes aus einer PostgreSQL-Datenbank. Das Schema ist au
 
 Die Systemansicht ist eine drehbare 3D-Ansicht (Three.js 0.170, MIT, lokal in `dist/vendor/three`). Schnellansichten 3D/Oben/Seite/Vorne, Bauteilname beim Überfahren, schwebende Beschriftung am markierten Bauteil. Die Lage der Bauteile stammt aus dem 2D-Plan (SVG in `dist/index.html`), Höhe und Form aus `dist/vehicle3d.js`, Zusatzdetails aus `dist/vehicle3d-details.js`. Der 2D-Plan bleibt per Umschalter und als Rückfall ohne WebGL erhalten.
 
+**Bauformen** (`dist/vehicle3d-layouts.js`): Die 3D-Ansicht zeigt eine für den gewählten Hersteller typische Bauform – schematisch, nicht modellgenau – und ist über „Bauform“ umschaltbar:
+
+| Bauform | Merkmale | Hersteller |
+|---|---|---|
+| Kompakt · R4 quer · Front | Grundform aus dem 2D-Plan | alle übrigen, „Nur Standardcodes“ |
+| Limousine · R6 längs · Heck | Reihensechser, Kardanwelle, Batterie im Kofferraum | BMW, Mercedes-Benz, Jaguar, Infiniti |
+| SUV/Pick-up · V8 längs · Allrad | Bank 1 links (1-3-5-7), Bank 2 rechts (2-4-6-8), zwei Abgasstränge | Chevrolet, GMC, Cadillac, GM, Ford, Lincoln, Mercury, Dodge, Chrysler, Jeep, Plymouth, Pontiac, Buick, Oldsmobile |
+| Kombi · Boxer längs · Allrad | liegende Zylinder, Ladeluftkühler oben | Subaru |
+| Hybrid · R4 quer + E-Motor · Front | E-Motor/Leistungselektronik, Hochvoltbatterie unter der Rückbank | Toyota, Lexus |
+
+Codes für Zylinder 5–8, Einspritzventile 5–8 und Lambdasonden der Bank 2 haben eigene Bauteile. Fehlt ein Bauteil in einer Bauform (z. B. Zylinder 7 beim Vierzylinder) oder im 2D-Plan, wird das übergeordnete Bauteil markiert (`FALLBACK`).
+
 ## Datenmodell
 
 | Tabelle | Inhalt |

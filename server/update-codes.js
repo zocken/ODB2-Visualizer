@@ -10,7 +10,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { pool, migrate, withTransaction } from './db.js';
 import { importData } from './seed.js';
-import { BRANDS, GENERIC_FILES, REPO, SOURCE, entry, isPassengerCar, parseCodes } from './wal33d.js';
+import { BRANDS, COMPONENTS, GENERIC_FILES, REPO, SOURCE, entry, isPassengerCar, parseCodes } from './wal33d.js';
 
 const API = `https://api.github.com/repos/${REPO}`;
 const RAW = `https://raw.githubusercontent.com/${REPO}`;
@@ -47,7 +47,8 @@ async function loadSource() {
     .filter((p) => /^data\/source-data\/[a-z_]+_codes\.txt$/.test(p))
     .map((p) => p.split('/').pop());
 
-  const data = { manufacturers: [], codes: [] };
+  // Bauteile mitliefern: neue Bauteile werden angelegt, bevor Codes darauf verweisen.
+  const data = { components: COMPONENTS, manufacturers: [], codes: [] };
   const source = `${SOURCE} · Stand ${sha.slice(0, 7)}`;
   let skipped = 0;
   for (const file of files) {

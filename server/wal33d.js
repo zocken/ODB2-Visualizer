@@ -20,6 +20,8 @@ export const BRANDS = {
 const base = JSON.parse(readFileSync(new URL('../db/seed/generic-codes.json', import.meta.url), 'utf8'));
 const componentLabels = Object.fromEntries(base.components.map((c) => [c.id, c.label]));
 export const HANDWRITTEN = new Set(base.codes.map((c) => c.code));
+// Bauteilliste (Fahrzeugansicht) – muss vor den Zuordnungen in der Datenbank stehen.
+export const COMPONENTS = base.components;
 
 // Nutzfahrzeug-spezifische Funktionen gehören nicht zum Pkw-Bereich.
 const COMMERCIAL = /\bpto\b|power take.?off|air brake|tachograph|retarder|engine brake|exhaust brake|fifth wheel|trailer brake|tag axle|lift axle/i;
@@ -114,11 +116,14 @@ function describe(code, en, brand) {
   let active = [...(family.active || [])];
   const context = [...(family.context || [])];
   const cylinder = Number(en.match(/cylinder (\d+)/i)?.[1]);
-  if (family.cylinders && cylinder >= 1 && cylinder <= 4) active = [`cylinder-${cylinder}`];
-  if (family.injectors && cylinder >= 1 && cylinder <= 4) active = [`injector-${cylinder}`];
+  // Zylinder/Einspritzventile 1–8; Bauformen mit weniger Zylindern markieren dann den Motor (FALLBACK im Frontend).
+  if (family.cylinders && cylinder >= 1 && cylinder <= 8) active = [`cylinder-${cylinder}`];
+  if (family.injectors && cylinder >= 1 && cylinder <= 8) active = [`injector-${cylinder}`];
   if (family.bank2 && /bank 2/i.test(en)) active = family.bank2;
   // Sensor 2/3 sitzen hinter dem Katalysator.
   if (family.lambdaRear && /sensor [23]\b/i.test(en)) active = ['lambda-rear'];
+  // Lambdasonden der Bank 2 eigenständig (V-Motoren); Bauformen mit einer Bank fallen auf Bank 1 zurück.
+  if (family.lambdaRear && /bank 2/i.test(en)) active = active.map((id) => (id.startsWith('lambda-') ? `${id}-2` : id));
   if (family.wheels) {
     if (/left front|front left|\blf\b/i.test(en)) active = ['wheel-fl'];
     else if (/right front|front right|\brf\b/i.test(en)) active = ['wheel-fr'];

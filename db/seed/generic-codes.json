@@ -208,6 +208,46 @@
     {
       "id": "wheel-rr",
       "label": "Raddrehzahlsensor hinten rechts"
+    },
+    {
+      "id": "cylinder-5",
+      "label": "Zylinder 5"
+    },
+    {
+      "id": "cylinder-6",
+      "label": "Zylinder 6"
+    },
+    {
+      "id": "cylinder-7",
+      "label": "Zylinder 7"
+    },
+    {
+      "id": "cylinder-8",
+      "label": "Zylinder 8"
+    },
+    {
+      "id": "injector-5",
+      "label": "Einspritzventil Zylinder 5"
+    },
+    {
+      "id": "injector-6",
+      "label": "Einspritzventil Zylinder 6"
+    },
+    {
+      "id": "injector-7",
+      "label": "Einspritzventil Zylinder 7"
+    },
+    {
+      "id": "injector-8",
+      "label": "Einspritzventil Zylinder 8"
+    },
+    {
+      "id": "lambda-front-2",
+      "label": "Lambdasonde vor Katalysator Bank 2"
+    },
+    {
+      "id": "lambda-rear-2",
+      "label": "Lambdasonde nach Katalysator Bank 2"
     }
   ],
   "codes": [

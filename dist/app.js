@@ -74,8 +74,13 @@ ready.then(()=>source.manufacturers()).then(list=>{
   byId('maker-row').hidden=false;
 }).catch(()=>{});
 
+// Parts that exist only in some 3D layouts (cylinders 5–8, bank 2 sensors) fall back to their parent in the 2D plan.
+const PLAN_FALLBACK={'cylinder-5':'engine','cylinder-6':'engine','cylinder-7':'engine','cylinder-8':'engine','injector-5':'fuel-rail','injector-6':'fuel-rail','injector-7':'fuel-rail','injector-8':'fuel-rail','lambda-front-2':'lambda-front','lambda-rear-2':'lambda-rear'};
+const planIds=ids=>(ids||[]).map(id=>document.querySelector(`#vehicle-diagram [data-component="${id}"]`)?id:PLAN_FALLBACK[id]).filter(Boolean);
+
 function updateVehicle(c){
-  const entry=c?.vehicle?.labels?.length?c.vehicle:null, code=c?.code;
+  const vehicle=c?.vehicle?.labels?.length?c.vehicle:null, code=c?.code;
+  const entry=vehicle&&{...vehicle,active:planIds(vehicle.active),context:planIds(vehicle.context)};
   document.querySelectorAll('[data-component]').forEach(part=>{
     const id=part.dataset.component;
     part.classList.toggle('is-active',!!entry?.active?.includes(id));
@@ -88,7 +93,7 @@ function updateVehicle(c){
     const tag=document.createElement('span');tag.textContent=label;if(!entry)tag.className='unmapped';return tag;
   }));
   // Same state for the 3D view (vehicle-view.js); kept on window in case the module loads later.
-  window.vehicleState={active:entry?.active||[],context:(entry?.context||[]).filter(id=>!entry.active?.includes(id)),labels:entry?.labels||[]};
+  window.vehicleState={active:vehicle?.active||[],context:(vehicle?.context||[]).filter(id=>!vehicle.active?.includes(id)),labels:vehicle?.labels||[]};
   window.vehicle3d?.highlight(window.vehicleState);
 }
 

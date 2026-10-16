@@ -663,11 +663,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-5"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 5",
      "Motor"
     ]
    },
@@ -688,11 +691,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-6"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 6",
      "Motor"
     ]
    },
@@ -1171,11 +1177,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-5"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 5",
      "Motor"
     ]
    },
@@ -1196,11 +1205,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-6"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 6",
      "Motor"
     ]
    },
@@ -5726,13 +5738,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -5782,13 +5794,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -5838,13 +5850,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -6174,13 +6186,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -6423,13 +6435,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -6451,13 +6463,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -6479,13 +6491,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -6507,13 +6519,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -6535,13 +6547,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -6563,13 +6575,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -6899,13 +6911,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -6955,13 +6967,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -7011,13 +7023,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -7067,13 +7079,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -7123,13 +7135,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -8062,11 +8074,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-5"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 5",
      "Motor"
     ]
    },
@@ -8087,11 +8102,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-5"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 5",
      "Motor"
     ]
    },
@@ -8112,11 +8130,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-6"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 6",
      "Motor"
     ]
    },
@@ -8137,11 +8158,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-6"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 6",
      "Motor"
     ]
    },
@@ -8162,11 +8186,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-7"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 7",
      "Motor"
     ]
    },
@@ -8187,11 +8214,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-7"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 7",
      "Motor"
     ]
    },
@@ -8212,11 +8242,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-8"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 8",
      "Motor"
     ]
    },
@@ -8237,11 +8270,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-8"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 8",
      "Motor"
     ]
    },
@@ -13251,13 +13287,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -13279,13 +13315,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -13307,13 +13343,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -13335,13 +13371,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -13363,13 +13399,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -13391,13 +13427,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -13419,13 +13455,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -13447,13 +13483,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -13475,13 +13511,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -14241,13 +14277,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-5"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 5",
      "Motor"
     ]
    },
@@ -14269,13 +14305,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-6"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 6",
      "Motor"
     ]
    },
@@ -14325,13 +14361,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-8"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 8",
      "Motor"
     ]
    },
@@ -23799,13 +23835,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -23827,13 +23863,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -23855,13 +23891,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -23883,13 +23919,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -23911,13 +23947,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -23939,13 +23975,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -23967,13 +24003,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -23995,13 +24031,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -24023,13 +24059,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -24789,13 +24825,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-5"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 5",
      "Motor"
     ]
    },
@@ -24817,13 +24853,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-6"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 6",
      "Motor"
     ]
    },
@@ -24845,13 +24881,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-7"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 7",
      "Motor"
     ]
    },
@@ -24873,13 +24909,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-8"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 8",
      "Motor"
     ]
    },
@@ -34375,13 +34411,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -34403,13 +34439,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -34431,13 +34467,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -34459,13 +34495,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -34487,13 +34523,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -34515,13 +34551,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -34543,13 +34579,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -34571,13 +34607,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -34599,13 +34635,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -35365,13 +35401,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-5"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 5",
      "Motor"
     ]
    },
@@ -35393,13 +35429,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-6"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 6",
      "Motor"
     ]
    },
@@ -35421,13 +35457,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-7"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 7",
      "Motor"
     ]
    },
@@ -35449,13 +35485,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-8"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 8",
      "Motor"
     ]
    },
@@ -44951,13 +44987,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -44979,13 +45015,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -45007,13 +45043,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -45035,13 +45071,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -45063,13 +45099,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -45091,13 +45127,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -45119,13 +45155,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -45147,13 +45183,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -45175,13 +45211,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -45941,13 +45977,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-5"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 5",
      "Motor"
     ]
    },
@@ -45969,13 +46005,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-6"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 6",
      "Motor"
     ]
    },
@@ -45997,13 +46033,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-7"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 7",
      "Motor"
     ]
    },
@@ -46025,13 +46061,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-8"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 8",
      "Motor"
     ]
    },
@@ -51636,13 +51672,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -55184,13 +55220,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -55212,13 +55248,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -55240,13 +55276,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -55352,13 +55388,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -55380,13 +55416,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -66683,13 +66719,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -66711,13 +66747,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -66739,13 +66775,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -66767,13 +66803,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -66795,13 +66831,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -66823,13 +66859,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -66851,13 +66887,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -66879,13 +66915,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -66907,13 +66943,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -67673,13 +67709,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-5"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 5",
      "Motor"
     ]
    },
@@ -67701,13 +67737,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-6"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 6",
      "Motor"
     ]
    },
@@ -67729,13 +67765,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-7"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 7",
      "Motor"
     ]
    },
@@ -67757,13 +67793,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-8"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 8",
      "Motor"
     ]
    },
@@ -77231,13 +77267,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -77259,13 +77295,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -77287,13 +77323,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -77315,13 +77351,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -77343,13 +77379,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -77371,13 +77407,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -77399,13 +77435,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -77427,13 +77463,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -77455,13 +77491,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -78221,13 +78257,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-5"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 5",
      "Motor"
     ]
    },
@@ -78249,13 +78285,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-6"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 6",
      "Motor"
     ]
    },
@@ -78277,13 +78313,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-7"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 7",
      "Motor"
     ]
    },
@@ -78305,13 +78341,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-8"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 8",
      "Motor"
     ]
    },
@@ -87289,11 +87325,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-5"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 5",
      "Motor"
     ]
    },
@@ -87314,11 +87353,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-6"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 6",
      "Motor"
     ]
    },
@@ -87797,11 +87839,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-5"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 5",
      "Motor"
     ]
    },
@@ -87822,11 +87867,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-6"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 6",
      "Motor"
     ]
    },
@@ -89778,11 +89826,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-5"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 5",
      "Motor"
     ]
    },
@@ -89803,11 +89854,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-6"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 6",
      "Motor"
     ]
    },
@@ -90286,11 +90340,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-5"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 5",
      "Motor"
     ]
    },
@@ -90311,11 +90368,14 @@
     "Kompressionsverlust oder Falschluft"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-6"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 6",
      "Motor"
     ]
    },
@@ -92831,13 +92891,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-5"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 5",
      "Motor"
     ]
    },
@@ -92859,13 +92919,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-6"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 6",
      "Motor"
     ]
    },
@@ -92887,13 +92947,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-7"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 7",
      "Motor"
     ]
    },
@@ -92915,13 +92975,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-8"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 8",
      "Motor"
     ]
    },
@@ -93803,11 +93863,14 @@
     "Steuergerät oder Software"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-5"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 5",
      "Motor"
     ]
    },
@@ -93828,11 +93891,14 @@
     "Steuergerät oder Software"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-6"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 6",
      "Motor"
     ]
    },
@@ -94040,11 +94106,14 @@
     "Steuergerät oder Software"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-5"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 5",
      "Motor"
     ]
    },
@@ -94065,11 +94134,14 @@
     "Steuergerät oder Software"
    ],
    "vehicle": {
-    "active": [],
+    "active": [
+     "cylinder-6"
+    ],
     "context": [
      "engine"
     ],
     "labels": [
+     "Zylinder 6",
      "Motor"
     ]
    },
@@ -95298,13 +95370,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -96234,13 +96306,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -103155,13 +103227,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -103183,13 +103255,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -103211,13 +103283,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -103323,13 +103395,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -103351,13 +103423,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -114110,13 +114182,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -114138,13 +114210,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -114166,13 +114238,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -114306,13 +114378,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -121340,13 +121412,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -121368,13 +121440,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -121396,13 +121468,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -121508,13 +121580,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -121536,13 +121608,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -134370,13 +134442,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -134790,13 +134862,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -134818,13 +134890,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -134846,13 +134918,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -134874,13 +134946,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -134902,13 +134974,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -134930,13 +135002,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -134958,13 +135030,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -134986,13 +135058,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -135014,13 +135086,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -135780,13 +135852,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-5"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 5",
      "Motor"
     ]
    },
@@ -135808,13 +135880,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-6"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 6",
      "Motor"
     ]
    },
@@ -135836,13 +135908,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-7"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 7",
      "Motor"
     ]
    },
@@ -135864,13 +135936,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-8"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 8",
      "Motor"
     ]
    },
@@ -144435,13 +144507,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -147514,13 +147586,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -151415,13 +151487,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -151443,13 +151515,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -151471,13 +151543,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -151499,13 +151571,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -151527,13 +151599,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -151555,13 +151627,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -151583,13 +151655,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -151611,13 +151683,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -151639,13 +151711,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -152405,13 +152477,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-5"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 5",
      "Motor"
     ]
    },
@@ -152433,13 +152505,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-6"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 6",
      "Motor"
     ]
    },
@@ -152489,13 +152561,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-8"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 8",
      "Motor"
     ]
    },
@@ -165257,13 +165329,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -165285,13 +165357,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -165313,13 +165385,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -165341,13 +165413,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -165369,13 +165441,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -165618,13 +165690,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -165646,13 +165718,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -165674,13 +165746,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -165702,13 +165774,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -166387,13 +166459,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -166415,13 +166487,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -166471,13 +166543,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -167442,13 +167514,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-front"
+     "lambda-front-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde vor Katalysator",
+     "Lambdasonde vor Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -167498,13 +167570,13 @@
    ],
    "vehicle": {
     "active": [
-     "lambda-rear"
+     "lambda-rear-2"
     ],
     "context": [
      "exhaust"
     ],
     "labels": [
-     "Lambdasonde nach Katalysator",
+     "Lambdasonde nach Katalysator Bank 2",
      "Abgasstrang"
     ]
    },
@@ -167638,13 +167710,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-5"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 5",
      "Motor"
     ]
    },
@@ -167666,13 +167738,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-6"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 6",
      "Motor"
     ]
    },
@@ -167694,13 +167766,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-7"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 7",
      "Motor"
     ]
    },
@@ -167722,13 +167794,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-8"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 8",
      "Motor"
     ]
    },
@@ -167946,13 +168018,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-5"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 5",
      "Motor"
     ]
    },
@@ -167974,13 +168046,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-6"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 6",
      "Motor"
     ]
    },
@@ -168002,13 +168074,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-7"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 7",
      "Motor"
     ]
    },
@@ -168030,13 +168102,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-8"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 8",
      "Motor"
     ]
    },
@@ -168170,13 +168242,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-5"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 5",
      "Motor"
     ]
    },
@@ -168198,13 +168270,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-6"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 6",
      "Motor"
     ]
    },
@@ -168226,13 +168298,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-7"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 7",
      "Motor"
     ]
    },
@@ -168254,13 +168326,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-8"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 8",
      "Motor"
     ]
    },
@@ -168394,13 +168466,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-5"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 5",
      "Motor"
     ]
    },
@@ -168422,13 +168494,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-6"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 6",
      "Motor"
     ]
    },
@@ -168450,13 +168522,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-7"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 7",
      "Motor"
     ]
    },
@@ -168478,13 +168550,13 @@
    ],
    "vehicle": {
     "active": [
-     "fuel-rail"
+     "injector-8"
     ],
     "context": [
      "engine"
     ],
     "labels": [
-     "Kraftstoffverteilung",
+     "Einspritzventil Zylinder 8",
      "Motor"
     ]
    },
