@@ -20,7 +20,7 @@ Ab Version 12 kommen die Codes aus einer PostgreSQL-Datenbank. Das Schema ist au
 
 Die Systemansicht ist eine drehbare 3D-Ansicht (Three.js 0.170, MIT, lokal in `dist/vendor/three`). Schnellansichten 3D/Oben/Seite/Vorne, Bauteilname beim Überfahren, schwebende Beschriftung am markierten Bauteil. Die Lage der Bauteile stammt aus dem 2D-Plan (SVG in `dist/index.html`), Höhe und Form aus `dist/vehicle3d.js`, Zusatzdetails aus `dist/vehicle3d-details.js`. Der 2D-Plan bleibt per Umschalter und als Rückfall ohne WebGL erhalten.
 
-**Bauformen** (`dist/vehicle3d-layouts.js`): Die 3D-Ansicht zeigt eine für den gewählten Hersteller typische Bauform – schematisch, nicht modellgenau – und ist über „Bauform“ umschaltbar:
+**Bauformen** (`dist/vehicle3d-layouts.js`): Die 3D-Ansicht zeigt eine für den gewählten Hersteller typische Bauform – schematisch, nicht modellgenau. Sie wechselt ausschließlich mit der Herstellerauswahl; ihr Name steht im Hinweis unter der Grafik:
 
 | Bauform | Merkmale | Hersteller |
 |---|---|---|

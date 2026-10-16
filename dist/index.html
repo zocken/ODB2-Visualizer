@@ -7,7 +7,7 @@
   <meta name="description" content="OBD2-Fehlercodes in verständlichem Klartext – mit Systemvisualisierung, Dringlichkeit und nächsten Schritten.">
   <title>OBD2 Klartext</title>
   <link rel="stylesheet" href="styles.css?v=16">
-  <link rel="stylesheet" href="vehicle.css?v=16">
+  <link rel="stylesheet" href="vehicle.css?v=17">
   <script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js","three/addons/":"./vendor/three/addons/"}}</script>
 </head>
 <body>
@@ -62,15 +62,11 @@
               <button type="button" data-view="side" aria-pressed="false">Seite</button>
               <button type="button" data-view="front" aria-pressed="false">Vorne</button>
             </div>
-            <button type="button" class="view-mode" data-mode-toggle>2D-Plan</button>
-            <label class="layout-pick" for="layout-select"><span>Bauform</span>
-              <select id="layout-select" aria-describedby="layout-hint"></select>
-            </label>
-          </div>
+            <button type="button" class="view-mode" data-mode-toggle>2D-Plan</button>          </div>
           <div id="vehicle-3d" class="vehicle-3d" hidden>
             <div class="vehicle-3d-stage" role="img" aria-label="Drehbare 3D-Ansicht des Fahrzeugs; die zum Fehlercode gehörenden Bauteile sind orange markiert"></div>
             <span class="vehicle-3d-tip" hidden></span>
-            <span id="layout-hint" class="vehicle-3d-hint">Typische Bauform · schematisch, nicht modellgenau · Ziehen zum Drehen</span>
+            <span id="layout-hint" class="vehicle-3d-hint" aria-live="polite">Typische Bauform · schematisch, nicht modellgenau · Ziehen zum Drehen</span>
           </div>
           <div class="vehicle-scan">
           <svg id="vehicle-diagram" class="vehicle-plan" viewBox="0 0 360 620" role="img" aria-labelledby="vehicle-svg-title vehicle-svg-desc">
@@ -187,6 +183,6 @@
 
   <footer><span>OBD2 Klartext</span><span>Lernprojekt · Keine Reparaturanleitung</span></footer>
   <script src="app.js?v=20"></script>
-  <script type="module" src="vehicle-view.js?v=13"></script>
+  <script type="module" src="vehicle-view.js?v=14"></script>
 </body>
 </html>

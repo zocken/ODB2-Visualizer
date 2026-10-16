@@ -10,8 +10,7 @@ const toolbar = document.getElementById('view-toolbar');
 const tip = host.querySelector('.vehicle-3d-tip');
 const modeButton = toolbar.querySelector('[data-mode-toggle]');
 const viewButtons = [...toolbar.querySelectorAll('[data-view]')];
-const layoutPick = toolbar.querySelector('.layout-pick');
-const layoutSelect = document.getElementById('layout-select');
+const layoutHint = document.getElementById('layout-hint');
 
 function webglAvailable() {
   try {
@@ -48,19 +47,18 @@ if (webglAvailable()) {
     window.vehicle3d = viewer;
     if (window.vehicleState) viewer.highlight(window.vehicleState);
 
-    // Bauform: folgt dem gewählten Hersteller, bis der Nutzer selbst eine wählt (gilt bis zum nächsten Herstellerwechsel).
-    layoutSelect.append(...Object.entries(LAYOUTS).map(([id, layout]) => new Option(layout.name, id)));
-    const applyLayout = (id) => { viewer.setLayout(id); layoutSelect.value = viewer.layout; };
-    window.setVehicleBrand = (slug) => applyLayout(BRAND_LAYOUT[slug] || 'fwd4');
+    // Bauform folgt ausschließlich dem gewählten Hersteller; ihr Name steht im Hinweis.
+    window.setVehicleBrand = (slug) => {
+      viewer.setLayout(BRAND_LAYOUT[slug] || 'fwd4');
+      layoutHint.textContent = `${LAYOUTS[viewer.layout].name} · typische Bauform, schematisch · Ziehen zum Drehen`;
+    };
     window.setVehicleBrand(window.vehicleBrand || '');
-    layoutSelect.addEventListener('change', () => applyLayout(layoutSelect.value));
 
     const setMode = (mode) => {
       const is3d = mode === '3d';
       host.hidden = !is3d;
       scan.hidden = is3d;
       viewButtons.forEach((b) => { b.hidden = !is3d; });
-      layoutPick.hidden = !is3d;
       modeButton.textContent = is3d ? '2D-Plan' : '3D-Ansicht';
       modeButton.setAttribute('aria-pressed', String(!is3d));
       storeMode(mode);
