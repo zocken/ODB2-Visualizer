@@ -15,3 +15,6 @@ node_modules/
 .env.*
 !.env.example
 
+
+# Generierter statischer Datenexport (server/build-static.js)
+dist/data/

@@ -1,0 +1,981 @@
+{
+  "description": "Herstellerunabhängige Basisdaten (redaktionelle Texte, siehe QUELLEN.md)",
+  "components": [
+    {
+      "id": "cooling",
+      "label": "Kühlsystem"
+    },
+    {
+      "id": "coolant-sensor",
+      "label": "Kühlmitteltemperatursensor"
+    },
+    {
+      "id": "thermostat",
+      "label": "Thermostat"
+    },
+    {
+      "id": "engine",
+      "label": "Motor"
+    },
+    {
+      "id": "cylinder-1",
+      "label": "Zylinder 1"
+    },
+    {
+      "id": "cylinder-2",
+      "label": "Zylinder 2"
+    },
+    {
+      "id": "cylinder-3",
+      "label": "Zylinder 3"
+    },
+    {
+      "id": "cylinder-4",
+      "label": "Zylinder 4"
+    },
+    {
+      "id": "fuel-rail",
+      "label": "Kraftstoffverteilung"
+    },
+    {
+      "id": "injector-1",
+      "label": "Einspritzventil Zylinder 1"
+    },
+    {
+      "id": "injector-2",
+      "label": "Einspritzventil Zylinder 2"
+    },
+    {
+      "id": "injector-3",
+      "label": "Einspritzventil Zylinder 3"
+    },
+    {
+      "id": "injector-4",
+      "label": "Einspritzventil Zylinder 4"
+    },
+    {
+      "id": "intake",
+      "label": "Ansaugsystem"
+    },
+    {
+      "id": "maf",
+      "label": "Luftmassenmesser"
+    },
+    {
+      "id": "battery",
+      "label": "Batterie"
+    },
+    {
+      "id": "ecm",
+      "label": "Motorsteuergerät"
+    },
+    {
+      "id": "alternator",
+      "label": "Lichtmaschine"
+    },
+    {
+      "id": "camshaft",
+      "label": "Nockenwellensensor"
+    },
+    {
+      "id": "crankshaft",
+      "label": "Kurbelwellensensor"
+    },
+    {
+      "id": "egr",
+      "label": "Abgasrückführung"
+    },
+    {
+      "id": "transmission",
+      "label": "Getriebe"
+    },
+    {
+      "id": "input-speed",
+      "label": "Getriebe-Eingangsdrehzahlsensor"
+    },
+    {
+      "id": "vehicle-speed",
+      "label": "Geschwindigkeitssensor"
+    },
+    {
+      "id": "tcm",
+      "label": "Getriebesteuergerät"
+    },
+    {
+      "id": "abs",
+      "label": "ABS-Steuergerät"
+    },
+    {
+      "id": "wheel-fl",
+      "label": "Raddrehzahlsensor vorne links"
+    },
+    {
+      "id": "wheel-fr",
+      "label": "Raddrehzahlsensor vorne rechts"
+    },
+    {
+      "id": "can",
+      "label": "Kommunikationsnetz / CAN-Bus"
+    },
+    {
+      "id": "exhaust",
+      "label": "Abgasstrang"
+    },
+    {
+      "id": "lambda-front",
+      "label": "Lambdasonde vor Katalysator"
+    },
+    {
+      "id": "cat-1",
+      "label": "Katalysator Bank 1"
+    },
+    {
+      "id": "cat-2",
+      "label": "Katalysator Bank 2, schematisch"
+    },
+    {
+      "id": "bcm",
+      "label": "Karosserieelektronik, herstellerabhängig"
+    },
+    {
+      "id": "airbag-left",
+      "label": "Seitenairbag links"
+    },
+    {
+      "id": "tank",
+      "label": "Kraftstofftank / Tankentlüftung"
+    },
+    {
+      "id": "evap",
+      "label": "Tankentlüftung"
+    },
+    {
+      "id": "tank-cap",
+      "label": "Tankverschluss"
+    }
+  ],
+  "codes": [
+    {
+      "code": "P0100",
+      "manufacturer": null,
+      "title": "Luftmassenmesser – Stromkreis",
+      "system": "Luftversorgung",
+      "urgency": "Gelb",
+      "explanation": "Der Messwert der angesaugten Luft fehlt oder ist elektrisch unplausibel.",
+      "location": "Ansaugsystem im Motorraum",
+      "causes": [
+        "Stecker oder Kabel am Luftmassenmesser",
+        "Verschmutzter Luftmassenmesser",
+        "Defekter Sensor"
+      ],
+      "vehicle": {
+        "active": [
+          "maf"
+        ],
+        "context": [
+          "intake"
+        ],
+        "labels": [
+          "Luftmassenmesser",
+          "Ansaugung"
+        ]
+      }
+    },
+    {
+      "code": "P0101",
+      "manufacturer": null,
+      "title": "Luftmassenmesser – Bereich/Funktion",
+      "system": "Luftversorgung",
+      "urgency": "Gelb",
+      "explanation": "Die gemessene Luftmenge passt nicht zu den übrigen Motorwerten.",
+      "location": "Ansaugtrakt im Motorraum",
+      "causes": [
+        "Verschmutzter Luftmassenmesser",
+        "Undichtigkeit im Ansaugtrakt",
+        "Sensor misst ungenau"
+      ],
+      "vehicle": {
+        "active": [
+          "maf"
+        ],
+        "context": [
+          "intake"
+        ],
+        "labels": [
+          "Luftmassenmesser",
+          "Ansaugung"
+        ]
+      }
+    },
+    {
+      "code": "P0115",
+      "manufacturer": null,
+      "title": "Kühlmitteltemperatursensor – Stromkreis",
+      "system": "Motorkühlung",
+      "urgency": "Gelb",
+      "explanation": "Das Motorsteuergerät erhält kein plausibles Temperatursignal.",
+      "location": "Motor und Kühlsystem",
+      "causes": [
+        "Stecker oder Leitung",
+        "Defekter Temperatursensor",
+        "Kontaktproblem durch Feuchtigkeit"
+      ],
+      "vehicle": {
+        "active": [
+          "coolant-sensor"
+        ],
+        "context": [
+          "cooling"
+        ],
+        "labels": [
+          "Kühlmitteltemperatursensor",
+          "Kühlsystem"
+        ]
+      }
+    },
+    {
+      "code": "P0128",
+      "manufacturer": null,
+      "title": "Kühlmitteltemperatur unter Regelbereich",
+      "system": "Motorkühlung",
+      "urgency": "Gelb",
+      "explanation": "Der Motor erreicht seine vorgesehene Betriebstemperatur zu langsam.",
+      "location": "Kühlkreislauf im Motorraum",
+      "causes": [
+        "Thermostat bleibt offen",
+        "Temperatursensor misst falsch",
+        "Sehr niedrige Außentemperatur"
+      ],
+      "vehicle": {
+        "active": [
+          "cooling",
+          "thermostat"
+        ],
+        "context": [],
+        "labels": [
+          "Kühlsystem",
+          "Thermostatbereich"
+        ]
+      }
+    },
+    {
+      "code": "P0130",
+      "manufacturer": null,
+      "title": "Lambdasonde Bank 1 Sensor 1 – Stromkreis",
+      "system": "Abgasregelung",
+      "urgency": "Gelb",
+      "explanation": "Das Signal der Lambdasonde vor dem Katalysator ist fehlerhaft.",
+      "location": "Abgasstrang nahe Motor",
+      "causes": [
+        "Sonde oder Stecker",
+        "Kabel nahe der Abgasanlage",
+        "Undichtigkeit im Abgastrakt"
+      ],
+      "vehicle": {
+        "active": [
+          "lambda-front"
+        ],
+        "context": [
+          "exhaust"
+        ],
+        "labels": [
+          "Lambdasonde · Bank 1 / Sensor 1"
+        ]
+      }
+    },
+    {
+      "code": "P0135",
+      "manufacturer": null,
+      "title": "Lambdasondenheizung Bank 1 Sensor 1",
+      "system": "Abgasregelung",
+      "urgency": "Gelb",
+      "explanation": "Die Heizung der vorderen Lambdasonde arbeitet nicht wie erwartet.",
+      "location": "Abgasstrang nahe Motor",
+      "causes": [
+        "Heizelement der Sonde",
+        "Sicherung oder Leitung",
+        "Korrodierter Steckkontakt"
+      ],
+      "vehicle": {
+        "active": [
+          "lambda-front"
+        ],
+        "context": [
+          "exhaust"
+        ],
+        "labels": [
+          "Lambdasondenheizung · Bank 1 / Sensor 1"
+        ]
+      }
+    },
+    {
+      "code": "P0171",
+      "manufacturer": null,
+      "title": "Gemisch zu mager – Bank 1",
+      "system": "Gemischaufbereitung",
+      "urgency": "Gelb",
+      "explanation": "Der Motor bekommt im Verhältnis zum Kraftstoff zu viel Luft.",
+      "location": "Ansaugung und Kraftstoffsystem",
+      "causes": [
+        "Falschluft im Ansaugsystem",
+        "Zu niedriger Kraftstoffdruck",
+        "Verschmutzter Luftmassenmesser"
+      ],
+      "vehicle": {
+        "active": [
+          "intake",
+          "fuel-rail"
+        ],
+        "context": [
+          "engine"
+        ],
+        "labels": [
+          "Gemischaufbereitung",
+          "Ansaugung / Einspritzung"
+        ]
+      }
+    },
+    {
+      "code": "P0172",
+      "manufacturer": null,
+      "title": "Gemisch zu fett – Bank 1",
+      "system": "Gemischaufbereitung",
+      "urgency": "Gelb",
+      "explanation": "Der Motor bekommt im Verhältnis zur Luft zu viel Kraftstoff.",
+      "location": "Einspritzung und Ansaugung",
+      "causes": [
+        "Undichtes Einspritzventil",
+        "Falscher Luftmassenwert",
+        "Zu hoher Kraftstoffdruck"
+      ],
+      "vehicle": {
+        "active": [
+          "intake",
+          "fuel-rail"
+        ],
+        "context": [
+          "engine"
+        ],
+        "labels": [
+          "Gemischaufbereitung",
+          "Ansaugung / Einspritzung"
+        ]
+      }
+    },
+    {
+      "code": "P0201",
+      "manufacturer": null,
+      "title": "Einspritzventil Zylinder 1 – Stromkreis",
+      "system": "Einspritzung",
+      "urgency": "Rot",
+      "explanation": "Die elektrische Ansteuerung des Einspritzventils an Zylinder 1 ist gestört.",
+      "location": "Motor – Zylinder 1",
+      "causes": [
+        "Stecker oder Leitung",
+        "Defektes Einspritzventil",
+        "Treiber im Motorsteuergerät"
+      ],
+      "vehicle": {
+        "active": [
+          "injector-1"
+        ],
+        "context": [
+          "engine",
+          "cylinder-1"
+        ],
+        "labels": [
+          "Motor",
+          "Einspritzventil · Zylinder 1"
+        ]
+      }
+    },
+    {
+      "code": "P0202",
+      "manufacturer": null,
+      "title": "Einspritzventil Zylinder 2 – Stromkreis",
+      "system": "Einspritzung",
+      "urgency": "Rot",
+      "explanation": "Die elektrische Ansteuerung des Einspritzventils an Zylinder 2 ist gestört.",
+      "location": "Motor – Zylinder 2",
+      "causes": [
+        "Stecker oder Leitung",
+        "Defektes Einspritzventil",
+        "Treiber im Motorsteuergerät"
+      ],
+      "vehicle": {
+        "active": [
+          "injector-2"
+        ],
+        "context": [
+          "engine",
+          "cylinder-2"
+        ],
+        "labels": [
+          "Motor",
+          "Einspritzventil · Zylinder 2"
+        ]
+      }
+    },
+    {
+      "code": "P0300",
+      "manufacturer": null,
+      "title": "Zufällige/mehrfache Fehlzündung erkannt",
+      "system": "Motor & Verbrennung",
+      "urgency": "Rot",
+      "explanation": "Ein oder mehrere Zylinder zünden unregelmäßig. Das kann Ruckeln, Leistungsverlust oder eine blinkende Motorkontrollleuchte verursachen.",
+      "location": "Motorraum",
+      "causes": [
+        "Zündkerzen oder Zündspulen",
+        "Falschluft im Ansaugsystem",
+        "Kraftstoff- oder Kompressionsproblem"
+      ],
+      "vehicle": {
+        "active": [
+          "cylinder-1",
+          "cylinder-2",
+          "cylinder-3",
+          "cylinder-4"
+        ],
+        "context": [
+          "engine"
+        ],
+        "labels": [
+          "Motor",
+          "Mehrere / nicht zugeordnete Zylinder"
+        ]
+      }
+    },
+    {
+      "code": "P0301",
+      "manufacturer": null,
+      "title": "Fehlzündung an Zylinder 1",
+      "system": "Motor & Verbrennung",
+      "urgency": "Rot",
+      "explanation": "Zylinder 1 verbrennt das Gemisch nicht zuverlässig.",
+      "location": "Motor – Zylinder 1",
+      "causes": [
+        "Zündkerze oder Zündspule",
+        "Einspritzventil",
+        "Kompressionsverlust"
+      ],
+      "vehicle": {
+        "active": [
+          "cylinder-1"
+        ],
+        "context": [
+          "engine"
+        ],
+        "labels": [
+          "Motor",
+          "Zylinder 1"
+        ]
+      }
+    },
+    {
+      "code": "P0302",
+      "manufacturer": null,
+      "title": "Fehlzündung an Zylinder 2",
+      "system": "Motor & Verbrennung",
+      "urgency": "Rot",
+      "explanation": "Zylinder 2 verbrennt das Gemisch nicht zuverlässig.",
+      "location": "Motor – Zylinder 2",
+      "causes": [
+        "Zündkerze oder Zündspule",
+        "Einspritzventil",
+        "Kompressionsverlust"
+      ],
+      "vehicle": {
+        "active": [
+          "cylinder-2"
+        ],
+        "context": [
+          "engine"
+        ],
+        "labels": [
+          "Motor",
+          "Zylinder 2"
+        ]
+      }
+    },
+    {
+      "code": "P0303",
+      "manufacturer": null,
+      "title": "Fehlzündung an Zylinder 3",
+      "system": "Motor & Verbrennung",
+      "urgency": "Rot",
+      "explanation": "Zylinder 3 verbrennt das Gemisch nicht zuverlässig.",
+      "location": "Motor – Zylinder 3",
+      "causes": [
+        "Zündkerze oder Zündspule",
+        "Einspritzventil",
+        "Kompressionsverlust"
+      ],
+      "vehicle": {
+        "active": [
+          "cylinder-3"
+        ],
+        "context": [
+          "engine"
+        ],
+        "labels": [
+          "Motor",
+          "Zylinder 3"
+        ]
+      }
+    },
+    {
+      "code": "P0304",
+      "manufacturer": null,
+      "title": "Fehlzündung an Zylinder 4",
+      "system": "Motor & Verbrennung",
+      "urgency": "Rot",
+      "explanation": "Zylinder 4 verbrennt das Gemisch nicht zuverlässig.",
+      "location": "Motor – Zylinder 4",
+      "causes": [
+        "Zündkerze oder Zündspule",
+        "Einspritzventil",
+        "Kompressionsverlust"
+      ],
+      "vehicle": {
+        "active": [
+          "cylinder-4"
+        ],
+        "context": [
+          "engine"
+        ],
+        "labels": [
+          "Motor",
+          "Zylinder 4"
+        ]
+      }
+    },
+    {
+      "code": "P0335",
+      "manufacturer": null,
+      "title": "Kurbelwellensensor A – Stromkreis",
+      "system": "Motorsynchronisation",
+      "urgency": "Rot",
+      "explanation": "Das Drehzahl- und Positionssignal der Kurbelwelle fehlt oder ist gestört.",
+      "location": "Unterer Motorbereich",
+      "causes": [
+        "Kurbelwellensensor",
+        "Stecker oder Kabel",
+        "Beschädigtes Geberrad"
+      ],
+      "vehicle": {
+        "active": [
+          "crankshaft"
+        ],
+        "context": [
+          "engine"
+        ],
+        "labels": [
+          "Kurbelwellensensor",
+          "Motor"
+        ]
+      }
+    },
+    {
+      "code": "P0340",
+      "manufacturer": null,
+      "title": "Nockenwellensensor A – Stromkreis",
+      "system": "Motorsynchronisation",
+      "urgency": "Gelb",
+      "explanation": "Das Steuergerät erkennt kein korrektes Nockenwellensignal.",
+      "location": "Zylinderkopf",
+      "causes": [
+        "Nockenwellensensor",
+        "Stecker oder Kabel",
+        "Steuerzeiten außerhalb Soll"
+      ],
+      "vehicle": {
+        "active": [
+          "camshaft"
+        ],
+        "context": [
+          "engine"
+        ],
+        "labels": [
+          "Nockenwellensensor",
+          "Motor"
+        ]
+      }
+    },
+    {
+      "code": "P0401",
+      "manufacturer": null,
+      "title": "Abgasrückführung – Durchfluss zu gering",
+      "system": "Abgasrückführung",
+      "urgency": "Gelb",
+      "explanation": "Es wird weniger Abgas zurückgeführt als vom Motorsteuergerät erwartet.",
+      "location": "AGR-System am Motor",
+      "causes": [
+        "Verkoktes AGR-Ventil",
+        "Verstopfte Kanäle",
+        "Defekter Drucksensor"
+      ],
+      "vehicle": {
+        "active": [
+          "egr"
+        ],
+        "context": [
+          "engine",
+          "exhaust"
+        ],
+        "labels": [
+          "Abgasrückführung"
+        ]
+      }
+    },
+    {
+      "code": "P0420",
+      "manufacturer": null,
+      "title": "Katalysator-Wirkungsgrad zu niedrig – Bank 1",
+      "system": "Abgasnachbehandlung",
+      "urgency": "Gelb",
+      "explanation": "Der Katalysator reinigt die Abgase laut Messung nicht ausreichend.",
+      "location": "Abgasstrang Bank 1",
+      "causes": [
+        "Gealterter Katalysator",
+        "Defekte Lambdasonde",
+        "Länger bestehende Fehlzündungen"
+      ],
+      "vehicle": {
+        "active": [
+          "cat-1"
+        ],
+        "context": [
+          "exhaust"
+        ],
+        "labels": [
+          "Katalysator · Bank 1"
+        ]
+      }
+    },
+    {
+      "code": "P0430",
+      "manufacturer": null,
+      "title": "Katalysator-Wirkungsgrad zu niedrig – Bank 2",
+      "system": "Abgasnachbehandlung",
+      "urgency": "Gelb",
+      "explanation": "Der Katalysator an Bank 2 arbeitet laut Messung nicht effizient genug.",
+      "location": "Abgasstrang Bank 2",
+      "causes": [
+        "Gealterter Katalysator",
+        "Defekte Lambdasonde",
+        "Abgasleck"
+      ],
+      "vehicle": {
+        "active": [
+          "cat-2"
+        ],
+        "context": [
+          "exhaust"
+        ],
+        "labels": [
+          "Katalysator · Bank 2"
+        ]
+      }
+    },
+    {
+      "code": "P0442",
+      "manufacturer": null,
+      "title": "Tankentlüftung – kleine Undichtigkeit",
+      "system": "Tankentlüftung",
+      "urgency": "Grün",
+      "explanation": "Im geschlossenen Kraftstoffdampfsystem wurde eine kleine Undichtigkeit erkannt.",
+      "location": "Tank und Entlüftungsleitungen",
+      "causes": [
+        "Tankdeckel nicht dicht",
+        "Poröser Schlauch",
+        "Kleines Leck am Aktivkohlebehälter"
+      ],
+      "vehicle": {
+        "active": [
+          "evap",
+          "tank-cap"
+        ],
+        "context": [
+          "tank"
+        ],
+        "labels": [
+          "Tankentlüftung",
+          "Tank / Verschlussbereich"
+        ]
+      }
+    },
+    {
+      "code": "P0455",
+      "manufacturer": null,
+      "title": "Tankentlüftung – große Undichtigkeit",
+      "system": "Tankentlüftung",
+      "urgency": "Gelb",
+      "explanation": "Das Kraftstoffdampfsystem ist deutlich undicht oder nicht verschlossen.",
+      "location": "Tank und Entlüftungsleitungen",
+      "causes": [
+        "Tankdeckel fehlt oder sitzt lose",
+        "Schlauch abgerutscht",
+        "Defektes Entlüftungsventil"
+      ],
+      "vehicle": {
+        "active": [
+          "evap",
+          "tank-cap"
+        ],
+        "context": [
+          "tank"
+        ],
+        "labels": [
+          "Tankentlüftung",
+          "Tank / Verschlussbereich"
+        ]
+      }
+    },
+    {
+      "code": "P0500",
+      "manufacturer": null,
+      "title": "Fahrgeschwindigkeitssensor – Signal",
+      "system": "Geschwindigkeitserfassung",
+      "urgency": "Gelb",
+      "explanation": "Das Steuergerät erhält kein plausibles Geschwindigkeitssignal.",
+      "location": "Getriebe oder Radnabe",
+      "causes": [
+        "Raddrehzahl- oder Geschwindigkeitssensor",
+        "Kabel oder Stecker",
+        "Signalübertragung vom ABS"
+      ],
+      "vehicle": {
+        "active": [
+          "vehicle-speed"
+        ],
+        "context": [
+          "transmission"
+        ],
+        "labels": [
+          "Geschwindigkeitssignal",
+          "Sensorlage fahrzeugabhängig"
+        ]
+      }
+    },
+    {
+      "code": "P0562",
+      "manufacturer": null,
+      "title": "Systemspannung zu niedrig",
+      "system": "Bordnetz",
+      "urgency": "Rot",
+      "explanation": "Die elektrische Bordspannung ist während des Betriebs zu niedrig.",
+      "location": "Batterie und Ladesystem",
+      "causes": [
+        "Schwache Batterie",
+        "Lichtmaschine lädt nicht",
+        "Lose oder korrodierte Anschlüsse"
+      ],
+      "vehicle": {
+        "active": [
+          "battery",
+          "alternator"
+        ],
+        "context": [],
+        "labels": [
+          "Batterie",
+          "Ladesystem"
+        ]
+      }
+    },
+    {
+      "code": "P0700",
+      "manufacturer": null,
+      "title": "Getriebesteuerung meldet einen Fehler",
+      "system": "Automatikgetriebe",
+      "urgency": "Gelb",
+      "explanation": "Die Getriebesteuerung hat einen eigenen Fehler gespeichert. Ein weiteres Diagnosegerät muss den Detailcode lesen.",
+      "location": "Getriebe und Steuergerät",
+      "causes": [
+        "Sensor im Getriebe",
+        "Hydraulik- oder Schaltproblem",
+        "Kommunikation zur Getriebesteuerung"
+      ],
+      "vehicle": {
+        "active": [
+          "tcm"
+        ],
+        "context": [
+          "transmission"
+        ],
+        "labels": [
+          "Getriebesteuerung",
+          "Getriebe"
+        ]
+      }
+    },
+    {
+      "code": "P0715",
+      "manufacturer": null,
+      "title": "Eingangsdrehzahlsensor – Stromkreis",
+      "system": "Automatikgetriebe",
+      "urgency": "Gelb",
+      "explanation": "Das Getriebesteuergerät erhält kein korrektes Eingangsdrehzahlsignal.",
+      "location": "Getriebegehäuse",
+      "causes": [
+        "Drehzahlsensor",
+        "Kabel oder Steckverbindung",
+        "Interner Getriebefehler"
+      ],
+      "vehicle": {
+        "active": [
+          "input-speed"
+        ],
+        "context": [
+          "transmission"
+        ],
+        "labels": [
+          "Getriebe-Eingangsdrehzahlsensor"
+        ]
+      }
+    },
+    {
+      "code": "B0020",
+      "manufacturer": null,
+      "title": "Seitenairbag links – Auslösesteuerung",
+      "system": "Rückhaltesystem",
+      "urgency": "Rot",
+      "explanation": "Im Stromkreis des linken Seitenairbags wurde ein Fehler erkannt. Der Airbag kann deaktiviert sein.",
+      "location": "Linker Sitz / Seitenairbag",
+      "causes": [
+        "Stecker unter Sitz",
+        "Kabel zum Seitenairbag",
+        "Airbagmodul oder Steuergerät"
+      ],
+      "vehicle": {
+        "active": [
+          "airbag-left"
+        ],
+        "context": [],
+        "labels": [
+          "Seitenairbag links"
+        ]
+      }
+    },
+    {
+      "code": "B1000",
+      "manufacturer": null,
+      "title": "Herstellerspezifischer Karosseriecode",
+      "system": "Karosserieelektronik",
+      "urgency": "Gelb",
+      "explanation": "Dieser Code ist herstellerspezifisch. Seine genaue Bedeutung hängt von Marke, Modell und Steuergerät ab.",
+      "location": "Karosserie-Steuergeräte",
+      "causes": [
+        "Herstellerspezifische Konfiguration",
+        "Unterspannung",
+        "Fehler im Karosseriesteuergerät"
+      ],
+      "vehicle": {
+        "active": [],
+        "context": [
+          "bcm"
+        ],
+        "labels": [
+          "Karosserieelektronik · herstellerabhängig"
+        ]
+      }
+    },
+    {
+      "code": "C0035",
+      "manufacturer": null,
+      "title": "Raddrehzahlsensor vorne links – Stromkreis",
+      "system": "ABS & Fahrstabilität",
+      "urgency": "Rot",
+      "explanation": "Das ABS erhält vom linken Vorderrad kein zuverlässiges Drehzahlsignal.",
+      "location": "Vorderrad links",
+      "causes": [
+        "Raddrehzahlsensor",
+        "Kabel im Radhaus",
+        "Beschädigter Sensorring"
+      ],
+      "vehicle": {
+        "active": [
+          "wheel-fl"
+        ],
+        "context": [],
+        "labels": [
+          "Raddrehzahlsensor",
+          "Vorne links"
+        ]
+      }
+    },
+    {
+      "code": "C0040",
+      "manufacturer": null,
+      "title": "Raddrehzahlsensor vorne rechts – Stromkreis",
+      "system": "ABS & Fahrstabilität",
+      "urgency": "Rot",
+      "explanation": "Das ABS erhält vom rechten Vorderrad kein zuverlässiges Drehzahlsignal.",
+      "location": "Vorderrad rechts",
+      "causes": [
+        "Raddrehzahlsensor",
+        "Kabel im Radhaus",
+        "Beschädigter Sensorring"
+      ],
+      "vehicle": {
+        "active": [
+          "wheel-fr"
+        ],
+        "context": [],
+        "labels": [
+          "Raddrehzahlsensor",
+          "Vorne rechts"
+        ]
+      }
+    },
+    {
+      "code": "U0100",
+      "manufacturer": null,
+      "title": "Kommunikation mit Motorsteuergerät verloren",
+      "system": "Steuergeräte-Netzwerk",
+      "urgency": "Rot",
+      "explanation": "Andere Steuergeräte können das Motorsteuergerät zeitweise oder dauerhaft nicht erreichen.",
+      "location": "CAN-Netzwerk / Motorsteuergerät",
+      "causes": [
+        "Unterspannung",
+        "CAN-Bus-Leitung oder Stecker",
+        "Ausfall des Motorsteuergeräts"
+      ],
+      "vehicle": {
+        "active": [
+          "ecm",
+          "can"
+        ],
+        "context": [],
+        "labels": [
+          "Motorsteuergerät",
+          "Kommunikationsweg"
+        ]
+      }
+    },
+    {
+      "code": "U0121",
+      "manufacturer": null,
+      "title": "Kommunikation mit ABS-Steuergerät verloren",
+      "system": "Steuergeräte-Netzwerk",
+      "urgency": "Rot",
+      "explanation": "Andere Steuergeräte können das ABS-Steuergerät nicht zuverlässig erreichen.",
+      "location": "CAN-Netzwerk / ABS-Steuergerät",
+      "causes": [
+        "Unterspannung",
+        "CAN-Bus-Verbindung",
+        "ABS-Steuergerät ohne Versorgung"
+      ],
+      "vehicle": {
+        "active": [
+          "abs",
+          "can"
+        ],
+        "context": [],
+        "labels": [
+          "ABS-Steuergerät",
+          "Kommunikationsweg"
+        ]
+      }
+    }
+  ]
+}
