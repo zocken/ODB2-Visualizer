@@ -36,6 +36,15 @@ Ein Code kann einmal herstellerunabhängig und zusätzlich pro Hersteller existi
 - `GET /api/manufacturers` – hinterlegte Hersteller
 - `GET /api/updates` – die letzten Läufe des automatischen Code-Abgleichs (angelegt, aktualisiert, entfernt)
 
+## Produktivbetrieb (Coolify)
+
+Live: https://obd2.traders-ai-signals.de
+
+- Coolify-Projekt „OBD2 Klartext“, Build Pack *Docker Compose* mit `docker-compose.coolify.yml` (keine Host-Ports, Routing über den Coolify-Proxy auf Port 8080)
+- PostgreSQL läuft als eigener Container mit Volume `obd2-db-data`; Zugangsdaten erzeugt Coolify (`SERVICE_USER_POSTGRES`, `SERVICE_PASSWORD_POSTGRES`)
+- **Automatisches Deployment:** Jeder Push auf `main` löst über den GitHub-Webhook (Repo → Settings → Webhooks, Push-Events) ein neues Deployment aus
+- HTTPS-Zertifikat per Let's Encrypt, HTTP wird auf HTTPS umgeleitet
+
 ## Lokaler Start mit Docker
 
 ```text
