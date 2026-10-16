@@ -31,6 +31,24 @@ export const PROFILES = {
     rearWindow: { y: 1.42, z: -2.29, tilt: 0.15, height: 0.5 },
     front: 2.37, rear: -2.34, headlightY: 0.86, taillightY: 1.12, seams: [0.95, -0.35, -1.4],
   },
+  wagon: {
+    outline: [['M', -2.25, 0.36], ['L', 2.1, 0.36], ['Q', 2.3, 0.38, 2.3, 0.6], ['Q', 2.29, 0.76, 2.1, 0.82], ['L', 1.0, 0.98],
+      ['Q', 0.62, 1.06, 0.38, 1.4], ['Q', -0.4, 1.5, -1.9, 1.46], ['Q', -2.18, 1.4, -2.22, 1.15], ['L', -2.25, 0.55],
+      ['Q', -2.27, 0.36, -2.25, 0.36]],
+    windows: [['M', 0.94, 1.03], ['Q', 0.62, 1.14, 0.42, 1.36], ['Q', -0.4, 1.44, -1.85, 1.4], ['Q', -2.05, 1.32, -2.08, 1.07], ['L', 0.94, 1.03]],
+    windshield: { y: 1.2, z: 0.68, tilt: -0.95, height: 0.5 },
+    rearWindow: { y: 1.25, z: -2.2, tilt: 0.2, height: 0.42 },
+    front: 2.3, rear: -2.26, headlightY: 0.74, taillightY: 0.98, seams: [0.88, -0.3, -1.35],
+  },
+  aero: {
+    outline: [['M', -2.2, 0.32], ['L', 2.05, 0.32], ['Q', 2.27, 0.34, 2.27, 0.52], ['Q', 2.26, 0.66, 2.08, 0.72], ['L', 1.1, 0.9],
+      ['Q', 0.55, 1.05, 0.15, 1.45], ['Q', -0.45, 1.52, -1.1, 1.38], ['Q', -1.75, 1.16, -2.15, 0.98],
+      ['Q', -2.28, 0.66, -2.2, 0.42], ['Q', -2.19, 0.32, -2.2, 0.32]],
+    windows: [['M', 1.02, 0.95], ['Q', 0.55, 1.1, 0.2, 1.4], ['Q', -0.42, 1.46, -1.05, 1.34], ['Q', -1.5, 1.17, -1.8, 1.0], ['L', 1.02, 0.95]],
+    windshield: { y: 1.15, z: 0.6, tilt: -1.1, height: 0.62 },
+    rearWindow: { y: 1.15, z: -1.62, tilt: 1.15, height: 0.5 },
+    front: 2.27, rear: -2.22, headlightY: 0.68, taillightY: 0.92, seams: [0.9, -0.25, -1.25],
+  },
 };
 
 const cylinderRow = (count, { x = 0, z0, dz, y = 0.97, r = 0.062, axis = 'z', prefix = 'cylinder' }) =>
@@ -200,8 +218,105 @@ LAYOUTS.v8 = {
   },
 };
 
+// Boxer längs vor der Vorderachse (Kombi, symmetrischer Allrad). Zylinder 1/3 rechts, 2/4 links, liegend.
+const BOXER = { 1: [-0.3, 1.66], 2: [0.3, 1.66], 3: [-0.3, 1.44], 4: [0.3, 1.44] };
+LAYOUTS.boxer = {
+  name: 'Kombi · Boxer längs · Allrad',
+  profile: 'wagon',
+  drivetrain: 'awd',
+  skipDetails: ['engine', 'intake', 'exhaust', 'transmission', 'steering'],
+  overrides: {
+    engine: { shape: 'box', x: 0, z: 1.55, w: 0.6, d: 0.48, y: 0.55, h: 0.3 },
+    ...Object.fromEntries(Object.entries(BOXER).flatMap(([n, [x, z]]) => [
+      [`cylinder-${n}`, { shape: 'cylX', x, z, y: 0.55, r: 0.06, len: 0.1 }],
+      [`injector-${n}`, { shape: 'box', x: x * 0.93, z, w: 0.04, d: 0.04, y: 0.74, h: 0.08 }],
+    ])),
+    'fuel-rail': { shape: 'box', x: -0.28, z: 1.55, w: 0.035, d: 0.36, y: 0.79, h: 0.035 },
+    'glow-plugs': { shape: 'dots', points: Object.values(BOXER).map(([x, z]) => ({ x: x * 1.4, z })), y: 0.6, h: 0.06 },
+    intake: { shape: 'box', x: 0, z: 1.55, w: 0.34, d: 0.4, y: 0.8, h: 0.1 },
+    'charge-air-cooler': { shape: 'box', x: 0, z: 1.4, w: 0.52, d: 0.3, y: 0.98, h: 0.06 }, // Ladeluftkühler oben auf dem Motor
+    throttle: { shape: 'cylZ', x: 0, z: 1.85, r: 0.05, len: 0.1, y: 0.8 },
+    maf: { shape: 'cylZ', x: 0.32, z: 1.98, r: 0.045, len: 0.14, y: 0.88 },
+    turbo: { shape: 'cylX', x: -0.12, z: 1.24, r: 0.07, len: 0.14, y: 0.42 },
+    egr: { shape: 'box', x: 0.2, z: 1.3, w: 0.1, d: 0.1, y: 0.74, h: 0.1 },
+    camshaft: { shape: 'box', x: -0.4, z: 1.8, w: 0.06, d: 0.05, y: 0.66, h: 0.05 },
+    crankshaft: { shape: 'box', x: 0, z: 1.82, w: 0.08, d: 0.05, y: 0.45, h: 0.06 },
+    'knock-sensor': { shape: 'box', x: 0, z: 1.55, w: 0.06, d: 0.05, y: 0.72, h: 0.05 },
+    'oil-pressure': { shape: 'box', x: 0.1, z: 1.32, w: 0.05, d: 0.05, y: 0.5, h: 0.05 },
+    alternator: { shape: 'cylX', x: 0.3, z: 1.86, r: 0.09, len: 0.12, y: 0.78 },
+    'ac-compressor': { shape: 'cylX', x: -0.3, z: 1.86, r: 0.08, len: 0.12, y: 0.72 },
+    thermostat: { shape: 'box', x: -0.1, z: 1.85, w: 0.1, d: 0.06, y: 0.48, h: 0.07 },
+    'coolant-sensor': { shape: 'box', x: 0.05, z: 1.8, w: 0.07, d: 0.05, y: 0.7, h: 0.05 },
+    transmission: { shape: 'box', x: 0, z: 0.95, w: 0.36, d: 0.6, y: 0.48, h: 0.3 },
+    'input-speed': { shape: 'box', x: 0.15, z: 1.15, w: 0.05, d: 0.05, y: 0.52, h: 0.06 },
+    'vehicle-speed': { shape: 'box', x: 0.05, z: 0.62, w: 0.05, d: 0.05, y: 0.42, h: 0.06 },
+    tcm: { shape: 'box', x: -0.2, z: 0.95, w: 0.06, d: 0.18, y: 0.5, h: 0.05 },
+    exhaust: { shape: 'tube', r: 0.032, paths: [
+      [[-0.4, 0.5, 1.6], [-0.3, 0.26, 1.4], [0, 0.22, 1.15], [0, 0.22, 0.6], [-0.05, 0.24, -1.2], [-0.3, 0.26, -1.8], [-0.35, 0.26, -2.26]],
+      [[0.4, 0.5, 1.6], [0.3, 0.26, 1.4], [0.02, 0.22, 1.18]],
+    ] },
+    'cat-1': { shape: 'box', x: 0, z: 1.0, w: 0.16, d: 0.3, y: 0.23, h: 0.12 },
+    'lambda-front': { shape: 'cylV', x: 0, z: 1.22, r: 0.02, y: 0.26, h: 0.1 },
+    'lambda-rear': { shape: 'cylV', x: 0, z: 0.78, r: 0.02, y: 0.26, h: 0.1 },
+    steering: { shape: 'steering', rack: { x: 0, z: 1.15, w: 0.7 }, ring: { x: 0.41, z: 0.0 } },
+  },
+  details: {
+    engine({ add, def }) {
+      for (const sx of [1, -1]) add('box', { x: sx * 0.38, z: def.z, w: 0.12, d: def.d * 0.95, y: def.y, h: 0.26 }); // Zylinderköpfe außen
+      add('box', { x: def.x, z: def.z, w: def.w * 0.5, d: def.d * 0.8, y: def.y - def.h / 2 - 0.05, h: 0.1 }); // Ölwanne
+    },
+    'fuel-rail'({ add, def }) {
+      add('box', { x: 0.28, z: def.z, w: def.w, d: def.d, y: def.y, h: def.h });
+    },
+    intake({ add }) {
+      for (const [x, z] of Object.values(BOXER)) add('tube', { r: 0.017, paths: [[[x * 0.3, 0.8, z], [x * 0.7, 0.78, z], [x * 0.95, 0.68, z]]] });
+    },
+    exhaust({ add }) {
+      add('box', { x: -0.3, z: -1.7, w: 0.42, d: 0.42, y: 0.27, h: 0.15 });
+      add('cylZ', { x: -0.35, z: -2.24, r: 0.04, len: 0.12, y: 0.26 });
+    },
+    transmission({ add, def }) {
+      add('cylZ', { x: def.x, z: def.z + def.d / 2 + 0.05, r: 0.2, len: 0.1, y: def.y + 0.04 });
+    },
+    steering({ add }) {
+      for (const sx of [1, -1]) add('cylX', { x: sx * 0.52, z: 1.2, r: 0.012, len: 0.36, y: 0.45 });
+    },
+  },
+};
+
+// Vollhybrid (Aero-Schrägheck, Frontantrieb): R4 quer, E-Motor/Leistungselektronik am Getriebe,
+// Hochvoltbatterie unter der Rückbank, 12-V-Batterie im Kofferraum. Übrige Lage wie Grundform.
+const HV_ORANGE = 0xff7a1a;
+LAYOUTS.hybrid = {
+  name: 'Hybrid · R4 quer + E-Motor · Front',
+  profile: 'aero',
+  drivetrain: 'fwd',
+  skipDetails: ['e-motor', 'battery', 'transmission', 'hv-battery'],
+  overrides: {
+    'e-motor': { shape: 'cylX', x: -0.22, z: 0.93, r: 0.15, len: 0.22, y: 0.55 },
+    transmission: { shape: 'box', x: 0.03, z: 0.93, w: 0.2, d: 0.36, y: 0.52, h: 0.3 },
+    'hv-battery': { shape: 'box', x: 0, z: -1.0, w: 1.2, d: 0.5, y: 0.37, h: 0.15 },
+    battery: { shape: 'box', x: -0.55, z: -1.82, w: 0.24, d: 0.16, y: 0.42, h: 0.2 },
+  },
+  details: {
+    'e-motor'({ add, def }) {
+      add('box', { x: def.x + 0.05, z: def.z + 0.08, w: 0.36, d: 0.3, y: def.y + 0.27, h: 0.14 }); // Leistungselektronik (Inverter)
+    },
+    'hv-battery'({ add, def }) {
+      const top = def.y + def.h / 2 + 0.004;
+      for (let i = 1; i < 8; i++) add('box', { x: def.x - def.w / 2 + (i * def.w) / 8, z: def.z, w: 0.008, d: def.d * 0.9, y: top, h: 0.006 });
+      add('tube', { r: 0.014, color: HV_ORANGE, paths: [[[0.15, 0.4, -0.74], [0.25, 0.3, -0.2], [0.2, 0.3, 0.5], [-0.05, 0.6, 0.9], [-0.12, 0.84, 1.0]]] }); // HV-Leitung
+    },
+    battery({ add, def }) {
+      add('cylV', { x: def.x, z: def.z + 0.05, r: 0.017, y: def.y + def.h / 2 + 0.02, h: 0.04, color: 0xc0392b });
+      add('cylV', { x: def.x, z: def.z - 0.05, r: 0.017, y: def.y + def.h / 2 + 0.02, h: 0.04, color: 0x1d2426 });
+    },
+  },
+};
+
 // Typische Bauform je Hersteller (Slug aus der Datenbank). Nicht aufgeführte Marken: Grundform.
 export const BRAND_LAYOUT = {
+  subaru: 'boxer', toyota: 'hybrid', lexus: 'hybrid', infiniti: 'rwd6',
   bmw: 'rwd6', mercedes: 'rwd6', jaguar: 'rwd6',
   chevy: 'v8', gmc: 'v8', cadillac: 'v8', gm: 'v8', ford: 'v8', lincoln: 'v8', mercury: 'v8',
   dodge: 'v8', chrysler: 'v8', jeep: 'v8', plymouth: 'v8', pontiac: 'v8', buick: 'v8', oldsmobile: 'v8',
