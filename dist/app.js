@@ -87,6 +87,9 @@ function updateVehicle(c){
   byId('vehicle-parts').replaceChildren(...(entry?entry.labels:['Keine Zuordnung']).map(label=>{
     const tag=document.createElement('span');tag.textContent=label;if(!entry)tag.className='unmapped';return tag;
   }));
+  // Same state for the 3D view (vehicle-view.js); kept on window in case the module loads later.
+  window.vehicleState={active:entry?.active||[],context:(entry?.context||[]).filter(id=>!entry.active?.includes(id)),labels:entry?.labels||[]};
+  window.vehicle3d?.highlight(window.vehicleState);
 }
 
 function closeSuggestions(){

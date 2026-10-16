@@ -7,7 +7,8 @@
   <meta name="description" content="OBD2-Fehlercodes in verständlichem Klartext – mit Systemvisualisierung, Dringlichkeit und nächsten Schritten.">
   <title>OBD2 Klartext</title>
   <link rel="stylesheet" href="styles.css?v=16">
-  <link rel="stylesheet" href="vehicle.css?v=13">
+  <link rel="stylesheet" href="vehicle.css?v=14">
+  <script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js","three/addons/":"./vendor/three/addons/"}}</script>
 </head>
 <body>
   <header class="topbar">
@@ -54,6 +55,20 @@
       <div class="vehicle-card" aria-label="Schematische Fahrzeugansicht">
         <div class="vehicle-label"><span>Systemansicht</span><b id="vehicle-code">P0300 · Motor</b></div>
         <div class="vehicle-schematic">
+          <div id="view-toolbar" class="view-toolbar" hidden>
+            <div class="view-presets" role="group" aria-label="Blickwinkel">
+              <button type="button" data-view="3d" aria-pressed="true">3D</button>
+              <button type="button" data-view="top" aria-pressed="false">Oben</button>
+              <button type="button" data-view="side" aria-pressed="false">Seite</button>
+              <button type="button" data-view="front" aria-pressed="false">Vorne</button>
+            </div>
+            <button type="button" class="view-mode" data-mode-toggle>2D-Plan</button>
+          </div>
+          <div id="vehicle-3d" class="vehicle-3d" hidden>
+            <div class="vehicle-3d-stage" role="img" aria-label="Drehbare 3D-Ansicht des Fahrzeugs; die zum Fehlercode gehörenden Bauteile sind orange markiert"></div>
+            <span class="vehicle-3d-tip" hidden></span>
+            <span class="vehicle-3d-hint">Ziehen zum Drehen · Scrollen zum Zoomen</span>
+          </div>
           <div class="vehicle-scan">
           <svg id="vehicle-diagram" class="vehicle-plan" viewBox="0 0 360 620" role="img" aria-labelledby="vehicle-svg-title vehicle-svg-desc">
             <title id="vehicle-svg-title">Pkw in Draufsicht</title>
@@ -168,6 +183,7 @@
   </main>
 
   <footer><span>OBD2 Klartext</span><span>Lernprojekt · Keine Reparaturanleitung</span></footer>
-  <script src="app.js?v=16"></script>
+  <script src="app.js?v=18"></script>
+  <script type="module" src="vehicle-view.js?v=9"></script>
 </body>
 </html>

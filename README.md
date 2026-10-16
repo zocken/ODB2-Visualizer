@@ -6,7 +6,7 @@ Ab Version 12 kommen die Codes aus einer PostgreSQL-Datenbank. Das Schema ist au
 
 ## Projektstruktur
 
-- `dist/` – Frontend (`index.html`, `app.js`, `styles.css`, `vehicle.css`)
+- `dist/` – Frontend (`index.html`, `app.js`, `styles.css`, `vehicle.css`, 3D-Ansicht `vehicle-view.js`, `vehicle3d.js`, `vehicle3d-details.js`, `vendor/three`)
 - `server/index.js` – Express-Server: liefert `dist/` aus und stellt die API bereit
 - `server/seed.js` – importiert Seed-Dateien per Upsert in die Datenbank
 - `server/build-static.js` – exportiert die Basisdaten nach `dist/data/` für den Betrieb ohne Backend
@@ -15,6 +15,10 @@ Ab Version 12 kommen die Codes aus einer PostgreSQL-Datenbank. Das Schema ist au
 - `Dockerfile`, `docker-compose.yml` – Container-Betrieb
 - `.github/workflows/pages.yml` – statische Veröffentlichung auf GitHub Pages
 - `QUELLEN.md` – Herkunft und Grenzen der Code-Texte
+
+## Fahrzeugansicht
+
+Die Systemansicht ist eine drehbare 3D-Ansicht (Three.js 0.170, MIT, lokal in `dist/vendor/three`). Schnellansichten 3D/Oben/Seite/Vorne, Bauteilname beim Überfahren, schwebende Beschriftung am markierten Bauteil. Die Lage der Bauteile stammt aus dem 2D-Plan (SVG in `dist/index.html`), Höhe und Form aus `dist/vehicle3d.js`, Zusatzdetails aus `dist/vehicle3d-details.js`. Der 2D-Plan bleibt per Umschalter und als Rückfall ohne WebGL erhalten.
 
 ## Datenmodell
 
