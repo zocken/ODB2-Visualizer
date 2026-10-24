@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07110e">
+  <meta name="description" content="OBD2-Fehlercodes in verständlichem Klartext – mit Systemvisualisierung, Dringlichkeit und nächsten Schritten.">
+  <title>OBD2 Klartext</title>
+  <link rel="stylesheet" href="styles.css?v=16">
+  <link rel="stylesheet" href="vehicle.css?v=17">
+  <link rel="stylesheet" href="chat.css?v=1">
+  <script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js","three/addons/":"./vendor/three/addons/"}}</script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#start" aria-label="OBD2 Klartext Startseite">
+      <span class="brand-mark" aria-hidden="true">O₂</span>
+      <span>OBD2 <b>Klartext</b></span>
+    </a>
+    <div class="top-meta"><span class="live-dot"></span><span id="database-count">32 Codes</span> · Lernprojekt</div>
+  </header>
+
+  <main id="start">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Fehler verstehen. Sicher reagieren.</p>
+        <h1>Was will dein Auto<br><em>dir sagen?</em></h1>
+        <p class="intro">Gib einen OBD2-Code ein. Du erhältst zuerst eine verständliche Antwort – und auf Wunsch technische Details.</p>
+
+        <form id="code-form" class="search-card" novalidate>
+          <div id="maker-row" class="maker-row" hidden>
+            <label for="maker-select">Hersteller</label>
+            <select id="maker-select" name="manufacturer" aria-describedby="maker-help">
+              <option value="">Nur Standardcodes</option>
+            </select>
+            <span id="maker-help" class="maker-help">Herstellercodes ergänzen die Standardcodes</span>
+          </div>
+          <label for="code-input">OBD2-Fehlercode</label>
+          <div class="search-row">
+            <input id="code-input" name="code" type="text" inputmode="text" maxlength="5" autocomplete="off" spellcheck="false" placeholder="z. B. P0300" aria-describedby="input-help" aria-controls="code-suggestions" aria-expanded="false">
+            <button type="submit">Code erklären <span aria-hidden="true">→</span></button>
+          </div>
+          <div class="search-footer">
+            <span id="input-help">P, B, C oder U + vier Zeichen (0–9 / A–F)</span>
+          </div>
+          <div id="code-suggestions" class="suggestions" role="listbox" aria-label="OBD2-Code-Vorschläge" hidden>
+            <div class="suggestion-head"><strong>Passende Treffer</strong><span>Auswahl wird ins Eingabefeld übernommen</span></div>
+            <div id="suggestion-list" class="suggestion-list"></div>
+          </div>
+          <div id="form-error" class="error-box" role="alert" hidden></div>
+        </form>
+
+        <div class="scope"><b>Datenbasis:</b> Pkw · Verbrenner/Hybrid · ausgewählte Karosserie-, Fahrwerk- und Netzwerkcodes</div>
+      </div>
+
+      <div class="vehicle-card" aria-label="Schematische Fahrzeugansicht">
+        <div class="vehicle-label"><span>Systemansicht</span><b id="vehicle-code">P0300 · Motor</b></div>
+        <div class="vehicle-schematic">
+          <div id="view-toolbar" class="view-toolbar" hidden>
+            <div class="view-presets" role="group" aria-label="Blickwinkel">
+              <button type="button" data-view="3d" aria-pressed="true">3D</button>
+              <button type="button" data-view="top" aria-pressed="false">Oben</button>
+              <button type="button" data-view="side" aria-pressed="false">Seite</button>
+              <button type="button" data-view="front" aria-pressed="false">Vorne</button>
+            </div>
+            <button type="button" class="view-mode" data-mode-toggle>2D-Plan</button>          </div>
+          <div id="vehicle-3d" class="vehicle-3d" hidden>
+            <div class="vehicle-3d-stage" role="img" aria-label="Drehbare 3D-Ansicht des Fahrzeugs; die zum Fehlercode gehörenden Bauteile sind orange markiert"></div>
+            <span class="vehicle-3d-tip" hidden></span>
+            <span id="layout-hint" class="vehicle-3d-hint" aria-live="polite">Typische Bauform · schematisch, nicht modellgenau · Ziehen zum Drehen</span>
+          </div>
+          <div class="vehicle-scan">
+          <svg id="vehicle-diagram" class="vehicle-plan" viewBox="0 0 360 620" role="img" aria-labelledby="vehicle-svg-title vehicle-svg-desc">
+            <title id="vehicle-svg-title">Pkw in Draufsicht</title>
+            <desc id="vehicle-svg-desc">Schematische Lage der Fahrzeugkomponenten. Die zum Fehlercode gehörenden Bauteile sind orange markiert.</desc>
+            <text class="plan-direction" x="180" y="21" text-anchor="middle">FAHRTRICHTUNG ↑</text>
+            <g class="plan-tyres"><rect x="70" y="110" width="22" height="74" rx="7"/><rect x="268" y="110" width="22" height="74" rx="7"/><rect x="70" y="464" width="22" height="74" rx="7"/><rect x="268" y="464" width="22" height="74" rx="7"/></g>
+            <path class="plan-body" d="M180 34C130 34 105 43 94 73L90 112v391c0 59 18 89 90 90s90-31 90-90V112l-4-39c-11-30-36-39-86-39Z"/>
+            <path class="plan-outline" d="M106 79h148M99 245h162M99 556h162M92 108v418M268 108v418"/>
+            <path class="plan-glass" d="m105 253 150 0-8 26H113Z"/>
+            <path class="plan-glass" d="m111 554 138 0 9 21c-41 11-69 11-156 0Z"/>
+            <g class="plan-interior"><rect x="111" y="331" width="54" height="65" rx="10"/><rect x="195" y="331" width="54" height="65" rx="10"/><rect x="111" y="432" width="138" height="48" rx="12"/><rect x="114" y="491" width="69" height="36" rx="8"/><rect x="171" y="344" width="18" height="15" rx="3"/><circle cx="139" cy="312" r="14"/><circle cx="139" cy="312" r="9"/></g>
+            <g class="plan-mirrors"><ellipse cx="83" cy="261" rx="10" ry="5"/><ellipse cx="277" cy="261" rx="10" ry="5"/></g>
+            <g class="plan-component" data-component="cooling"><title>Kühlsystem</title><rect x="119" y="48" width="122" height="13" rx="3"/></g>
+            <g class="plan-component" data-component="coolant-sensor"><title>Kühlmitteltemperatursensor</title><rect x="109" y="65" width="10" height="8" rx="2"/></g>
+            <g class="plan-component" data-component="thermostat"><title>Thermostat</title><rect x="124" y="68" width="13" height="8" rx="2"/></g>
+            <g class="plan-component" data-component="engine"><title>Motor</title><rect x="124" y="82" width="111" height="89" rx="10"/><circle class="plan-bolt" cx="132" cy="90" r="3"/><circle class="plan-bolt" cx="226" cy="90" r="3"/><circle class="plan-bolt" cx="132" cy="163" r="3"/><circle class="plan-bolt" cx="226" cy="163" r="3"/></g>
+            <g class="plan-component" data-component="cylinder-1"><title>Zylinder 1</title><circle cx="148" cy="124" r="10"/><text x="148" y="146">1</text></g>
+            <g class="plan-component" data-component="cylinder-2"><title>Zylinder 2</title><circle cx="169" cy="124" r="10"/><text x="169" y="146">2</text></g>
+            <g class="plan-component" data-component="cylinder-3"><title>Zylinder 3</title><circle cx="190" cy="124" r="10"/><text x="190" y="146">3</text></g>
+            <g class="plan-component" data-component="cylinder-4"><title>Zylinder 4</title><circle cx="211" cy="124" r="10"/><text x="211" y="146">4</text></g>
+            <g class="plan-component" data-component="fuel-rail"><title>Kraftstoffverteilung</title><rect x="140" y="99" width="80" height="5" rx="2"/></g>
+            <g class="plan-component" data-component="injector-1"><title>Einspritzventil Zylinder 1</title><rect x="145" y="104" width="6" height="8" rx="1"/></g>
+            <g class="plan-component" data-component="injector-2"><title>Einspritzventil Zylinder 2</title><rect x="166" y="104" width="6" height="8" rx="1"/></g>
+            <g class="plan-component" data-component="injector-3"><title>Einspritzventil Zylinder 3</title><rect x="187" y="104" width="6" height="8" rx="1"/></g>
+            <g class="plan-component" data-component="injector-4"><title>Einspritzventil Zylinder 4</title><rect x="208" y="104" width="6" height="8" rx="1"/></g>
+            <g class="plan-component" data-component="intake"><title>Ansaugsystem</title><rect x="244" y="83" width="17" height="36" rx="4"/><path class="plan-pipe" d="M244 126h-7"/></g>
+            <g class="plan-component" data-component="maf"><title>Luftmassenmesser</title><rect x="244" y="121" width="17" height="12" rx="2"/></g>
+            <g class="plan-component" data-component="battery"><title>Batterie</title><rect x="244" y="138" width="17" height="28" rx="3"/><text x="252.5" y="155">+ −</text></g>
+            <g class="plan-component" data-component="ecm"><title>Motorsteuergerät</title><rect x="99" y="126" width="22" height="30" rx="3"/><text x="110" y="144">ECM</text></g>
+            <g class="plan-component" data-component="alternator"><title>Lichtmaschine</title><circle cx="111" cy="104" r="12"/></g>
+            <g class="plan-component" data-component="camshaft"><title>Nockenwellensensor</title><rect x="141" y="76" width="12" height="7" rx="2"/></g>
+            <g class="plan-component" data-component="crankshaft"><title>Kurbelwellensensor</title><rect x="141" y="176" width="18" height="10" rx="2"/></g>
+            <g class="plan-component" data-component="egr"><title>Abgasrückführung</title><path d="M232 172h11v17h-11Z"/></g>
+            <g class="plan-component" data-component="transmission"><title>Getriebe</title><rect x="170" y="176" width="44" height="52" rx="6"/></g>
+            <g class="plan-component" data-component="input-speed"><title>Getriebe-Eingangsdrehzahlsensor</title><rect x="163" y="181" width="7" height="10" rx="2"/></g>
+            <g class="plan-component" data-component="vehicle-speed"><title>Geschwindigkeitssensor</title><rect x="207" y="215" width="11" height="8" rx="2"/></g>
+            <g class="plan-component" data-component="tcm"><title>Getriebesteuergerät</title><rect x="171" y="239" width="22" height="12" rx="3"/><text x="182" y="247">TCM</text></g>
+            <g class="plan-component" data-component="abs"><title>ABS-Steuergerät</title><rect x="244" y="174" width="23" height="26" rx="3"/><text x="255.5" y="190">ABS</text></g>
+            <g class="plan-component" data-component="wheel-fl"><title>Raddrehzahlsensor vorne links</title><rect x="94" y="168" width="9" height="16" rx="3"/></g>
+            <g class="plan-component" data-component="wheel-fr"><title>Raddrehzahlsensor vorne rechts</title><rect x="257" y="168" width="9" height="16" rx="3"/></g>
+            <g class="plan-component" data-component="can"><title>Kommunikationsnetz / CAN-Bus</title><path class="plan-wire" d="M110 156v88h145V200M192 228v16M182 251v72M255 244v322"/><circle cx="110" cy="244" r="2.5"/><circle cx="255" cy="244" r="2.5"/></g>
+            <g class="plan-component" data-component="exhaust"><title>Abgasstrang</title><path class="plan-pipe" d="M229 171v30h-7v39h9v167h-7v160"/></g>
+            <g class="plan-component" data-component="lambda-front"><title>Lambdasonde vor Katalysator</title><rect x="225" y="192" width="10" height="8" rx="2"/></g>
+            <g class="plan-component" data-component="cat-1"><title>Katalysator Bank 1</title><rect x="225" y="210" width="13" height="35" rx="5"/></g>
+            <g class="plan-component" data-component="cat-2"><title>Katalysator Bank 2, schematisch</title><rect x="242" y="210" width="13" height="35" rx="5"/></g>
+            <g class="plan-component" data-component="bcm"><title>Karosserieelektronik, herstellerabhängig</title><rect x="109" y="282" width="52" height="18" rx="3"/><text x="135" y="294">BCM</text></g>
+            <g class="plan-component" data-component="airbag-left"><title>Seitenairbag links</title><rect x="96" y="333" width="6" height="65" rx="3"/></g>
+            <g class="plan-component" data-component="tank"><title>Kraftstofftank / Tankentlüftung</title><rect x="113" y="487" width="72" height="42" rx="8"/></g>
+            <g class="plan-component" data-component="evap"><title>Tankentlüftung</title><rect x="120" y="537" width="33" height="12" rx="3"/></g>
+            <g class="plan-component" data-component="tank-cap"><title>Tankverschluss</title><circle cx="101" cy="503" r="4"/></g>
+            <g class="plan-component" data-component="charge-air-cooler"><title>Ladeluftkühler</title><rect x="140" y="63" width="96" height="5" rx="2"/></g>
+            <g class="plan-component" data-component="throttle"><title>Drosselklappe</title><rect x="237" y="99" width="6" height="14" rx="2"/></g>
+            <g class="plan-component" data-component="turbo"><title>Turbolader</title><circle cx="221" cy="182" r="6"/><circle class="plan-bolt" cx="221" cy="182" r="2"/></g>
+            <g class="plan-component" data-component="glow-plugs"><title>Glühkerzen</title><circle cx="156" cy="108" r="2"/><circle cx="177" cy="108" r="2"/><circle cx="198" cy="108" r="2"/><circle cx="219" cy="108" r="2"/></g>
+            <g class="plan-component" data-component="knock-sensor"><title>Klopfsensor</title><rect x="220" y="149" width="9" height="7" rx="2"/></g>
+            <g class="plan-component" data-component="oil-pressure"><title>Öldrucksensor</title><rect x="127" y="142" width="9" height="7" rx="2"/></g>
+            <g class="plan-component" data-component="ac-compressor"><title>Klimakompressor</title><circle cx="128" cy="198" r="8"/><text x="128" y="201">AC</text></g>
+            <g class="plan-component" data-component="steering"><title>Lenkung</title><rect x="115" y="231" width="52" height="5" rx="2"/><circle class="plan-ring" cx="139" cy="312" r="14"/></g>
+            <g class="plan-component" data-component="pedal"><title>Fahrpedal</title><rect x="160" y="309" width="6" height="13" rx="2"/></g>
+            <g class="plan-component" data-component="lambda-rear"><title>Lambdasonde nach Katalysator</title><rect x="226" y="288" width="10" height="8" rx="2"/></g>
+            <g class="plan-component" data-component="hv-battery"><title>Hochvoltbatterie</title><rect x="120" y="402" width="120" height="24" rx="5"/><text x="180" y="417">HV</text></g>
+            <g class="plan-component" data-component="e-motor"><title>Elektromotor / Leistungselektronik</title><rect x="192" y="490" width="26" height="20" rx="4"/><text x="205" y="503">E</text></g>
+            <g class="plan-component" data-component="wheel-rl"><title>Raddrehzahlsensor hinten links</title><rect x="94" y="470" width="9" height="16" rx="3"/></g>
+            <g class="plan-component" data-component="wheel-rr"><title>Raddrehzahlsensor hinten rechts</title><rect x="257" y="470" width="9" height="16" rx="3"/></g>
+            <text class="plan-side" x="55" y="370" transform="rotate(-90 55 370)">FAHRERSEITE</text>
+          </svg>
+          </div>
+          <div id="vehicle-parts" class="vehicle-parts" aria-live="polite"></div>
+          <div class="plan-key"><span><i></i>betroffen</span><span><i class="context-key"></i>Systembereich</span><span>Lage schematisch</span></div>
+        </div>
+        <div class="legend"><span><i class="p"></i>P Antrieb</span><span><i class="b"></i>B Karosserie</span><span><i class="c"></i>C Fahrwerk</span><span><i class="u"></i>U Netzwerk</span></div>
+      </div>
+    </section>
+
+    <section id="empty-state" class="orientation">
+      <div><p class="eyebrow">Schnelle Orientierung</p><h2>Der erste Buchstabe zeigt den Bereich.</h2></div>
+      <div class="category-grid">
+        <article><b>P</b><h3>Antrieb</h3><p>Motor, Abgas und Getriebe</p></article>
+        <article><b>B</b><h3>Karosserie</h3><p>Airbag, Komfort, Innenraum</p></article>
+        <article><b>C</b><h3>Fahrwerk</h3><p>ABS, Lenkung, Räder</p></article>
+        <article><b>U</b><h3>Netzwerk</h3><p>Kommunikation der Steuergeräte</p></article>
+      </div>
+    </section>
+
+    <section id="result" class="result" hidden aria-live="polite">
+      <div class="result-head">
+        <div><p class="eyebrow">Sofortantwort</p><div class="badges"><span id="r-code"></span><span id="r-category"></span><span id="r-origin"></span></div></div>
+        <span id="r-urgency" class="urgency"></span>
+      </div>
+      <h2 id="r-title"></h2>
+      <div class="result-grid">
+        <article class="panel system-panel"><p class="panel-label">Betroffenes System</p><div id="system-icon" class="system-icon" aria-hidden="true">⚙</div><h3 id="r-system"></h3><p id="r-system-copy"></p><span id="r-location" class="location"></span></article>
+        <article class="panel"><p class="panel-label">Einfach erklärt</p><p id="r-explanation" class="lead"></p><h3>Wahrscheinliche Ursachen</h3><ul id="r-causes" class="cause-list"></ul><small>Das sind Möglichkeiten – keine gesicherte Diagnose.</small></article>
+        <article class="panel action-panel"><p class="panel-label">Was jetzt?</p><div class="verdict"><span>Weiterfahrt</span><b id="r-verdict"></b></div><h3 id="r-advice-title"></h3><p id="r-advice"></p><ol id="r-steps"></ol></article>
+      </div>
+      <div class="details detail-panel">
+        <button id="detail-toggle" class="detail-toggle" type="button" aria-expanded="false" aria-controls="technical-details"><span><small>Für Hobbyschrauber</small>Technische Details und Ursachenvergleich anzeigen</span><b aria-hidden="true">+</b></button>
+        <div id="technical-details" class="technical-details" hidden>
+          <p id="r-tech"></p>
+          <div class="cause-table-wrap"><table class="cause-table"><thead><tr><th>Einordnung</th><th>Mögliche Ursache</th><th>Typischer Hinweis</th><th>Sinnvolle Prüfung</th></tr></thead><tbody id="cause-table-body"></tbody></table></div>
+          <div class="data-notes"><span><small>Datenbasis</small>SAE J2012 / ISO 15031-6</span><span><small>Informationsstand</small>Redaktionell geprüft · 16.10.2026</span><span><small>Grenze</small>Nicht fahrzeugspezifisch</span></div>
+          <div class="source-note"><b>Quellen &amp; Einordnung</b><p>Codeaufbau und standardisierte Bezeichnungen orientieren sich an <a href="https://saemobilus.sae.org/standards/j2012_202509-diagnostic-trouble-code-definitions" target="_blank" rel="noopener noreferrer">SAE J2012</a> und <a href="https://www.iso.org/standard/66369.html" target="_blank" rel="noopener noreferrer">ISO 15031-6</a>. Die deutschen Erklärungen und möglichen Ursachen sind redaktionelle, nicht abschließende Diagnosehinweise. Die konkrete Ursache muss anhand fahrzeugspezifischer Herstellerunterlagen und Messwerte geprüft werden.</p></div>
+        </div>
+      </div>
+      <div class="safety"><b>Sicherheitshinweis</b><span>Bei roter Warnleuchte, Rauch, ungewöhnlichen Geräuschen oder starkem Leistungsverlust sicher anhalten. Diese App ersetzt keine Fachdiagnose.</span></div>
+    </section>
+
+    <section class="journey">
+      <div><p class="eyebrow">Der Nutzerweg</p><h2>Vom Code zur nächsten Entscheidung.</h2></div>
+      <ol><li><b>01</b><span>Code eingeben</span></li><li><b>02</b><span>Klartext verstehen</span></li><li><b>03</b><span>System zuordnen</span></li><li><b>04</b><span>Ursachen vergleichen</span></li><li><b>05</b><span>Sicher handeln</span></li></ol>
+    </section>
+    <section class="ai-chat" aria-labelledby="ai-chat-title">
+      <div class="ai-chat-card">
+        <div class="ai-chat-header">
+          <div><p class="eyebrow">Noch eine Frage?</p><h2 id="ai-chat-title">Frag den KI-Assistenten.</h2></div>
+          <button id="ai-chat-reset" class="ai-chat-reset" type="button">Neues Gespräch</button>
+        </div>
+        <div id="ai-chat-log" class="ai-chat-log" role="log" aria-label="Chatverlauf" aria-live="polite" aria-relevant="additions"></div>
+        <form id="ai-chat-form" class="ai-chat-form">
+          <label for="ai-chat-input">Deine Frage</label>
+          <div class="ai-chat-compose">
+            <textarea id="ai-chat-input" name="message" rows="2" maxlength="2000" required placeholder="Zum Beispiel: Was bedeutet P0300 und was sollte ich zuerst prüfen?" aria-describedby="ai-chat-help"></textarea>
+            <button id="ai-chat-send" class="ai-chat-send" type="submit">Senden →</button>
+          </div>
+          <div class="ai-chat-meta"><span id="ai-chat-status" role="status">Fragen zu Fehlercodes und Fahrzeugtechnik</span><span id="ai-chat-help">KI-Antworten können Fehler enthalten.</span></div>
+          <p id="ai-chat-error" class="ai-chat-error" role="alert" hidden></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer><span>OBD2 Klartext</span><span>Lernprojekt · Keine Reparaturanleitung</span></footer>
+  <script src="app.js?v=23"></script>
+  <script src="chat.js?v=1" defer></script>
+  <script type="module" src="vehicle-view.js?v=14"></script>
+</body>
+</html>

@@ -25,6 +25,8 @@ services:
       AUTO_UPDATE: ${AUTO_UPDATE:-true}
       UPDATE_HOUR: ${UPDATE_HOUR:-3}
       UPDATE_TIMEZONE: ${UPDATE_TIMEZONE:-Europe/Berlin}
+      LM_GATEWAY_URL: ${LM_GATEWAY_URL:-}
+      LM_GATEWAY_KEY: ${LM_GATEWAY_KEY:-}
     expose:
       - "8080"
     depends_on:

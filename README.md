@@ -135,3 +135,13 @@ Ist keine API erreichbar, lädt das Frontend `data/generic-codes.json`. Der Page
 ## Wichtiger Hinweis
 
 Die App ist ein Lern- und Orientierungstool. Sie ersetzt weder fahrzeugspezifische Herstellerunterlagen noch Messungen oder eine fachgerechte Diagnose.
+
+## KI-Chat
+
+Am Seitenende steht ein kompakter KI-Chat. Browseranfragen gehen an `POST /api/chat`; ausschließlich das Backend verwendet `LM_GATEWAY_URL` und `LM_GATEWAY_KEY`. Beide Werte gehören in die Produktions-Laufzeitvariablen von Coolify, niemals in Browsercode oder ins Repository.
+
+Der Chat ist erreichbar, solange die lokale KI und ihr SSH-Tunnel laufen. Bei einer getrennten Verbindung zeigt die Oberfläche eine verständliche Fehlermeldung. Gesprächsverläufe bleiben im Speicher des jeweiligen Browser-Tabs und werden vom Chat-Backend nicht gespeichert.
+
+Grenzen: sechs Anfragen je Besucher und Minute, 18 insgesamt je Minute, zwei laufende Anfragen, 2.000 Zeichen pro neuer Frage und 768 Ausgabetokens. Der Server setzt Modell und Systemanweisung fest; Clients können keine Systemrollen oder Tools übergeben. Der Verlauf ist auf wenige Nachrichten begrenzt. Ein neuer Chat setzt den Verlauf zurück.
+
+Backend-Tests: `node --test server/chat.test.js`.
