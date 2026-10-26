@@ -16,12 +16,17 @@ const RETENTION_DAYS = 365;
 const LIMIT_PER_MINUTE = 60;
 
 const buckets = new Map(); // IP → { count, reset } (nur im Arbeitsspeicher)
+// Abgelaufene Einträge regelmäßig verwerfen: keine IP bleibt länger als etwa eine Minute im Speicher.
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, b] of buckets) if (b.reset < now) buckets.delete(k);
+}, 15_000).unref();
 function allowed(ip) {
   const now = Date.now();
   const bucket = buckets.get(ip);
   if (!bucket || bucket.reset < now) {
+    if (buckets.size >= 10_000) return false;
     buckets.set(ip, { count: 1, reset: now + 60_000 });
-    if (buckets.size > 10_000) for (const [k, b] of buckets) if (b.reset < now) buckets.delete(k);
     return true;
   }
   bucket.count += 1;

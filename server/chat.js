@@ -75,6 +75,11 @@ export function createChatRouter({
   let streaming = true; // false, sobald das Gateway Streaming abgelehnt hat
   let globalCalls = [];
   const visitors = new Map();
+  // IP-Adressen nur so lange im Speicher halten, wie die Minuten-Begrenzung sie braucht.
+  setInterval(() => {
+    const now = clock();
+    for (const [ip, calls] of visitors) if (calls.at(-1) <= now - 60000) visitors.delete(ip);
+  }, 15000).unref();
   router.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
   router.post('/', express.json({ limit: '16kb' }), async (req, res) => {
     const fail = (status, error) => res.status(status).json({ error });
