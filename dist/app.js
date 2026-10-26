@@ -5,6 +5,8 @@ const makerSelect=byId('maker-select');
 let activeCode='';
 // Selected manufacturer slug; '' = standard codes only (initial choice).
 let manufacturer='';
+// Page context for the AI chat: shown code and manufacturer choice.
+window.obd2ChatContext=()=>({code:activeCode||undefined,manufacturer:manufacturer||undefined});
 const makerQuery=(prefix)=>manufacturer?`${prefix}manufacturer=${encodeURIComponent(manufacturer)}`:'';
 // Suggestions are loaded page by page while scrolling the list.
 const PAGE_SIZE=40;

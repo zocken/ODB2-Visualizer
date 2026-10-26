@@ -142,6 +142,12 @@ Am Seitenende steht ein kompakter KI-Chat. Browseranfragen gehen an `POST /api/c
 
 Der Chat ist erreichbar, solange die lokale KI und ihr SSH-Tunnel laufen. Bei einer getrennten Verbindung zeigt die Oberfläche eine verständliche Fehlermeldung. Gesprächsverläufe bleiben im Speicher des jeweiligen Browser-Tabs und werden vom Chat-Backend nicht gespeichert.
 
+**Datenbankkontext:** Vor jeder Anfrage sucht der Server bis zu drei Codes heraus – zuerst aus der aktuellen Frage, dann den gerade angezeigten Code, dann aus früheren Fragen – und holt deren Einträge passend zur Herstellerauswahl aus der Datenbank (`server/code-context.js`). Titel, System, Dringlichkeit, Erklärung und Ursachen gehen als zusätzliche Systemnachricht an die KI; Codes ohne Eintrag werden als „nicht in der Datenbasis“ gekennzeichnet. Unter der Antwort steht, auf welchen Einträgen sie beruht. Fällt die Datenbank aus, antwortet der Chat ohne Kontext.
+
+**Streaming:** Der Server fragt das Gateway mit `stream: true` an und reicht die Antwort als NDJSON weiter (`{"sources":[…]}`, dann `{"delta":"…"}`-Teile, zum Schluss `{"done":true}` oder `{"error":"…"}`), sodass der Text sofort erscheint. Liefert das Gateway kein Streaming, wird die JSON-Antwort am Stück weitergegeben. Zeitgrenzen: 120 s bis zum ersten Textteil, 60 s zwischen zwei Teilen.
+
+Tests: `npm test` (`server/chat.test.js`, ohne Datenbank und ohne echtes Gateway).
+
 Grenzen: sechs Anfragen je Besucher und Minute, 18 insgesamt je Minute, zwei laufende Anfragen, 2.000 Zeichen pro neuer Frage und 768 Ausgabetokens. Der Server setzt Modell und Systemanweisung fest; Clients können keine Systemrollen oder Tools übergeben. Der Verlauf ist auf wenige Nachrichten begrenzt. Ein neuer Chat setzt den Verlauf zurück.
 
 Backend-Tests: `node --test server/chat.test.js`.

@@ -9,15 +9,11 @@
   const error = document.querySelector('#ai-chat-error');
   const history = [];
   let busy = false;
-  function message(role, text) {
-    const item = document.createElement('div');
-    item.className = `ai-chat-message ai-chat-message--${role}`;
-    const label = document.createElement('strong');
-    label.textContent = role === 'user' ? 'Du' : 'KI-Assistent';
-    const body = document.createElement('p');
-    // Render basic emphasis with DOM nodes; model output is never inserted as HTML.
+  // Render basic emphasis with DOM nodes; model output is never inserted as HTML.
+  function render(body, text) {
     const emphasis = /\*\*([^*\n]+)\*\*|\*([^*\n]+)\*/g;
     let position = 0;
+    body.replaceChildren();
     for (const match of text.matchAll(emphasis)) {
       body.append(document.createTextNode(text.slice(position, match.index)));
       const part = document.createElement(match[1] ? 'b' : 'em');
@@ -25,8 +21,31 @@
       position = match.index + match[0].length;
     }
     body.append(document.createTextNode(text.slice(position)));
+  }
+  function message(role, text) {
+    const item = document.createElement('div');
+    item.className = `ai-chat-message ai-chat-message--${role}`;
+    const label = document.createElement('strong');
+    label.textContent = role === 'user' ? 'Du' : 'KI-Assistent';
+    const body = document.createElement('p');
+    render(body, text);
     item.append(label, body); log.append(item); log.scrollTop = log.scrollHeight;
-    return item;
+    return {
+      item,
+      update(next) {
+        const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+        render(body, next);
+        if (atBottom) log.scrollTop = log.scrollHeight;
+      },
+      // Which database entries the answer is based on.
+      sources(list) {
+        if (!list.length) return;
+        const note = document.createElement('small');
+        note.className = 'ai-chat-sources';
+        note.textContent = `Grundlage: ${list.map((s) => `${s.code}${s.manufacturer ? ` (${s.manufacturer})` : ''}`).join(', ')} aus der Datenbasis`;
+        item.append(note);
+      },
+    };
   }
   const greeting = () => message('assistant', 'Hallo! Was möchtest du über einen Fehlercode oder dein Fahrzeug wissen?');
   greeting();
@@ -38,6 +57,22 @@
   input.addEventListener('keydown', event => {
     if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); form.requestSubmit(); }
   });
+
+  // Reads the NDJSON answer stream: {sources}, then {delta} parts, finally {done} or {error}.
+  async function* events(response) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    for (;;) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+      const lines = buffer.split('\n');
+      buffer = done ? '' : lines.pop();
+      for (const line of lines) if (line.trim()) yield JSON.parse(line);
+      if (done) return;
+    }
+  }
+
   form.addEventListener('submit', async event => {
     event.preventDefault();
     const question = input.value.trim();
@@ -45,23 +80,41 @@
     if (question.length > 2000) { error.textContent = 'Bitte kürze deine Frage auf 2.000 Zeichen.'; error.hidden = false; return; }
     busy = true; error.hidden = true; send.disabled = reset.disabled = true;
     input.readOnly = true; send.textContent = 'Wird gesendet …';
-    status.textContent = 'Die KI antwortet …'; log.setAttribute('aria-busy', 'true');
+    status.textContent = 'Die KI denkt nach …'; log.setAttribute('aria-busy', 'true');
     const userMessage = message('user', question);
+    let reply = null, answer = '';
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 125000);
+    let timeout = setTimeout(() => controller.abort(), 130000);
     try {
       let recent = history.slice(-10);
       while (recent.length && recent.reduce((n, m) => n + m.content.length, question.length) > 11000) recent = recent.slice(2);
       const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [...recent, { role: 'user', content: question }] }), signal: controller.signal });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Die Antwort konnte nicht geladen werden.');
-      if (typeof data.answer !== 'string' || !data.answer.trim()) throw new Error('Die KI hat keine Antwort geliefert.');
-      history.push({ role: 'user', content: question }, { role: 'assistant', content: data.answer.slice(0, 4000) });
+        body: JSON.stringify({ messages: [...recent, { role: 'user', content: question }], context: window.obd2ChatContext?.() }),
+        signal: controller.signal });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Die Antwort konnte nicht geladen werden.');
+      }
+      let sources = [], finished = false;
+      for await (const part of events(response)) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => controller.abort(), 70000);
+        if (part.sources) sources = part.sources;
+        if (part.error) throw new Error(part.error);
+        if (part.delta) {
+          if (!reply) { reply = message('assistant', ''); status.textContent = 'Die KI antwortet …'; }
+          answer += part.delta; reply.update(answer);
+        }
+        if (part.done) finished = true;
+      }
+      if (!finished || !answer.trim()) throw new Error('Die KI hat keine Antwort geliefert.');
+      reply.sources(sources);
+      history.push({ role: 'user', content: question }, { role: 'assistant', content: answer.trim().slice(0, 4000) });
       if (history.length > 10) history.splice(0, history.length - 10);
-      message('assistant', data.answer); input.value = ''; status.textContent = 'Antwort erhalten';
+      input.value = ''; status.textContent = 'Antwort erhalten';
     } catch (reason) {
-      userMessage.remove();
+      // A partial answer stays visible but is not added to the history; the question stays in the input.
+      if (!answer.trim()) { userMessage.item.remove(); reply?.item.remove(); }
       error.textContent = reason.name === 'AbortError' ? 'Die Antwort dauert zu lange. Bitte versuche es erneut.' : reason.message || 'Keine Verbindung zur KI. Bitte versuche es später erneut.';
       error.hidden = false; status.textContent = 'Bitte erneut versuchen';
     } finally {

@@ -12,7 +12,8 @@
     "start": "node server/index.js",
     "seed": "node server/seed.js",
     "build:static": "node server/build-static.js",
-    "update-codes": "node server/update-codes.js"
+    "update-codes": "node server/update-codes.js",
+    "test": "node --test"
   },
   "dependencies": {
     "express": "^5.1.0",
