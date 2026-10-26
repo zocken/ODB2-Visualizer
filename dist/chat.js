@@ -84,7 +84,7 @@
     const userMessage = message('user', question);
     let reply = null, answer = '';
     const controller = new AbortController();
-    let timeout = setTimeout(() => controller.abort(), 130000);
+    let timeout = setTimeout(() => controller.abort(), 190000);
     try {
       let recent = history.slice(-10);
       while (recent.length && recent.reduce((n, m) => n + m.content.length, question.length) > 11000) recent = recent.slice(2);

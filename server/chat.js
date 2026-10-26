@@ -6,7 +6,7 @@ const CODE = /^[PBCU][0-9A-F]{4}$/;
 const CODE_IN_TEXT = /\b[PBCU][0-9A-F]{4}\b/gi;
 const SLUG = /^[a-z0-9-]{1,40}$/;
 const MAX_CODES = 3;
-const FIRST_TOKEN_MS = 120000; // Wartezeit bis zum Antwortbeginn (lokales Modell lädt ggf. erst)
+const FIRST_TOKEN_MS = 180000; // Wartezeit bis zum Antwortbeginn (ohne Streaming: bis zur ganzen Antwort, lokal ~100 s)
 const IDLE_MS = 60000; // längste Pause zwischen zwei Antwortteilen
 
 // Codes für den Datenbankkontext: zuerst aus der aktuellen Frage, dann der gerade angezeigte Code,
@@ -72,6 +72,7 @@ export function createChatRouter({
 } = {}) {
   const router = express.Router();
   let active = 0;
+  let streaming = true; // false, sobald das Gateway Streaming abgelehnt hat
   let globalCalls = [];
   const visitors = new Map();
   router.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
@@ -124,11 +125,12 @@ export function createChatRouter({
         }),
         signal: controller.signal,
       });
-      let upstream = await request(true);
+      let upstream = await request(streaming);
       // Gateways ohne Streaming lehnen stream: true teils ab – dann einmal ohne Streaming versuchen.
-      if ([400, 404, 415, 422, 501].includes(upstream.status)) {
+      if (streaming && [400, 404, 415, 422, 501].includes(upstream.status)) {
         console.error(`Chat-Gateway lehnt Streaming ab (HTTP ${upstream.status}), neuer Versuch ohne Streaming.`);
         upstream = await request(false);
+        if (upstream.ok) streaming = false;
       }
       if (upstream.status === 429) { res.set('Retry-After', '15'); return fail(429, 'Die KI ist gerade ausgelastet. Bitte versuche es gleich noch einmal.'); }
       if (!upstream.ok) {

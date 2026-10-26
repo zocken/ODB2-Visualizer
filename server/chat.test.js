@@ -156,5 +156,8 @@ test('lehnt das Gateway Streaming ab, folgt ein Versuch ohne Streaming', async (
     const out = await lines(await ask(url, { messages: [{ role: 'user', content: 'Hallo' }] }));
     assert.deepEqual(modes, [true, false]);
     assert.equal(out.find((l) => l.delta).delta, 'ohne Stream');
+    // danach direkt ohne Streaming, kein abgelehnter Versuch mehr
+    await lines(await ask(url, { messages: [{ role: 'user', content: 'Noch mal' }] }));
+    assert.deepEqual(modes, [true, false, false]);
   } finally { console.error = original; close(); }
 });
