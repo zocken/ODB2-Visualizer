@@ -142,3 +142,17 @@ test('Fehler des Gateways und leere Antwort', async () => {
   const bad = await serve({ fetchImpl: async () => sse() });
   try { assert.equal((await ask(bad.url, { messages: [{ role: 'assistant', content: 'x' }] })).status, 400); } finally { bad.close(); }
 });
+
+test('lehnt das Gateway Streaming ab, folgt ein Versuch ohne Streaming', async () => {
+  const modes = [];
+  const { url, close } = await serve({ fetchImpl: async (_u, init) => {
+    const { stream } = JSON.parse(init.body); modes.push(stream);
+    return stream ? new Response('stream not supported', { status: 400 }) : Response.json({ choices: [{ message: { content: 'ohne Stream' } }] });
+  } });
+  const original = console.error; console.error = () => {};
+  try {
+    const out = await lines(await ask(url, { messages: [{ role: 'user', content: 'Hallo' }] }));
+    assert.deepEqual(modes, [true, false]);
+    assert.equal(out.find((l) => l.delta).delta, 'ohne Stream');
+  } finally { console.error = original; close(); }
+});

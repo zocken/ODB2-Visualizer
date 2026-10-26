@@ -111,7 +111,7 @@ export function createChatRouter({
       let facts = { entries: [], manufacturerName: null };
       try { facts = await lookupCodes(codes, manufacturer); } catch (error) { console.error('Chat-Kontext nicht verfügbar:', error.message); }
       const context = factsMessage(facts, codes, contextCode);
-      const upstream = await fetchImpl(`${gatewayUrl.replace(/\/$/, '')}/v1/chat/completions`, {
+      const request = (stream) => fetchImpl(`${gatewayUrl.replace(/\/$/, '')}/v1/chat/completions`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${gatewayKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,12 +119,21 @@ export function createChatRouter({
           messages: [{ role: 'system', content: SYSTEM }, ...(context ? [{ role: 'system', content: context }] : []),
             ...messages.map(({ role, content }) => ({ role, content }))],
           max_tokens: 768,
-          stream: true,
+          stream,
         }),
         signal: controller.signal,
       });
+      let upstream = await request(true);
+      // Gateways ohne Streaming lehnen stream: true teils ab – dann einmal ohne Streaming versuchen.
+      if ([400, 404, 415, 422, 501].includes(upstream.status)) {
+        console.error(`Chat-Gateway lehnt Streaming ab (HTTP ${upstream.status}), neuer Versuch ohne Streaming.`);
+        upstream = await request(false);
+      }
       if (upstream.status === 429) { res.set('Retry-After', '15'); return fail(429, 'Die KI ist gerade ausgelastet. Bitte versuche es gleich noch einmal.'); }
-      if (!upstream.ok) return fail(503, 'Die KI ist momentan nicht erreichbar. Bitte versuche es später erneut.');
+      if (!upstream.ok) {
+        console.error(`Chat-Gateway antwortet mit HTTP ${upstream.status}.`);
+        return fail(503, 'Die KI ist momentan nicht erreichbar. Bitte versuche es später erneut.');
+      }
       // Antwort als NDJSON: zuerst die verwendeten Datenbankeinträge, dann Textteile, zum Schluss done.
       res.status(200).set({ 'Content-Type': 'application/x-ndjson; charset=utf-8', 'X-Accel-Buffering': 'no' });
       send({ sources: facts.entries.map(({ code, title, manufacturer: maker }) => ({ code, title, manufacturer: maker })) });
@@ -137,7 +146,9 @@ export function createChatRouter({
       }
       send(answered ? { done: true } : { error: 'Die KI hat keine Antwort geliefert. Bitte versuche es noch einmal.' });
       res.end();
-    } catch {
+    } catch (reason) {
+      // Nur Fehlerart und -code ins Log, keine URL oder Schlüssel.
+      if (!controller.signal.aborted) console.error(`Chat-Gateway nicht erreichbar: ${reason?.cause?.code || reason?.name || 'Fehler'}`);
       const error = controller.signal.aborted ? 'Die Antwort dauert zu lange. Bitte versuche eine kürzere Frage.' : 'Die KI ist momentan nicht erreichbar. Bitte versuche es später erneut.';
       if (res.destroyed) return;
       if (res.headersSent) { send({ error }); res.end(); } else fail(controller.signal.aborted ? 504 : 503, error);
