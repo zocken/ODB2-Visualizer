@@ -116,7 +116,8 @@ export function createChatRouter({
         headers: { Authorization: `Bearer ${gatewayKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: MODEL,
-          messages: [{ role: 'system', content: SYSTEM }, ...(context ? [{ role: 'system', content: context }] : []),
+          // Nur eine Systemnachricht: Mistral-/Devstral-Vorlagen lehnen eine zweite ab.
+          messages: [{ role: 'system', content: context ? `${SYSTEM}\n\n${context}` : SYSTEM },
             ...messages.map(({ role, content }) => ({ role, content }))],
           max_tokens: 768,
           stream,

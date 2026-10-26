@@ -106,8 +106,10 @@ test('streamt die Antwort und gibt die Datenbankfakten an die KI', async () => {
     assert.deepEqual(out.at(-1), { done: true });
     assert.deepEqual(looked, { codes: ['P0420'], maker: 'bmw' });
     assert.equal(sent.stream, true);
-    assert.equal(sent.messages[1].role, 'system');
-    assert.match(sent.messages[1].content, /Katalysator Bank 1/);
+    // genau eine Systemnachricht, die Datenbankfakten hängen daran
+    assert.equal(sent.messages.filter((m) => m.role === 'system').length, 1);
+    assert.match(sent.messages[0].content, /Katalysator Bank 1/);
+    assert.equal(sent.messages[1].role, 'user');
   } finally { close(); }
 });
 
