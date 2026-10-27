@@ -55,7 +55,7 @@
     status.textContent = 'Neues Gespräch'; input.focus();
   });
   input.addEventListener('keydown', event => {
-    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); form.requestSubmit(); }
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); if (!busy) form.requestSubmit(); }
   });
 
   // Reads the NDJSON answer stream: {sources}, then {delta} parts, finally {done} or {error}.
@@ -73,19 +73,63 @@
     }
   }
 
+  // Seitenkontext: Kopfzeile „Bezieht sich auf …“, passende Vorschlagsfragen und der Sprung-Knopf fürs Handy.
+  const section = document.querySelector('.ai-chat');
+  const contextLine = document.querySelector('#ai-chat-context');
+  const suggestions = document.querySelector('#ai-chat-suggestions');
+  const jump = document.querySelector('#ai-chat-jump');
+  const result = document.querySelector('#result');
+  let chatVisible = false;
+  function openChat() {
+    // Erst fokussieren, dann scrollen: ein Fokus während des weichen Scrollens bricht es ab.
+    input.focus({ preventScroll: true });
+    section.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  }
+  function updateContext() {
+    const { code } = window.obd2ChatContext?.() || {};
+    const maker = document.querySelector('#maker-select');
+    const makerName = maker?.value ? maker.selectedOptions[0].text.replace(/\s*\(\d+\)$/, '') : '';
+    const shown = code && !result.hidden;
+    contextLine.hidden = !shown;
+    contextLine.textContent = shown ? `Bezieht sich auf ${code}${makerName ? ` · ${makerName}` : ''}` : '';
+    suggestions.replaceChildren(...(shown ? [`Kann ich mit ${code} noch weiterfahren?`, 'Was sollte ich zuerst prüfen?', 'Welche Live-Daten helfen weiter?'] : []).map(text => {
+      const chip = document.createElement('button');
+      chip.type = 'button'; chip.textContent = text;
+      chip.addEventListener('click', () => { if (busy) return; input.value = text; form.requestSubmit(); });
+      return chip;
+    }));
+    suggestions.hidden = !shown;
+    input.placeholder = shown ? `Deine Frage zu ${code} …` : 'Zum Beispiel: Was bedeutet P0300 und was sollte ich zuerst prüfen?';
+    jump.hidden = !shown || chatVisible;
+  }
+  new IntersectionObserver(([entry]) => { chatVisible = entry.isIntersecting; updateContext(); }).observe(section);
+  document.addEventListener('obd2:context', updateContext);
+  document.querySelector('#maker-select')?.addEventListener('change', updateContext);
+  for (const button of [jump, document.querySelector('#r-ask')]) button?.addEventListener('click', openChat);
+  updateContext();
+
+  let controller = null, cancelled = false;
   form.addEventListener('submit', async event => {
     event.preventDefault();
+    // Während einer Antwort ist der Senden-Knopf ein Abbrechen-Knopf.
+    if (busy) { cancelled = true; controller?.abort(); return; }
     const question = input.value.trim();
-    if (!question || busy) return;
+    if (!question) return;
     if (question.length > 2000) { error.textContent = 'Bitte kürze deine Frage auf 2.000 Zeichen.'; error.hidden = false; return; }
-    busy = true; error.hidden = true; send.disabled = reset.disabled = true;
-    input.readOnly = true; send.textContent = 'Wird gesendet …';
+    busy = true; cancelled = false; error.hidden = true; reset.disabled = true;
+    input.readOnly = true; send.textContent = 'Abbrechen'; send.classList.add('is-cancel');
     status.textContent = 'Die KI denkt nach …'; log.setAttribute('aria-busy', 'true');
     const userMessage = message('user', question);
-    let reply = null, answer = '';
-    const controller = new AbortController();
-    let timeout = setTimeout(() => controller.abort(), 190000);
+    // Warteblase im Verlauf, bis der erste Text kommt; lokale Modelle brauchen dafür oft eine Minute oder länger.
     const started = Date.now();
+    const pending = message('assistant', 'Denkt nach …');
+    pending.item.classList.add('is-pending');
+    const tick = () => pending.update(`Denkt nach … ${Math.round((Date.now() - started) / 1000)} s\nDas kann 1–2 Minuten dauern.`);
+    tick();
+    const ticker = setInterval(tick, 1000);
+    let reply = null, answer = '';
+    controller = new AbortController();
+    let timeout = setTimeout(() => controller.abort(), 190000);
     try {
       let recent = history.slice(-10);
       while (recent.length && recent.reduce((n, m) => n + m.content.length, question.length) > 11000) recent = recent.slice(2);
@@ -100,12 +144,11 @@
       for await (const part of events(response)) {
         // Bis zum ersten Lebenszeichen gilt die lange Wartezeit, danach 70 s je Pause (die Quellenzeile kommt sofort).
         if (part.delta || part.thinking) { clearTimeout(timeout); timeout = setTimeout(() => controller.abort(), 70000); }
-        if (part.thinking && !reply) status.textContent = `Die KI denkt nach … (${Math.round((Date.now() - started) / 1000)} s)`;
         if (part.sources) sources = part.sources;
         if (part.error) throw new Error(part.error);
         if (part.delta) {
-          if (!reply) { reply = message('assistant', ''); status.textContent = 'Die KI antwortet …'; }
-          answer += part.delta; reply.update(answer);
+          if (!reply) { clearInterval(ticker); reply = pending; pending.item.classList.remove('is-pending'); status.textContent = 'Die KI antwortet …'; }
+          answer += part.delta; reply.update(answer.trimStart());
         }
         if (part.done) finished = true;
       }
@@ -116,12 +159,13 @@
       input.value = ''; status.textContent = 'Antwort erhalten';
     } catch (reason) {
       // A partial answer stays visible but is not added to the history; the question stays in the input.
-      if (!answer.trim()) { userMessage.item.remove(); reply?.item.remove(); }
-      error.textContent = reason.name === 'AbortError' ? 'Die Antwort dauert zu lange. Bitte versuche es erneut.' : reason.message || 'Keine Verbindung zur KI. Bitte versuche es später erneut.';
-      error.hidden = false; status.textContent = 'Bitte erneut versuchen';
+      if (!answer.trim()) { userMessage.item.remove(); pending.item.remove(); }
+      error.textContent = cancelled ? 'Abgebrochen. Deine Frage steht noch im Eingabefeld.'
+        : reason.name === 'AbortError' ? 'Die Antwort dauert zu lange. Bitte versuche es erneut.' : reason.message || 'Keine Verbindung zur KI. Bitte versuche es später erneut.';
+      error.hidden = false; status.textContent = cancelled ? 'Abgebrochen' : 'Bitte erneut versuchen';
     } finally {
-      clearTimeout(timeout); busy = false; send.disabled = reset.disabled = false; input.readOnly = false;
-      send.textContent = 'Senden →'; log.removeAttribute('aria-busy'); input.focus({ preventScroll: true });
+      clearTimeout(timeout); clearInterval(ticker); busy = false; reset.disabled = false; input.readOnly = false;
+      send.textContent = 'Senden →'; send.classList.remove('is-cancel'); log.removeAttribute('aria-busy'); input.focus({ preventScroll: true });
     }
   });
 })();

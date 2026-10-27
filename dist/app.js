@@ -214,7 +214,7 @@ function hideError(){
 }
 
 function showError(message,alternatives=[]){
-  activeCode=''; result.hidden=true; byId('empty-state').hidden=false; updateVehicle(null);
+  activeCode=''; result.hidden=true; byId('empty-state').hidden=false; updateVehicle(null); document.dispatchEvent(new Event('obd2:context'));
   const box=byId('form-error'); box.replaceChildren();
   const title=document.createElement('strong'); title.textContent=message;
   const hint=document.createElement('span'); hint.textContent=alternatives.length?'Diese ähnlichen Codes sind bereits hinterlegt:':'Beispiel für ein gültiges Format: P0300';
@@ -269,7 +269,7 @@ async function showCode(code,{scroll=true}={}){
   byId('r-verdict').textContent=a.verdict; byId('r-advice-title').textContent=a.title; byId('r-advice').textContent=a.text;
   byId('r-steps').replaceChildren(...a.steps.map(step=>{const li=document.createElement('li');li.textContent=step;return li}));
   byId('r-tech').textContent=`${c.code} ist als ${c.origin} dem Diagnosebereich ${c.category} zugeordnet. Der Code beschreibt eine erkannte Abweichung in ${c.system.toLowerCase()}, benennt aber nicht automatisch ein defektes Bauteil. Messwerte, Begleitcodes und fahrzeugspezifische Herstellerangaben müssen gemeinsam bewertet werden.${c.source!=='redaktionell'?` Originalbezeichnung: ${c.titleEn||c.title}. Quelle: ${c.source}; Erklärung und Ursachen sind automatisch erzeugt und nicht redaktionell geprüft.`:''}`;
-  renderDataNotes(c); renderCauseTable(details); resetTechnicalDetails(); updateVehicle(c);
+  renderDataNotes(c); renderCauseTable(details); resetTechnicalDetails(); updateVehicle(c); document.dispatchEvent(new Event('obd2:context'));
   if(scroll)result.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
 }
 
@@ -293,7 +293,7 @@ function previewVehicle(code){
 input.addEventListener('input',()=>{
   input.value=input.value.toUpperCase().replace(/[^0-9A-FPBCU]/g,'').slice(0,5);
   hideError();
-  if(input.value!==activeCode){result.hidden=true;byId('empty-state').hidden=false;activeCode=''}
+  if(input.value!==activeCode){result.hidden=true;byId('empty-state').hidden=false;activeCode='';document.dispatchEvent(new Event('obd2:context'))}
   previewVehicle(input.value);
   renderSuggestions(input.value);
 });
@@ -319,7 +319,7 @@ form.addEventListener('submit',event=>{event.preventDefault();runSearch()});
 suggestions.addEventListener('click',event=>{
   const button=event.target.closest('[data-code]'); if(!button)return;
   input.value=button.dataset.code; hideError();
-  if(activeCode!==input.value){result.hidden=true;byId('empty-state').hidden=false;activeCode=''}
+  if(activeCode!==input.value){result.hidden=true;byId('empty-state').hidden=false;activeCode='';document.dispatchEvent(new Event('obd2:context'))}
   previewVehicle(input.value); closeSuggestions(); input.focus();
 });
 // Switching the manufacturer refreshes the shown result, the vehicle preview and open suggestions.

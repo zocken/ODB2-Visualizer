@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
-import { createChatRouter, codesFor, factsMessage } from './chat.js';
+import { createChatRouter, codesFor, factsMessage, withoutThinkTags } from './chat.js';
 
 async function fixture(options, run) {
   const app = express();
@@ -186,4 +186,19 @@ test('Reasoning-Modell ohne Antworttext meldet zu langes Nachdenken', async () =
     const result = await lines(await ask(url, { messages: [{ role: 'user', content: 'Frage' }] }));
     assert.match(result.at(-1).error, /zu lange nachgedacht/);
   } finally { close(); }
+});
+
+test('withoutThinkTags entfernt Denkblöcke auch über Teilgrenzen', async () => {
+  const run = async (...parts) => { const out = []; for await (const p of withoutThinkTags(parts)) out.push(p); return out; };
+  const text = (out) => out.filter((p) => typeof p === 'string').join('');
+  assert.equal(text(await run('<thi', 'nk>geheim', ' weiter</th', 'ink>Antwort ', 'mit <b>')), 'Antwort mit <b>');
+  assert.ok((await run('<think>x</think>A')).some((p) => p.thinking));
+  assert.equal(text(await run('Ohne Denkblock, 3 < 4')), 'Ohne Denkblock, 3 < 4');
+  assert.equal(text(await run('Ende mit <thi')), 'Ende mit <thi');
+});
+
+test('factsMessage gibt die Weiterfahrt-Empfehlung der Seite mit', () => {
+  const text = factsMessage({ entries: [{ ...P0420, urgency: 'Rot' }], manufacturerName: null }, ['P0420'], 'P0420');
+  assert.match(text, /Empfehlung der Seite zur Weiterfahrt: nur eingeschränkt/);
+  assert.match(text, /halte dich an die Empfehlung der Seite/);
 });
