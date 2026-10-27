@@ -97,8 +97,8 @@
       }
       let sources = [], finished = false;
       for await (const part of events(response)) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => controller.abort(), 70000);
+        // Bis zum ersten Textteil gilt die lange Wartezeit, danach 70 s je Pause (die Quellenzeile kommt sofort).
+        if (part.delta) { clearTimeout(timeout); timeout = setTimeout(() => controller.abort(), 70000); }
         if (part.sources) sources = part.sources;
         if (part.error) throw new Error(part.error);
         if (part.delta) {
