@@ -227,6 +227,14 @@ function showError(message,alternatives=[]){
   box.hidden=false;
 }
 
+// Datenbasis und Informationsstand passend zur Herkunft des Eintrags (redaktionell oder automatisch importiert).
+function renderDataNotes(c){
+  const edited=c.source==='redaktionell', sha=c.source.match(/Stand (\w+)/)?.[1];
+  byId('r-basis').textContent=edited?'SAE J2012 / ISO 15031-6':'Wal33D/dtc-database (MIT)';
+  byId('r-stand').textContent=edited?'Redaktionell geprüft · 16.10.2026':`Automatisch übersetzt · nicht redaktionell geprüft${sha?` · Quellstand ${sha}`:''}`;
+  byId('r-limit').textContent=c.origin.startsWith('herstellerspezifisch · ')?'Herstellerangabe · nicht modellgenau':'Nicht fahrzeugspezifisch';
+}
+
 function renderCauseTable(details){
   const body=byId('cause-table-body'); body.replaceChildren();
   details.forEach(item=>{
@@ -261,7 +269,7 @@ async function showCode(code,{scroll=true}={}){
   byId('r-verdict').textContent=a.verdict; byId('r-advice-title').textContent=a.title; byId('r-advice').textContent=a.text;
   byId('r-steps').replaceChildren(...a.steps.map(step=>{const li=document.createElement('li');li.textContent=step;return li}));
   byId('r-tech').textContent=`${c.code} ist als ${c.origin} dem Diagnosebereich ${c.category} zugeordnet. Der Code beschreibt eine erkannte Abweichung in ${c.system.toLowerCase()}, benennt aber nicht automatisch ein defektes Bauteil. Messwerte, Begleitcodes und fahrzeugspezifische Herstellerangaben müssen gemeinsam bewertet werden.${c.source!=='redaktionell'?` Originalbezeichnung: ${c.titleEn||c.title}. Quelle: ${c.source}; Erklärung und Ursachen sind automatisch erzeugt und nicht redaktionell geprüft.`:''}`;
-  renderCauseTable(details); resetTechnicalDetails(); updateVehicle(c);
+  renderDataNotes(c); renderCauseTable(details); resetTechnicalDetails(); updateVehicle(c);
   if(scroll)result.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
 }
 

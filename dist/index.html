@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#07110e">
   <meta name="description" content="OBD2-Fehlercodes in verständlichem Klartext – mit Systemvisualisierung, Dringlichkeit und nächsten Schritten.">
   <title>OBD2 Klartext</title>
-  <link rel="stylesheet" href="styles.css?v=17">
+  <link rel="stylesheet" href="styles.css?v=18">
   <link rel="stylesheet" href="vehicle.css?v=17">
   <link rel="stylesheet" href="chat.css?v=2">
   <script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js","three/addons/":"./vendor/three/addons/"}}</script>
@@ -169,7 +169,7 @@
         <div id="technical-details" class="technical-details" hidden>
           <p id="r-tech"></p>
           <div class="cause-table-wrap"><table class="cause-table"><thead><tr><th>Einordnung</th><th>Mögliche Ursache</th><th>Typischer Hinweis</th><th>Sinnvolle Prüfung</th></tr></thead><tbody id="cause-table-body"></tbody></table></div>
-          <div class="data-notes"><span><small>Datenbasis</small>SAE J2012 / ISO 15031-6</span><span><small>Informationsstand</small>Redaktionell geprüft · 16.10.2026</span><span><small>Grenze</small>Nicht fahrzeugspezifisch</span></div>
+          <div class="data-notes"><span><small>Datenbasis</small><i id="r-basis">SAE J2012 / ISO 15031-6</i></span><span><small>Informationsstand</small><i id="r-stand">Redaktionell geprüft · 16.10.2026</i></span><span><small>Grenze</small><i id="r-limit">Nicht fahrzeugspezifisch</i></span></div>
           <div class="source-note"><b>Quellen &amp; Einordnung</b><p>Codeaufbau und standardisierte Bezeichnungen orientieren sich an <a href="https://saemobilus.sae.org/standards/j2012_202509-diagnostic-trouble-code-definitions" target="_blank" rel="noopener noreferrer">SAE J2012</a> und <a href="https://www.iso.org/standard/66369.html" target="_blank" rel="noopener noreferrer">ISO 15031-6</a>. Die deutschen Erklärungen und möglichen Ursachen sind redaktionelle, nicht abschließende Diagnosehinweise. Die konkrete Ursache muss anhand fahrzeugspezifischer Herstellerunterlagen und Messwerte geprüft werden.</p></div>
         </div>
       </div>
@@ -201,7 +201,7 @@
   </main>
 
   <footer><span>OBD2 Klartext</span><span>Lernprojekt · Keine Reparaturanleitung · <a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a></span></footer>
-  <script src="app.js?v=25"></script>
+  <script src="app.js?v=26"></script>
   <script src="chat.js?v=3" defer></script>
   <script type="module" src="vehicle-view.js?v=14"></script>
 </body>
