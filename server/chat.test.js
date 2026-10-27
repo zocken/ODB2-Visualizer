@@ -21,7 +21,7 @@ test('uses server credentials, fixed model and system prompt; streams only the a
     assert.equal(body.model, 'devstral-small-2-24b-instruct-2512');
     assert.equal(body.messages[0].role, 'system');
     assert.equal(body.messages.at(-1).content, 'Was bedeutet P0300?');
-    assert.equal(body.max_tokens, 768); assert.equal(body.stream, true);
+    assert.equal(body.max_tokens, 2048); assert.equal(body.stream, true);
     return Response.json({ choices: [{ message: { content: 'Antwort', reasoning_content: 'private reasoning' } }], debug: 'secret' });
   } }, async send => {
     const result = await send({ ...valid, model: 'other', max_tokens: 99999 });
@@ -160,4 +160,30 @@ test('lehnt das Gateway Streaming ab, folgt ein Versuch ohne Streaming', async (
     await lines(await ask(url, { messages: [{ role: 'user', content: 'Noch mal' }] }));
     assert.deepEqual(modes, [true, false, false]);
   } finally { console.error = original; close(); }
+});
+
+const sseRaw = (...deltas) => new Response(new ReadableStream({
+  start(c) {
+    for (const d of deltas) c.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: d }] })}\n\n`));
+    c.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+    c.close();
+  },
+}), { headers: { 'content-type': 'text/event-stream' } });
+
+test('Reasoning-Modell: Denkphase als Lebenszeichen, Denktext bleibt intern', async () => {
+  const { url, close } = await serve({ fetchImpl: async () => sseRaw({ reasoning_content: 'geheimes Nachdenken' }, { reasoning_content: 'weiter' }, { content: 'Antwort' }) });
+  try {
+    const response = await ask(url, { messages: [{ role: 'user', content: 'Frage' }] });
+    const text = await response.text();
+    assert.doesNotMatch(text, /geheimes Nachdenken/);
+    assert.deepEqual(text.trim().split('\n').map((l) => JSON.parse(l)), [{ sources: [] }, { thinking: true }, { delta: 'Antwort' }, { done: true }]);
+  } finally { close(); }
+});
+
+test('Reasoning-Modell ohne Antworttext meldet zu langes Nachdenken', async () => {
+  const { url, close } = await serve({ fetchImpl: async () => sseRaw({ reasoning_content: 'denkt nur' }) });
+  try {
+    const result = await lines(await ask(url, { messages: [{ role: 'user', content: 'Frage' }] }));
+    assert.match(result.at(-1).error, /zu lange nachgedacht/);
+  } finally { close(); }
 });

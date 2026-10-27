@@ -8,6 +8,7 @@ const SLUG = /^[a-z0-9-]{1,40}$/;
 const MAX_CODES = 3;
 const FIRST_TOKEN_MS = 180000; // Wartezeit bis zum Antwortbeginn (ohne Streaming: bis zur ganzen Antwort, lokal ~100 s)
 const IDLE_MS = 60000; // längste Pause zwischen zwei Antwortteilen
+const MAX_TOKENS = 2048; // Reasoning-Modelle zählen die Denkphase mit; 768 reichte dann oft nicht für die Antwort
 
 // Codes für den Datenbankkontext: zuerst aus der aktuellen Frage, dann der gerade angezeigte Code,
 // dann aus früheren Fragen (damit Rückfragen wie „Und was kostet das?“ beim Thema bleiben).
@@ -38,6 +39,7 @@ export function factsMessage({ entries, manufacturerName }, codes, contextCode) 
 }
 
 // Liest die Antwort des Gateways: Server-Sent Events (stream) oder, falls das Gateway nicht streamt, ein JSON-Objekt.
+// Liefert Antworttext als String und Denkphasen von Reasoning-Modellen als { thinking: true }.
 async function* answerParts(upstream) {
   if (!(upstream.headers.get('content-type') || '').includes('text/event-stream')) {
     const data = await upstream.json();
@@ -57,8 +59,10 @@ async function* answerParts(upstream) {
       if (payload === '[DONE]') return;
       let event;
       try { event = JSON.parse(payload); } catch { continue; }
-      const text = event.choices?.[0]?.delta?.content ?? event.choices?.[0]?.message?.content;
+      const delta = event.choices?.[0]?.delta;
+      const text = delta?.content ?? event.choices?.[0]?.message?.content;
       if (typeof text === 'string' && text) yield text;
+      else if (delta?.reasoning_content || delta?.reasoning) yield { thinking: true };
     }
   }
 }
@@ -125,7 +129,7 @@ export function createChatRouter({
           // Nur eine Systemnachricht: Mistral-/Devstral-Vorlagen lehnen eine zweite ab.
           messages: [{ role: 'system', content: context ? `${SYSTEM}\n\n${context}` : SYSTEM },
             ...messages.map(({ role, content }) => ({ role, content }))],
-          max_tokens: 768,
+          max_tokens: MAX_TOKENS,
           stream,
         }),
         signal: controller.signal,
@@ -145,14 +149,23 @@ export function createChatRouter({
       // Antwort als NDJSON: zuerst die verwendeten Datenbankeinträge, dann Textteile, zum Schluss done.
       res.status(200).set({ 'Content-Type': 'application/x-ndjson; charset=utf-8', 'X-Accel-Buffering': 'no' });
       send({ sources: facts.entries.map(({ code, title, manufacturer: maker }) => ({ code, title, manufacturer: maker })) });
-      let answered = false;
+      let answered = false, thought = false, lastPing = 0;
       for await (const part of answerParts(upstream)) {
         clearTimeout(timeout);
         timeout = setTimeout(() => controller.abort(), IDLE_MS);
-        answered ||= Boolean(part.trim());
-        send({ delta: part });
+        if (typeof part === 'string') {
+          answered ||= Boolean(part.trim());
+          send({ delta: part });
+        } else if (clock() - lastPing > 5000) {
+          // Denkphase: höchstens alle 5 s ein Lebenszeichen an den Browser, der Denktext selbst bleibt intern.
+          thought = true; lastPing = clock();
+          send({ thinking: true });
+        }
       }
-      send(answered ? { done: true } : { error: 'Die KI hat keine Antwort geliefert. Bitte versuche es noch einmal.' });
+      if (!answered && thought) console.error('Chat-Gateway: Modell hat nur nachgedacht, keine Antwort (Token-Limit?).');
+      send(answered ? { done: true } : { error: thought
+        ? 'Die KI hat zu lange nachgedacht und keine Antwort geschrieben. Bitte stelle eine kürzere oder konkretere Frage.'
+        : 'Die KI hat keine Antwort geliefert. Bitte versuche es noch einmal.' });
       res.end();
     } catch (reason) {
       // Nur Fehlerart und -code ins Log, keine URL oder Schlüssel.

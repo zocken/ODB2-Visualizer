@@ -85,6 +85,7 @@
     let reply = null, answer = '';
     const controller = new AbortController();
     let timeout = setTimeout(() => controller.abort(), 190000);
+    const started = Date.now();
     try {
       let recent = history.slice(-10);
       while (recent.length && recent.reduce((n, m) => n + m.content.length, question.length) > 11000) recent = recent.slice(2);
@@ -97,8 +98,9 @@
       }
       let sources = [], finished = false;
       for await (const part of events(response)) {
-        // Bis zum ersten Textteil gilt die lange Wartezeit, danach 70 s je Pause (die Quellenzeile kommt sofort).
-        if (part.delta) { clearTimeout(timeout); timeout = setTimeout(() => controller.abort(), 70000); }
+        // Bis zum ersten Lebenszeichen gilt die lange Wartezeit, danach 70 s je Pause (die Quellenzeile kommt sofort).
+        if (part.delta || part.thinking) { clearTimeout(timeout); timeout = setTimeout(() => controller.abort(), 70000); }
+        if (part.thinking && !reply) status.textContent = `Die KI denkt nach … (${Math.round((Date.now() - started) / 1000)} s)`;
         if (part.sources) sources = part.sources;
         if (part.error) throw new Error(part.error);
         if (part.delta) {
