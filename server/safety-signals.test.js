@@ -25,3 +25,10 @@ test('normale Fragen lösen keinen Sicherheitshinweis aus', () => {
   for (const text of ['Was bedeutet P0420?', 'Welche Live-Daten soll ich bei P0171 ansehen?', 'Kann ich mit P0301 noch weiterfahren?', 'Wie teuer ist ein neuer Bremsbelag?', 'Was kostet ein Lenkradbezug?'])
     assert.deepEqual(ids(text), [], text);
 });
+
+test('erkennt Bremsverlust und absinkendes Bremspedal ohne KI-Antwort', () => {
+  for (const text of ['Ich kann nicht mehr bremsen.', 'Ich kann nicht bremsen.', 'Wir können plötzlich nicht mehr bremsen.', 'Das Bremspedal sinkt bis zum Boden.', 'Mein Bremspedal fällt bis auf den Boden.'])
+    assert.deepEqual(ids(text), ['brake'], text);
+  for (const text of ['Wie kann ich die Bremsbeläge wechseln?', 'Was kostet ein Bremspedal?'])
+    assert.deepEqual(ids(text), [], text);
+});

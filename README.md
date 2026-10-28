@@ -138,6 +138,8 @@ Die App ist ein Lern- und Orientierungstool. Sie ersetzt weder fahrzeugspezifisc
 
 ## KI-Chat
 
+Verbindliche Vorgaben: [KI-Richtlinie](docs/KI-Richtlinie.md) · Stand der Umsetzung, Prüfprotokoll und offene Punkte: [KI-Umsetzungsstand](docs/KI-Umsetzungsstand.md).
+
 Am Seitenende steht ein kompakter KI-Chat. Browseranfragen gehen an `POST /api/chat`; ausschließlich das Backend verwendet `LM_GATEWAY_URL` und `LM_GATEWAY_KEY`. Beide Werte gehören in die Produktions-Laufzeitvariablen von Coolify, niemals in Browsercode oder ins Repository.
 
 Der Chat ist erreichbar, solange die lokale KI und ihr SSH-Tunnel laufen. Bei einer getrennten Verbindung zeigt die Oberfläche eine verständliche Fehlermeldung. Gesprächsverläufe bleiben im Speicher des jeweiligen Browser-Tabs und werden vom Chat-Backend nicht gespeichert.

@@ -1,4 +1,4 @@
-import { safetySignals } from './safety-signals.js?v=1';
+import { safetySignals } from './safety-signals.js?v=2';
 
 (() => {
   const form = document.querySelector('#ai-chat-form');

@@ -4,7 +4,7 @@
 const near = (a, b) => new RegExp(`(${a})[^.!?\\n]{0,40}(${b})|(${b})[^.!?\\n]{0,40}(${a})`, 'i');
 
 export const SAFETY_SIGNALS = [
-  { id: 'brake', re: [near('brems', 'weich|schwammig|durch|versag|wirkt nicht|ohne wirkung|kaum|schlecht'), /bremswarn|bremsflüssigkeit/i],
+  { id: 'brake', re: [near('brems', 'weich|schwammig|durch|versag|wirkt nicht|ohne wirkung|kaum|schlecht'), /(?:kann|können)\s+[^.!?\n]{0,30}nicht\s+(?:mehr\s+)?bremsen/i, near('bremspedal', 'sinkt|fällt|boden'), /bremswarn|bremsflüssigkeit/i],
     text: 'Bremse: Fühlt sich die Bremse anders an oder leuchtet die rote Bremswarnleuchte, nicht weiterfahren. Sicher anhalten und abschleppen lassen.' },
   { id: 'steering', re: [near('lenk', 'schwer|blockier|fest|hakt|ausgefallen|warn')],
     text: 'Lenkung: Wird die Lenkung schwergängig oder ungewohnt, sicher anhalten und nicht weiterfahren.' },
