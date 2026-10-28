@@ -1,3 +1,5 @@
+import { safetySignals } from './safety-signals.js?v=1';
+
 (() => {
   const form = document.querySelector('#ai-chat-form');
   if (!form) return;
@@ -37,16 +39,15 @@
         render(body, next);
         if (atBottom) log.scrollTop = log.scrollHeight;
       },
+      // Fester Hinweis über dem Antworttext; bleibt beim Weiterschreiben der Antwort stehen.
+      notice(text) {
+        const note = document.createElement('small');
+        note.className = 'ai-chat-notice-line';
+        note.textContent = text;
+        label.after(note);
+      },
       // Which database entries the answer is based on.
-      sources(list, unavailable) {
-        // Datenbasis nicht erreichbar: deutlich sagen, dass die Antwort nicht durch die Projektdaten abgesichert ist.
-        if (unavailable) {
-          const note = document.createElement('small');
-          note.className = 'ai-chat-sources ai-chat-sources--warn';
-          note.textContent = 'Datenbasis gerade nicht erreichbar – diese Antwort beruht nicht auf den Projektdaten.';
-          item.append(note);
-          return;
-        }
+      sources(list) {
         if (!list.length) return;
         const note = document.createElement('small');
         note.className = 'ai-chat-sources';
@@ -128,6 +129,19 @@
     input.readOnly = true; send.textContent = 'Abbrechen'; send.classList.add('is-cancel');
     status.textContent = 'Die KI denkt nach …'; log.setAttribute('aria-busy', 'true');
     const userMessage = message('user', question);
+    // Akute Gefahrenzeichen: Hinweis sofort und unabhängig von der KI anzeigen (KI-Richtlinie, Abschnitt 4).
+    const signals = safetySignals(question);
+    if (signals.length) {
+      const box = document.createElement('div');
+      box.className = 'ai-chat-safety'; box.setAttribute('role', 'alert');
+      const title = document.createElement('strong');
+      title.textContent = 'Sicherheitshinweis';
+      const list = document.createElement('ul');
+      list.append(...signals.map(({ text }) => { const li = document.createElement('li'); li.textContent = text; return li; }));
+      const note = document.createElement('small');
+      note.textContent = 'Automatisch angezeigt, unabhängig von der KI-Antwort.';
+      box.append(title, list, note); log.append(box);
+    }
     // Warteblase im Verlauf, bis der erste Text kommt; lokale Modelle brauchen dafür oft eine Minute oder länger.
     const started = Date.now();
     const pending = message('assistant', 'Denkt nach …');
@@ -135,7 +149,7 @@
     const tick = () => pending.update(`Denkt nach … ${Math.round((Date.now() - started) / 1000)} s\nDas kann 1–2 Minuten dauern.`);
     tick();
     const ticker = setInterval(tick, 1000);
-    let reply = null, answer = '';
+    let reply = null, answer = '', dataNotice = false;
     controller = new AbortController();
     let timeout = setTimeout(() => controller.abort(), 190000);
     try {
@@ -148,11 +162,13 @@
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Die Antwort konnte nicht geladen werden.');
       }
-      let sources = [], unavailable = false, finished = false;
+      let sources = [], finished = false;
       for await (const part of events(response)) {
         // Bis zum ersten Lebenszeichen gilt die lange Wartezeit, danach 70 s je Pause (die Quellenzeile kommt sofort).
         if (part.delta || part.thinking) { clearTimeout(timeout); timeout = setTimeout(() => controller.abort(), 70000); }
-        if (part.sources) { sources = part.sources; unavailable = Boolean(part.dataUnavailable); }
+        if (part.sources) sources = part.sources;
+        // Datenbasis nicht erreichbar: Hinweis sofort und vor dem ersten Antworttext (KI-Richtlinie, Abschnitt 5).
+        if (part.dataUnavailable && !dataNotice) { dataNotice = true; pending.notice('Datenbasis gerade nicht erreichbar – diese Antwort beruht nicht auf den Projektdaten.'); }
         if (part.error) throw new Error(part.error);
         if (part.delta) {
           if (!reply) { clearInterval(ticker); reply = pending; pending.item.classList.remove('is-pending'); status.textContent = 'Die KI antwortet …'; }
@@ -161,13 +177,18 @@
         if (part.done) finished = true;
       }
       if (!finished || !answer.trim()) throw new Error('Die KI hat keine Antwort geliefert.');
-      reply.sources(sources, unavailable);
+      reply.sources(sources);
       history.push({ role: 'user', content: question }, { role: 'assistant', content: answer.trim().slice(0, 4000) });
       if (history.length > 10) history.splice(0, history.length - 10);
       input.value = ''; status.textContent = 'Antwort erhalten';
     } catch (reason) {
       // A partial answer stays visible but is not added to the history; the question stays in the input.
-      if (!answer.trim()) { userMessage.item.remove(); pending.item.remove(); }
+      // Sicherheits- und Ausfallhinweise bleiben stehen; ohne sie verschwinden Frage und Warteblase wie bisher.
+      if (!answer.trim()) {
+        clearInterval(ticker);
+        if (dataNotice) { pending.item.classList.remove('is-pending'); pending.update('Keine Antwort erhalten.'); } else pending.item.remove();
+        if (!signals.length && !dataNotice) userMessage.item.remove();
+      }
       error.textContent = cancelled ? 'Abgebrochen. Deine Frage steht noch im Eingabefeld.'
         : reason.name === 'AbortError' ? 'Die Antwort dauert zu lange. Bitte versuche es erneut.' : reason.message || 'Keine Verbindung zur KI. Bitte versuche es später erneut.';
       error.hidden = false; status.textContent = cancelled ? 'Abgebrochen' : 'Bitte erneut versuchen';
