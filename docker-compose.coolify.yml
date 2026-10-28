@@ -27,6 +27,7 @@ services:
       UPDATE_TIMEZONE: ${UPDATE_TIMEZONE:-Europe/Berlin}
       LM_GATEWAY_URL: ${LM_GATEWAY_URL:-}
       LM_GATEWAY_KEY: ${LM_GATEWAY_KEY:-}
+      LM_MODEL: ${LM_MODEL:-}
     expose:
       - "8080"
     depends_on:

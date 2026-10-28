@@ -96,3 +96,4 @@
 /* hidden-Attribut hat Vorrang vor display-Regeln (z. B. .error-box, .maker-row) */
 [hidden]{display:none!important}
 .suggestion.is-highlighted{background:#dfe8dc;outline:2px solid #72ad33;outline-offset:-2px}
+.verdict-note{display:block;margin-top:3px;font-size:10px;letter-spacing:.04em;text-transform:none;color:#4d6a3a}

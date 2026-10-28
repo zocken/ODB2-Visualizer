@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#07110e">
   <meta name="description" content="OBD2-Fehlercodes in verständlichem Klartext – mit Systemvisualisierung, Dringlichkeit und nächsten Schritten.">
   <title>OBD2 Klartext</title>
-  <link rel="stylesheet" href="styles.css?v=18">
+  <link rel="stylesheet" href="styles.css?v=19">
   <link rel="stylesheet" href="vehicle.css?v=17">
-  <link rel="stylesheet" href="chat.css?v=3">
+  <link rel="stylesheet" href="chat.css?v=4">
   <script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js","three/addons/":"./vendor/three/addons/"}}</script>
 </head>
 <body>
@@ -162,7 +162,7 @@
       <div class="result-grid">
         <article class="panel system-panel"><p class="panel-label">Betroffenes System</p><div id="system-icon" class="system-icon" aria-hidden="true">⚙</div><h3 id="r-system"></h3><p id="r-system-copy"></p><span id="r-location" class="location"></span></article>
         <article class="panel"><p class="panel-label">Einfach erklärt</p><p id="r-explanation" class="lead"></p><h3>Wahrscheinliche Ursachen</h3><ul id="r-causes" class="cause-list"></ul><small>Das sind Möglichkeiten – keine gesicherte Diagnose.</small></article>
-        <article class="panel action-panel"><p class="panel-label">Was jetzt?</p><div class="verdict"><span>Weiterfahrt</span><b id="r-verdict"></b></div><h3 id="r-advice-title"></h3><p id="r-advice"></p><ol id="r-steps"></ol><button id="r-ask" class="ask-ai" type="button">Frage dazu an die KI →</button></article>
+        <article class="panel action-panel"><p class="panel-label">Was jetzt?</p><div class="verdict"><span>Weiterfahrt<small class="verdict-note">Einschätzung, keine Freigabe</small></span><b id="r-verdict"></b></div><h3 id="r-advice-title"></h3><p id="r-advice"></p><ol id="r-steps"></ol><button id="r-ask" class="ask-ai" type="button">Frage dazu an die KI →</button></article>
       </div>
       <div class="details detail-panel">
         <button id="detail-toggle" class="detail-toggle" type="button" aria-expanded="false" aria-controls="technical-details"><span><small>Für Hobbyschrauber</small>Technische Details und Ursachenvergleich anzeigen</span><b aria-hidden="true">+</b></button>
@@ -182,6 +182,7 @@
           <div><p class="eyebrow">Noch eine Frage?</p><h2 id="ai-chat-title">Frag den KI-Assistenten.</h2><p id="ai-chat-context" class="ai-chat-context" hidden></p></div>
           <button id="ai-chat-reset" class="ai-chat-reset" type="button">Neues Gespräch</button>
         </div>
+        <p class="ai-chat-notice"><b>KI-Antworten</b> entstehen automatisch und können Fehler enthalten. Sie dienen der Orientierung und sind keine Diagnose oder Freigabe zur Weiterfahrt – Warnleuchten, Fahrzeugmeldungen und Herstellerangaben haben Vorrang. Bitte keine Namen, Kontaktdaten, Kennzeichen oder Fahrgestellnummern eingeben. <a href="datenschutz.html#ki">Datenschutz</a> · <a href="mailto:falk.brueggen@netcologne.de?subject=OBD2%20Klartext%3A%20KI-Antwort%20melden">Falsche Antwort melden</a></p>
         <div id="ai-chat-log" class="ai-chat-log" role="log" aria-label="Chatverlauf" aria-live="polite" aria-relevant="additions"></div>
         <form id="ai-chat-form" class="ai-chat-form">
           <div id="ai-chat-suggestions" class="ai-chat-suggestions" aria-label="Vorschläge" hidden></div>
@@ -204,8 +205,8 @@
   </main>
 
   <footer><span>OBD2 Klartext</span><span>Lernprojekt · Keine Reparaturanleitung · <a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a></span></footer>
-  <script src="app.js?v=27"></script>
-  <script src="chat.js?v=6" defer></script>
+  <script src="app.js?v=28"></script>
+  <script src="chat.js?v=7" defer></script>
   <script type="module" src="vehicle-view.js?v=14"></script>
 </body>
 </html>

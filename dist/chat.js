@@ -38,7 +38,15 @@
         if (atBottom) log.scrollTop = log.scrollHeight;
       },
       // Which database entries the answer is based on.
-      sources(list) {
+      sources(list, unavailable) {
+        // Datenbasis nicht erreichbar: deutlich sagen, dass die Antwort nicht durch die Projektdaten abgesichert ist.
+        if (unavailable) {
+          const note = document.createElement('small');
+          note.className = 'ai-chat-sources ai-chat-sources--warn';
+          note.textContent = 'Datenbasis gerade nicht erreichbar – diese Antwort beruht nicht auf den Projektdaten.';
+          item.append(note);
+          return;
+        }
         if (!list.length) return;
         const note = document.createElement('small');
         note.className = 'ai-chat-sources';
@@ -140,11 +148,11 @@
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Die Antwort konnte nicht geladen werden.');
       }
-      let sources = [], finished = false;
+      let sources = [], unavailable = false, finished = false;
       for await (const part of events(response)) {
         // Bis zum ersten Lebenszeichen gilt die lange Wartezeit, danach 70 s je Pause (die Quellenzeile kommt sofort).
         if (part.delta || part.thinking) { clearTimeout(timeout); timeout = setTimeout(() => controller.abort(), 70000); }
-        if (part.sources) sources = part.sources;
+        if (part.sources) { sources = part.sources; unavailable = Boolean(part.dataUnavailable); }
         if (part.error) throw new Error(part.error);
         if (part.delta) {
           if (!reply) { clearInterval(ticker); reply = pending; pending.item.classList.remove('is-pending'); status.textContent = 'Die KI antwortet …'; }
@@ -153,7 +161,7 @@
         if (part.done) finished = true;
       }
       if (!finished || !answer.trim()) throw new Error('Die KI hat keine Antwort geliefert.');
-      reply.sources(sources);
+      reply.sources(sources, unavailable);
       history.push({ role: 'user', content: question }, { role: 'assistant', content: answer.trim().slice(0, 4000) });
       if (history.length > 10) history.splice(0, history.length - 10);
       input.value = ''; status.textContent = 'Antwort erhalten';

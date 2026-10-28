@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
-import { createChatRouter, codesFor, factsMessage, withoutThinkTags } from './chat.js';
+import { createChatRouter, codesFor, factsMessage, withoutThinkTags, drivingAdvice, DEFAULT_MODEL } from './chat.js';
 
 async function fixture(options, run) {
   const app = express();
@@ -18,7 +18,7 @@ test('uses server credentials, fixed model and system prompt; streams only the a
     assert.equal(url, 'http://gateway/v1/chat/completions');
     assert.equal(options.headers.Authorization, 'Bearer secret');
     const body = JSON.parse(options.body);
-    assert.equal(body.model, 'devstral-small-2-24b-instruct-2512');
+    assert.equal(body.model, DEFAULT_MODEL);
     assert.equal(body.messages[0].role, 'system');
     assert.equal(body.messages.at(-1).content, 'Was bedeutet P0300?');
     assert.equal(body.max_tokens, 2048); assert.equal(body.stream, true);
@@ -126,13 +126,16 @@ test('Datenbankfehler blockiert den Chat nicht, ungültiger Kontext wird ignorie
   let looked;
   const { url, close } = await serve({
     lookupCodes: async (codes, maker) => { looked = { codes, maker }; throw new Error('db weg'); },
-    fetchImpl: async () => sse('ok'),
+    fetchImpl: async (_url, init) => { looked.system = JSON.parse(init.body).messages[0].content; return sse('ok'); },
   });
   const original = console.error; console.error = () => {};
   try {
     const out = await lines(await ask(url, { messages: [{ role: 'user', content: 'Hallo' }], context: { code: '<b>', manufacturer: 'DROP TABLE' } }));
-    assert.deepEqual(looked, { codes: [], maker: null });
+    assert.deepEqual({ codes: looked.codes, maker: looked.maker }, { codes: [], maker: null });
     assert.deepEqual(out.at(-1), { done: true });
+    // Ausfall ist für Nutzende und KI erkennbar
+    assert.deepEqual(out[0], { sources: [], dataUnavailable: true });
+    assert.match(looked.system, /Datenbasis ist gerade nicht erreichbar/);
   } finally { console.error = original; close(); }
 });
 
@@ -199,6 +202,19 @@ test('withoutThinkTags entfernt Denkblöcke auch über Teilgrenzen', async () =>
 
 test('factsMessage gibt die Weiterfahrt-Empfehlung der Seite mit', () => {
   const text = factsMessage({ entries: [{ ...P0420, urgency: 'Rot' }], manufacturerName: null }, ['P0420'], 'P0420');
-  assert.match(text, /Empfehlung der Seite zur Weiterfahrt: nur eingeschränkt/);
-  assert.match(text, /halte dich an die Empfehlung der Seite/);
+  assert.match(text, /Einschätzung der Seite zur Weiterfahrt: nur eingeschränkt/);
+  assert.match(text, /ohne sie als Freigabe zu formulieren/);
+});
+
+test('Sicherheitsrelevante Systeme gehen der Dringlichkeitsfarbe vor', () => {
+  assert.match(drivingAdvice({ system: 'ABS & Fahrstabilität', urgency: 'Grün' }), /^nur nach Prüfung \(Bremsen/);
+  assert.match(drivingAdvice({ system: 'Motorschmierung', urgency: 'Gelb' }), /Öldruckwarnung sofort sicher anhalten/);
+  assert.match(drivingAdvice({ system: 'Hybrid-/Elektroantrieb', urgency: 'Grün' }), /Hochvolt/);
+  assert.match(drivingAdvice({ system: 'Tankentlüftung', urgency: 'Grün' }), /^meist möglich/);
+});
+
+test('Modell ist konfigurierbar', async () => {
+  let model;
+  const { url, close } = await serve({ model: 'test-modell', fetchImpl: async (_u, init) => { model = JSON.parse(init.body).model; return sse('ok'); } });
+  try { await (await ask(url, valid)).text(); assert.equal(model, 'test-modell'); } finally { close(); }
 });

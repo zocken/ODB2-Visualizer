@@ -1,17 +1,34 @@
 import express from 'express';
 
-const MODEL = 'devstral-small-2-24b-instruct-2512';
-const SYSTEM = 'Du bist der deutschsprachige KI-Assistent von OBD2 Klartext. Hilf bei Fragen zu OBD2-Fehlercodes und Fahrzeugtechnik. Antworte verständlich, knapp und mit konkreten nächsten Schritten. Unterscheide mögliche Ursachen von bestätigten Diagnosen. Frage bei Bedarf nach Fahrzeug, Baujahr, Motor und Symptomen. Erfinde keine Messwerte oder fahrzeugspezifischen Angaben. Bei sicherheitskritischen Symptomen empfehle sicheres Anhalten und eine Fachwerkstatt. Gib keine Anleitung zum Umgehen von Sicherheits- oder Abgassystemen. Nutze kurze Absätze und einfache Aufzählungen ohne Tabellen.';
+// Modell laut LM Studio; über LM_MODEL änderbar. Ein Wechsel braucht laut KI-Richtlinie (Abschnitt 9) eine erneute Prüfung.
+export const DEFAULT_MODEL = 'qwen3.8-flash-next';
+// Systemanweisung nach der KI-Richtlinie (Abschnitte 2, 4 und 5).
+const SYSTEM = 'Du bist der deutschsprachige KI-Assistent von OBD2 Klartext. Hilf bei Fragen zu OBD2-Fehlercodes und Fahrzeugtechnik. Antworte verständlich, knapp und mit konkreten nächsten Schritten. '
+  + 'Sicherheit hat Vorrang vor Kürze und Vollständigkeit: Bei Anzeichen akuter Gefahr fordere zum sicheren Anhalten und zur fachlichen Abklärung auf und relativiere gefährliche Symptome nicht. '
+  + 'Gib keine gesicherte Diagnose, keine verbindliche Reparaturentscheidung und keine Freigabe zur Weiterfahrt; ein Fehlercode allein beweist keinen Bauteildefekt. Bezeichne Ursachen als Möglichkeiten. '
+  + 'Erfinde keine Messwerte, Sollwerte, Herstellerangaben, Quellen oder Prüfergebnisse. Fehlen Angaben zu Fahrzeug, Baujahr, Motor oder Symptomen, benenne das und frage danach. '
+  + 'Gib keine Anleitung zum Deaktivieren oder Umgehen von Sicherheits- oder Abgassystemen. Bei Arbeiten mit erheblichem Verletzungsrisiko (Airbag, Hochvolt, Bremsen, heißes Kühlsystem) verweise auf qualifiziertes Fachpersonal. '
+  + 'Nutze kurze Absätze und einfache Aufzählungen ohne Tabellen.';
 const CODE = /^[PBCU][0-9A-F]{4}$/;
 const CODE_IN_TEXT = /\b[PBCU][0-9A-F]{4}\b/gi;
 const SLUG = /^[a-z0-9-]{1,40}$/;
 const MAX_CODES = 3;
-// Gleiche Weiterfahrt-Empfehlung wie auf der Ergebnisseite (dist/app.js, adviceFor), damit Chat und Seite übereinstimmen.
+// Gleiche Weiterfahrt-Einschätzung wie auf der Ergebnisseite (dist/app.js, SAFETY und adviceFor), damit Chat und Seite übereinstimmen.
+// Sicherheitsrelevante Systeme gehen der Dringlichkeitsfarbe vor (KI-Richtlinie, Abschnitt 4).
+const SAFETY = [
+  [/ABS|Bremse|Fahrstabilit/i, 'nur nach Prüfung (Bremsen und Fahrstabilität). Leuchtet die rote Bremswarnleuchte oder fühlt sich die Bremse anders an, nicht weiterfahren. Sonst nur vorsichtig und direkt zur Fachwerkstatt – ABS und ESP können ausgefallen sein.'],
+  [/Lenkung/i, 'nur nach Prüfung (Lenkung). Wird die Lenkung schwergängig, ungewohnt oder erscheint eine Lenkungswarnung, sicher anhalten und nicht weiterfahren.'],
+  [/Schmierung|Öldruck/i, 'nur nach Prüfung (Öldruck). Bei Öldruckwarnung sofort sicher anhalten und den Motor abstellen. Nicht weiterfahren, bevor die Ursache geklärt ist.'],
+  [/Kühlung|Kühlsystem|Überhitz/i, 'nur nach Prüfung (Motorkühlung). Steigt die Temperaturanzeige, erscheint eine Temperaturwarnung oder tritt Dampf aus: sofort sicher anhalten und den Motor abstellen. Das heiße Kühlsystem nicht öffnen.'],
+  [/Rückhalte|Airbag|Gurt/i, 'nur nach Prüfung (Airbag und Gurte). Airbags oder Gurtstraffer lösen bei einem Unfall möglicherweise nicht aus. Nicht selbst am System arbeiten und zeitnah eine Fachwerkstatt aufsuchen.'],
+  [/Hybrid|Elektroantrieb|Hochvolt/i, 'nur nach Prüfung (Hochvoltsystem). Keine eigenen Arbeiten am Hochvoltsystem – nur durch entsprechend geschultes Fachpersonal. Bei einer Hochvolt-Warnmeldung sicher anhalten.'],
+];
 const DRIVING = {
   Rot: 'nur eingeschränkt. Starke Belastung und längere Fahrten vermeiden; bei deutlichen Symptomen, roter oder blinkender Warnleuchte sicher anhalten. Zeitnah fachlich prüfen lassen.',
   Gelb: 'meist möglich, solange keine starken Symptome oder roten Warnleuchten auftreten. Hohe Belastung vermeiden und zeitnah prüfen lassen.',
   Grün: 'meist möglich, wenn das Fahrzeug normal fährt und keine weiteren Warnzeichen auftreten. Nach einigen Fahrten erneut auslesen.',
 };
+export const drivingAdvice = (e) => SAFETY.find(([re]) => re.test(e.system))?.[1] ?? DRIVING[e.urgency];
 const FIRST_TOKEN_MS = 180000; // Wartezeit bis zum Antwortbeginn (ohne Streaming: bis zur ganzen Antwort, lokal ~100 s)
 const IDLE_MS = 60000; // längste Pause zwischen zwei Antwortteilen
 const MAX_TOKENS = 2048; // Reasoning-Modelle zählen die Denkphase mit; 768 reichte dann oft nicht für die Antwort
@@ -26,7 +43,12 @@ export function codesFor(messages, contextCode) {
 }
 
 // Fakten aus der eigenen Datenbasis als zusätzliche Systemnachricht.
-export function factsMessage({ entries, manufacturerName }, codes, contextCode) {
+export function factsMessage({ entries, manufacturerName, unavailable }, codes, contextCode) {
+  // Datenbasis nicht erreichbar: keine Antwort darf wirken, als sei sie durch die Projektdaten abgesichert (Abschnitt 5).
+  if (unavailable) {
+    return 'Die OBD2-Klartext-Datenbasis ist gerade nicht erreichbar. Sag zu Beginn kurz, dass diese Antwort nicht auf der Projektdatenbank beruht. '
+      + `Gib die Bedeutung von Codes${codes.length ? ` (${codes.join(', ')})` : ''} nur unter Vorbehalt an und beschränke Aussagen zu Sicherheit und Weiterfahrt auf vorsichtige allgemeine Hinweise.`;
+  }
   const lines = [];
   if (manufacturerName) lines.push(`Auf der Seite gewählter Hersteller: ${manufacturerName}.`);
   if (contextCode) lines.push(`Auf der Seite gerade angezeigter Code: ${contextCode}.`);
@@ -35,14 +57,16 @@ export function factsMessage({ entries, manufacturerName }, codes, contextCode) 
       `System: ${e.system}; Dringlichkeit: ${e.urgency}; typischer Einbauort: ${e.location}`,
       `Erklärung: ${e.explanation}`);
     if (e.causes.length) lines.push(`Mögliche Ursachen: ${e.causes.join('; ')}`);
-    if (DRIVING[e.urgency]) lines.push(`Empfehlung der Seite zur Weiterfahrt: ${DRIVING[e.urgency]}`);
-    if (e.source !== 'redaktionell') lines.push(`Originalbezeichnung: ${e.titleEn || e.title}. Automatisch übersetzter Eintrag, nicht redaktionell geprüft.`);
+    const driving = drivingAdvice(e);
+    if (driving) lines.push(`Einschätzung der Seite zur Weiterfahrt: ${driving}`);
+    if (e.source !== 'redaktionell') lines.push(`Originalbezeichnung: ${e.titleEn || e.title}. Automatisch übersetzter Eintrag, nicht redaktionell geprüft; Einstufung automatisch.`);
   }
   const missing = codes.filter((c) => !entries.some((e) => e.code === c));
   if (missing.length) lines.push('', `Nicht in der Datenbasis${manufacturerName ? ` (für ${manufacturerName})` : ''}: ${missing.join(', ')}. Sag das offen und gib keine sichere Bedeutung an; die Bedeutung kann herstellerabhängig sein.`);
   if (!lines.length) return null;
-  return 'Daten aus der OBD2-Klartext-Datenbasis. Nutze für die Bedeutung eines Codes diese Angaben und ihre deutschen Bezeichnungen statt eigener Vermutungen; ergänze sie mit allgemeinem Wissen, ohne ihnen zu widersprechen. '
-    + 'Bei Fragen zur Weiterfahrt halte dich an die Empfehlung der Seite und konkretisiere sie anhand der genannten Symptome; nenne Warnzeichen, bei denen sofort angehalten werden sollte.\n'
+  return 'Daten aus der OBD2-Klartext-Datenbasis. Nutze für die Bedeutung eines Codes diese Angaben und ihre deutschen Bezeichnungen. Allgemeines Wissen darf sie erläutern, aber keine unbelegten fahrzeugspezifischen Tatsachen hinzufügen. '
+    + 'Passen Datenbasis, geschilderte Symptome und dein Wissen nicht zusammen, sag das offen. Stelle automatisch übersetzte Einträge nicht als geprüft dar. '
+    + 'Zur Weiterfahrt: Gib die Einschätzung der Seite wieder, ohne sie als Freigabe zu formulieren; geschilderte Warnzeichen und Fahrzeugwarnungen gehen immer vor.\n'
     + lines.join('\n');
 }
 
@@ -103,6 +127,7 @@ export async function* withoutThinkTags(parts) {
 export function createChatRouter({
   gatewayUrl = process.env.LM_GATEWAY_URL,
   gatewayKey = process.env.LM_GATEWAY_KEY,
+  model = process.env.LM_MODEL || DEFAULT_MODEL,
   lookupCodes = async () => ({ entries: [], manufacturerName: null }),
   fetchImpl = globalThis.fetch,
   clock = Date.now,
@@ -152,13 +177,13 @@ export function createChatRouter({
     try {
       const codes = codesFor(messages, contextCode);
       let facts = { entries: [], manufacturerName: null };
-      try { facts = await lookupCodes(codes, manufacturer); } catch (error) { console.error('Chat-Kontext nicht verfügbar:', error.message); }
+      try { facts = await lookupCodes(codes, manufacturer); } catch (error) { console.error('Chat-Kontext nicht verfügbar:', error.message); facts = { entries: [], manufacturerName: null, unavailable: true }; }
       const context = factsMessage(facts, codes, contextCode);
       const request = (stream) => fetchImpl(`${gatewayUrl.replace(/\/$/, '')}/v1/chat/completions`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${gatewayKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: MODEL,
+          model,
           // Nur eine Systemnachricht: Mistral-/Devstral-Vorlagen lehnen eine zweite ab.
           messages: [{ role: 'system', content: context ? `${SYSTEM}\n\n${context}` : SYSTEM },
             ...messages.map(({ role, content }) => ({ role, content }))],
@@ -181,7 +206,7 @@ export function createChatRouter({
       }
       // Antwort als NDJSON: zuerst die verwendeten Datenbankeinträge, dann Textteile, zum Schluss done.
       res.status(200).set({ 'Content-Type': 'application/x-ndjson; charset=utf-8', 'X-Accel-Buffering': 'no' });
-      send({ sources: facts.entries.map(({ code, title, manufacturer: maker }) => ({ code, title, manufacturer: maker })) });
+      send({ sources: facts.entries.map(({ code, title, manufacturer: maker }) => ({ code, title, manufacturer: maker })), ...(facts.unavailable && { dataUnavailable: true }) });
       let answered = false, thought = false, lastPing = 0;
       for await (const part of withoutThinkTags(answerParts(upstream))) {
         clearTimeout(timeout);

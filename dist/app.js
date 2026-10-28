@@ -201,8 +201,22 @@ function causeDetailsFor(c){
   return c.causes.map((cause,index)=>({rank:ranks[index]||'Weitere',cause,...causeGuide(cause,c)}));
 }
 
+// Sicherheitsrelevante Systeme bekommen eine eigene Empfehlung statt der allgemeinen nach Dringlichkeitsfarbe
+// (KI-Richtlinie, Abschnitt 4). Gleiche Liste in server/chat.js (SAFETY). Texte brauchen noch eine fachliche Prüfung.
+const SAFETY=[
+  [/ABS|Bremse|Fahrstabilit/i,'Bremsen und Fahrstabilität','Leuchtet die rote Bremswarnleuchte oder fühlt sich die Bremse anders an, nicht weiterfahren. Sonst nur vorsichtig und direkt zur Fachwerkstatt – ABS und ESP können ausgefallen sein.'],
+  [/Lenkung/i,'Lenkung','Wird die Lenkung schwergängig, ungewohnt oder erscheint eine Lenkungswarnung, sicher anhalten und nicht weiterfahren.'],
+  [/Schmierung|Öldruck/i,'Öldruck','Bei Öldruckwarnung sofort sicher anhalten und den Motor abstellen. Nicht weiterfahren, bevor die Ursache geklärt ist.'],
+  [/Kühlung|Kühlsystem|Überhitz/i,'Motorkühlung','Steigt die Temperaturanzeige, erscheint eine Temperaturwarnung oder tritt Dampf aus: sofort sicher anhalten und den Motor abstellen. Das heiße Kühlsystem nicht öffnen.'],
+  [/Rückhalte|Airbag|Gurt/i,'Airbag und Gurte','Airbags oder Gurtstraffer lösen bei einem Unfall möglicherweise nicht aus. Nicht selbst am System arbeiten und zeitnah eine Fachwerkstatt aufsuchen.'],
+  [/Hybrid|Elektroantrieb|Hochvolt/i,'Hochvoltsystem','Keine eigenen Arbeiten am Hochvoltsystem – nur durch entsprechend geschultes Fachpersonal. Bei einer Hochvolt-Warnmeldung sicher anhalten.'],
+];
+function safetyFor(c){const hit=SAFETY.find(([re])=>re.test(c.system));return hit&&{area:hit[1],text:hit[2]}}
+
 function adviceFor(c,details){
   const firstCheck=details[0]?.check||'Sichtprüfung am betroffenen System durchführen';
+  const safety=safetyFor(c);
+  if(safety) return {verdict:'Nur nach Prüfung',title:`Sicherheitsrelevant: ${safety.area}`,text:safety.text,steps:['Auf Warnleuchten und spürbare Veränderungen achten.',firstCheck,'Fachwerkstatt hinzuziehen, im Zweifel abschleppen lassen.']};
   if(c.urgency==='Rot') return {verdict:'Nur eingeschränkt',title:'Vorsichtig reagieren',text:'Starke Belastung vermeiden. Bei deutlichen Symptomen, roter oder blinkender Warnleuchte sicher anhalten.',steps:[firstCheck,'Belastung und längere Fahrten vermeiden.','Fehlerspeicher und betroffenes System zeitnah fachlich prüfen lassen.']};
   if(c.urgency==='Grün') return {verdict:'Meist möglich',title:'Weiterfahrt meist möglich',text:'Wenn das Fahrzeug normal fährt und keine weiteren Warnzeichen auftreten, ist eine vorsichtige Weiterfahrt meist möglich.',steps:[firstCheck,'Nach einigen Fahrzyklen erneut auslesen.','Bei wiederkehrendem Code Werkstatttermin planen.']};
   return {verdict:'Meist möglich',title:'Zeitnah prüfen lassen',text:'Eine vorsichtige Weiterfahrt ist meist möglich, solange keine starken Symptome oder roten Warnleuchten auftreten.',steps:[firstCheck,'Hohe Belastung nach Möglichkeit vermeiden.','Ursache zeitnah systematisch prüfen lassen.']};
