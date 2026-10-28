@@ -40,6 +40,51 @@ ALTER TABLE dtc_codes ADD COLUMN IF NOT EXISTS content_hash text;
 -- Gesetzt, wenn ein importierter Code nicht mehr in der Quelle steht (wird ausgeblendet, nicht gelöscht).
 ALTER TABLE dtc_codes ADD COLUMN IF NOT EXISTS source_removed_at timestamptz;
 
+-- No implicit approval of existing editorial or imported entries.
+ALTER TABLE dtc_codes ADD COLUMN IF NOT EXISTS review_status text NOT NULL DEFAULT 'pending'
+  CHECK (review_status IN ('pending', 'approved'));
+ALTER TABLE dtc_codes ADD COLUMN IF NOT EXISTS reviewed_by text;
+ALTER TABLE dtc_codes ADD COLUMN IF NOT EXISTS reviewed_at timestamptz;
+ALTER TABLE dtc_codes ADD COLUMN IF NOT EXISTS reviewed_hash text;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='dtc_review_complete' AND conrelid='dtc_codes'::regclass) THEN
+    ALTER TABLE dtc_codes ADD CONSTRAINT dtc_review_complete CHECK (
+      review_status <> 'approved' OR (reviewed_by IS NOT NULL AND length(trim(reviewed_by))>0
+        AND reviewed_at IS NOT NULL AND reviewed_hash IS NOT NULL
+        AND content_hash IS NOT NULL AND reviewed_hash=content_hash)
+    );
+  END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS content_reviews (
+  id bigserial PRIMARY KEY,
+  dtc_id integer REFERENCES dtc_codes(id) ON DELETE SET NULL,
+  action text NOT NULL CHECK (action IN ('approved','invalidated')),
+  reviewer text,
+  content_hash text,
+  snapshot jsonb NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE OR REPLACE FUNCTION invalidate_code_review() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF ROW(NEW.code,NEW.manufacturer_id,NEW.title,NEW.title_en,NEW.system,NEW.urgency,
+      NEW.explanation,NEW.location,NEW.vehicle_labels,NEW.source,NEW.source_removed_at)
+    IS DISTINCT FROM ROW(OLD.code,OLD.manufacturer_id,OLD.title,OLD.title_en,OLD.system,OLD.urgency,
+      OLD.explanation,OLD.location,OLD.vehicle_labels,OLD.source,OLD.source_removed_at) THEN
+    NEW.review_status := 'pending'; NEW.reviewed_by := NULL; NEW.reviewed_at := NULL; NEW.reviewed_hash := NULL;
+  END IF;
+  IF OLD.review_status='approved' AND NEW.review_status <> 'approved' THEN
+    INSERT INTO content_reviews(dtc_id,action,reviewer,content_hash,snapshot)
+      VALUES(OLD.id,'invalidated',OLD.reviewed_by,OLD.reviewed_hash,to_jsonb(OLD));
+  END IF;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS invalidate_code_review ON dtc_codes;
+CREATE TRIGGER invalidate_code_review BEFORE UPDATE ON dtc_codes
+  FOR EACH ROW EXECUTE FUNCTION invalidate_code_review();
+
 CREATE TABLE IF NOT EXISTS dtc_causes (
   dtc_id   integer NOT NULL REFERENCES dtc_codes(id) ON DELETE CASCADE,
   position smallint NOT NULL,
@@ -78,3 +123,22 @@ CREATE TABLE IF NOT EXISTS dtc_components (
   role         text NOT NULL CHECK (role IN ('active', 'context')),
   PRIMARY KEY (dtc_id, component_id)
 );
+
+-- Related facts are part of the reviewed content. Lock parent before changing a child.
+CREATE OR REPLACE FUNCTION invalidate_related_review() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP <> 'INSERT' THEN
+    UPDATE dtc_codes SET review_status='pending',reviewed_by=NULL,reviewed_at=NULL,reviewed_hash=NULL WHERE id=OLD.dtc_id;
+  END IF;
+  IF TG_OP <> 'DELETE' THEN
+    UPDATE dtc_codes SET review_status='pending',reviewed_by=NULL,reviewed_at=NULL,reviewed_hash=NULL WHERE id=NEW.dtc_id;
+    RETURN NEW;
+  END IF;
+  RETURN OLD;
+END $$;
+DROP TRIGGER IF EXISTS invalidate_cause_review ON dtc_causes;
+CREATE TRIGGER invalidate_cause_review BEFORE INSERT OR UPDATE OR DELETE ON dtc_causes
+  FOR EACH ROW EXECUTE FUNCTION invalidate_related_review();
+DROP TRIGGER IF EXISTS invalidate_component_review ON dtc_components;
+CREATE TRIGGER invalidate_component_review BEFORE INSERT OR UPDATE OR DELETE ON dtc_components
+  FOR EACH ROW EXECUTE FUNCTION invalidate_related_review();

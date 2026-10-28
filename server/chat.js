@@ -1,4 +1,6 @@
 import express from 'express';
+import { isReviewed } from '../dist/review-policy.js';
+import { CHAT_LIMITS, abortable, boundedParts } from './deadline.js';
 
 // Modell laut LM Studio; über LM_MODEL änderbar. Ein Wechsel braucht laut KI-Richtlinie (Abschnitt 9) eine erneute Prüfung.
 export const DEFAULT_MODEL = 'qwen3.8-flash-next';
@@ -29,10 +31,8 @@ const DRIVING = {
   Grün: 'meist möglich, wenn das Fahrzeug normal fährt und keine weiteren Warnzeichen auftreten. Nach einigen Fahrten erneut auslesen.',
 };
 // Importierte Einträge haben nur eine automatisch abgeleitete Dringlichkeit; ohne fachliche Prüfung keine Einschätzung nach Farbe (Abschnitt 6).
-const UNCHECKED = 'keine fachlich geprüfte Einschätzung vorhanden (automatisch importierter Eintrag). Bei Warnleuchten, spürbaren Veränderungen oder Unsicherheit nicht weiterfahren und fachlich prüfen lassen.';
-export const drivingAdvice = (e) => SAFETY.find(([re]) => re.test(e.system))?.[1] ?? (e.source && e.source !== 'redaktionell' ? UNCHECKED : DRIVING[e.urgency]);
-const FIRST_TOKEN_MS = 180000; // Wartezeit bis zum Antwortbeginn (ohne Streaming: bis zur ganzen Antwort, lokal ~100 s)
-const IDLE_MS = 60000; // längste Pause zwischen zwei Antwortteilen
+const UNCHECKED = 'keine fachlich geprüfte Einschätzung vorhanden (Eintrag nicht freigegeben). Bei Warnleuchten, spürbaren Veränderungen oder Unsicherheit nicht weiterfahren und fachlich prüfen lassen.';
+export const drivingAdvice = (e) => isReviewed(e) ? (SAFETY.find(([re]) => re.test(e.system))?.[1] ?? DRIVING[e.urgency]) : UNCHECKED;
 const MAX_TOKENS = 2048; // Reasoning-Modelle zählen die Denkphase mit; 768 reichte dann oft nicht für die Antwort
 
 // Codes für den Datenbankkontext: zuerst aus der aktuellen Frage, dann der gerade angezeigte Code,
@@ -56,12 +56,12 @@ export function factsMessage({ entries, manufacturerName, unavailable }, codes, 
   if (contextCode) lines.push(`Auf der Seite gerade angezeigter Code: ${contextCode}.`);
   for (const e of entries) {
     lines.push('', `${e.code} – ${e.title}${e.manufacturer ? ` (herstellerspezifisch, ${e.manufacturer})` : ' (Standardcode)'}`,
-      `System: ${e.system}; Dringlichkeit: ${e.source !== 'redaktionell' ? 'automatisch abgeleitet, nicht geprüft – nicht als Einstufung nennen' : e.urgency}; typischer Einbauort: ${e.location}`,
+      `System: ${e.system}; Dringlichkeit: ${!isReviewed(e) ? 'nicht fachlich freigegeben – nicht als Einstufung nennen' : e.urgency}; typischer Einbauort: ${e.location}`,
       `Erklärung: ${e.explanation}`);
     if (e.causes.length) lines.push(`Mögliche Ursachen: ${e.causes.join('; ')}`);
     const driving = drivingAdvice(e);
     if (driving) lines.push(`Einschätzung der Seite zur Weiterfahrt: ${driving}`);
-    if (e.source !== 'redaktionell') lines.push(`Originalbezeichnung: ${e.titleEn || e.title}. Automatisch übersetzter Eintrag, nicht redaktionell geprüft; Einstufung automatisch.`);
+    if (!isReviewed(e)) lines.push(`Originalbezeichnung: ${e.titleEn || e.title}. Nicht fachlich freigegebener Eintrag; keine geprüften Handlungsempfehlungen ableiten.`);
   }
   const missing = codes.filter((c) => !entries.some((e) => e.code === c));
   if (missing.length) lines.push('', `Nicht in der Datenbasis${manufacturerName ? ` (für ${manufacturerName})` : ''}: ${missing.join(', ')}. Sag das offen und gib keine sichere Bedeutung an; die Bedeutung kann herstellerabhängig sein.`);
@@ -135,6 +135,7 @@ export function createChatRouter({
   lookupCodes = async () => ({ entries: [], manufacturerName: null }),
   fetchImpl = globalThis.fetch,
   clock = Date.now,
+  limits = CHAT_LIMITS,
 } = {}) {
   const router = express.Router();
   let active = 0;
@@ -175,14 +176,20 @@ export function createChatRouter({
     }
     calls.push(now); visitors.set(ip, calls); globalCalls.push(now); active++;
     const controller = new AbortController();
-    let timeout = setTimeout(() => controller.abort(), FIRST_TOKEN_MS);
+    let firstTimer = setTimeout(() => controller.abort(new Error('Antwortbeginn überschritten')), limits.first);
+    const totalTimer = setTimeout(() => controller.abort(new Error('Gesamtdauer überschritten')), limits.total);
+    let idleTimer;
+    const lookupController = new AbortController();
+    const lookupTimer = setTimeout(() => lookupController.abort(), limits.lookup);
     const disconnect = () => { if (!res.writableEnded) controller.abort(); };
     res.on('close', disconnect);
     const send = (obj) => res.write(`${JSON.stringify(obj)}\n`);
     try {
       const codes = codesFor(messages, contextCode);
       let facts = { entries: [], manufacturerName: null };
-      try { facts = await lookupCodes(codes, manufacturer); } catch (error) { console.error('Chat-Kontext nicht verfügbar:', error.message); facts = { entries: [], manufacturerName: null, unavailable: true }; }
+      try { facts = await abortable(abortable(lookupCodes(codes, manufacturer), lookupController.signal), controller.signal); } catch (error) { console.error('Chat-Kontext nicht verfügbar:', error.message); facts = { entries: [], manufacturerName: null, unavailable: true }; }
+      clearTimeout(lookupTimer);
+      if (controller.signal.aborted) throw controller.signal.reason;
       const context = factsMessage(facts, codes, contextCode);
       const request = (stream) => fetchImpl(`${gatewayUrl.replace(/\/$/, '')}/v1/chat/completions`, {
         method: 'POST',
@@ -197,11 +204,11 @@ export function createChatRouter({
         }),
         signal: controller.signal,
       });
-      let upstream = await request(streaming);
+      let upstream = await abortable(request(streaming), controller.signal);
       // Gateways ohne Streaming lehnen stream: true teils ab – dann einmal ohne Streaming versuchen.
       if (streaming && [400, 404, 415, 422, 501].includes(upstream.status)) {
         console.error(`Chat-Gateway lehnt Streaming ab (HTTP ${upstream.status}), neuer Versuch ohne Streaming.`);
-        upstream = await request(false);
+        upstream = await abortable(request(false), controller.signal);
         if (upstream.ok) streaming = false;
       }
       if (upstream.status === 429) { res.set('Retry-After', '15'); return fail(429, 'Die KI ist gerade ausgelastet. Bitte versuche es gleich noch einmal.'); }
@@ -213,10 +220,11 @@ export function createChatRouter({
       res.status(200).set({ 'Content-Type': 'application/x-ndjson; charset=utf-8', 'X-Accel-Buffering': 'no' });
       send({ sources: facts.entries.map(({ code, title, manufacturer: maker }) => ({ code, title, manufacturer: maker })), ...(facts.unavailable && { dataUnavailable: true }) });
       let answered = false, thought = false, lastPing = 0;
-      for await (const part of withoutThinkTags(answerParts(upstream))) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => controller.abort(), IDLE_MS);
+      for await (const part of boundedParts(withoutThinkTags(answerParts(upstream)), controller.signal)) {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => controller.abort(new Error('Antwortpause überschritten')), limits.idle);
         if (typeof part === 'string') {
+          if (part.trim()) clearTimeout(firstTimer);
           answered ||= Boolean(part.trim());
           send({ delta: part });
         } else if (clock() - lastPing > 5000) {
@@ -237,7 +245,7 @@ export function createChatRouter({
       if (res.destroyed) return;
       if (res.headersSent) { send({ error }); res.end(); } else fail(controller.signal.aborted ? 504 : 503, error);
     } finally {
-      clearTimeout(timeout); res.off('close', disconnect); active--;
+      clearTimeout(firstTimer); clearTimeout(totalTimer); clearTimeout(idleTimer); clearTimeout(lookupTimer); res.off('close', disconnect); active--;
     }
   });
   router.use((error, _req, res, _next) => {

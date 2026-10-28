@@ -173,3 +173,7 @@ Ein Modellwechsel oder wesentliche Änderungen an der Systemanweisung brauchen e
 Grenzen: sechs Anfragen je Besucher und Minute, 18 insgesamt je Minute, zwei laufende Anfragen, 2.000 Zeichen pro neuer Frage und 2.048 Ausgabetokens (Denkphase eingeschlossen). Der Server setzt Modell und Systemanweisung fest; Clients können keine Systemrollen oder Tools übergeben. Der Verlauf ist auf wenige Nachrichten begrenzt. Ein neuer Chat setzt den Verlauf zurück.
 
 Backend-Tests: `node --test server/chat.test.js`.
+
+## Technische KI-Prüfungen
+
+Prüfstatus, Freigabebefehle, Zeitlimits, Browsertests und Versionsnachweise: siehe [TECHNISCHE-FREIGABE.md](TECHNISCHE-FREIGABE.md).

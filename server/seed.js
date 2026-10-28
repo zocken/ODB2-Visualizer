@@ -1,5 +1,6 @@
 // Importiert eine Seed-Datei (JSON) per Upsert in die Datenbank.
 // Aufruf: npm run seed [-- pfad/zur/datei.json]   (Standard: db/seed/generic-codes.json)
+import { contentHash } from './review-content.js';
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { pool, migrate, withTransaction } from './db.js';
@@ -28,10 +29,10 @@ const UPDATE_COLUMNS = `
 //   sync   – automatische Aktualisierung: neue Codes anlegen; vorhandene nur ändern, wenn ihre
 //            Quelle dem Muster `updatable` entspricht (LIKE) und sich der Inhalt (content_hash)
 //            geändert hat oder der Code zuvor als entfernt markiert war. Andere Einträge bleiben unberührt.
-export async function importData(data, { mode = 'upsert', updatable = null } = {}) {
+export async function importData(data, { mode = 'upsert', updatable = null, transaction = withTransaction } = {}) {
   const sync = mode === 'sync';
   if (sync && !updatable) throw new Error('sync benötigt ein Quellmuster (updatable)');
-  return withTransaction(async (db) => {
+  return transaction(async (db) => {
     for (const c of data.components || []) {
       await db.query(
         `INSERT INTO vehicle_components (id, label) VALUES ($1, $2)
@@ -60,11 +61,11 @@ export async function importData(data, { mode = 'upsert', updatable = null } = {
         `INSERT INTO dtc_codes (code, manufacturer_id, title, title_en, system, urgency, explanation, location, vehicle_labels, source, content_hash)
          VALUES ($1, $2, $3, $10, $4, $5, $6, $7, $8, $9, $11)
          ON CONFLICT (code, manufacturer_id) DO UPDATE SET ${UPDATE_COLUMNS}
-         ${sync ? `WHERE dtc_codes.source LIKE $12
-           AND (dtc_codes.content_hash IS DISTINCT FROM EXCLUDED.content_hash OR dtc_codes.source_removed_at IS NOT NULL)` : ''}
+         ${sync ? `WHERE dtc_codes.source LIKE $12 AND` : 'WHERE'}
+           (dtc_codes.content_hash IS DISTINCT FROM EXCLUDED.content_hash OR dtc_codes.source_removed_at IS NOT NULL)
          RETURNING id, (xmax = 0) AS inserted`,
         [c.code, manufacturerId, c.title, c.system, c.urgency, c.explanation, c.location,
-          c.vehicle?.labels || [], c.source || 'redaktionell', c.titleEn || null, c.contentHash || null,
+          c.vehicle?.labels || [], c.source || 'redaktionell', c.titleEn || null, contentHash(c),
           ...(sync ? [updatable] : [])],
       );
       if (!rows.length) continue; // unverändert oder geschützt (nur bei sync)

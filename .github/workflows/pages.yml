@@ -25,6 +25,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: npm ci
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:ui
       - run: node server/build-static.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
@@ -32,3 +36,7 @@ jobs:
           path: dist
       - id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify published static release
+        env:
+          RELEASE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node tools/verify-release.js "$RELEASE_URL" --static

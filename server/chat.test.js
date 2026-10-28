@@ -55,7 +55,7 @@ test('limits each visitor and releases quota after one minute', async () => {
 
 // Datenbankkontext und Streaming
 
-const P0420 = { code: 'P0420', title: 'Katalysator Bank 1 – Wirkungsgrad unter Schwellenwert', titleEn: null, system: 'Abgasnachbehandlung', urgency: 'Gelb', explanation: 'Der Katalysator speichert zu wenig Sauerstoff.', location: 'Abgasanlage', source: 'redaktionell', manufacturer: null, causes: ['Katalysator gealtert', 'Lambdasonde hinten defekt'] };
+const P0420 = { code: 'P0420', title: 'Katalysator Bank 1 – Wirkungsgrad unter Schwellenwert', titleEn: null, system: 'Abgasnachbehandlung', urgency: 'Gelb', explanation: 'Der Katalysator speichert zu wenig Sauerstoff.', location: 'Abgasanlage', source: 'redaktionell', reviewStatus: 'approved', reviewedBy: 'Test-Prüfer', reviewedAt: '2026-10-28', contentHash: 'hash', reviewedHash: 'hash', manufacturer: null, causes: ['Katalysator gealtert', 'Lambdasonde hinten defekt'] };
 
 async function serve(options) {
   const app = express();
@@ -207,10 +207,10 @@ test('factsMessage gibt die Weiterfahrt-Empfehlung der Seite mit', () => {
 });
 
 test('Sicherheitsrelevante Systeme gehen der Dringlichkeitsfarbe vor', () => {
-  assert.match(drivingAdvice({ system: 'ABS & Fahrstabilität', urgency: 'Grün' }), /^nur nach Prüfung \(Bremsen/);
-  assert.match(drivingAdvice({ system: 'Motorschmierung', urgency: 'Gelb' }), /Öldruckwarnung sofort sicher anhalten/);
-  assert.match(drivingAdvice({ system: 'Hybrid-/Elektroantrieb', urgency: 'Grün' }), /Hochvolt/);
-  assert.match(drivingAdvice({ system: 'Tankentlüftung', urgency: 'Grün' }), /^meist möglich/);
+  assert.match(drivingAdvice({ ...P0420, system: 'ABS & Fahrstabilität', urgency: 'Grün' }), /^nur nach Prüfung \(Bremsen/);
+  assert.match(drivingAdvice({ ...P0420, system: 'Motorschmierung', urgency: 'Gelb' }), /Öldruckwarnung sofort sicher anhalten/);
+  assert.match(drivingAdvice({ ...P0420, system: 'Hybrid-/Elektroantrieb', urgency: 'Grün' }), /Hochvolt/);
+  assert.match(drivingAdvice({ ...P0420, system: 'Tankentlüftung', urgency: 'Grün' }), /^meist möglich/);
 });
 
 test('Modell ist konfigurierbar', async () => {
@@ -221,9 +221,9 @@ test('Modell ist konfigurierbar', async () => {
 
 test('Importierte Einträge: keine Einschätzung nach automatisch abgeleiteter Farbe', () => {
   assert.match(drivingAdvice({ system: 'Tankentlüftung', urgency: 'Grün', source: 'Wal33D/dtc-database (MIT)' }), /keine fachlich geprüfte Einschätzung/);
-  assert.match(drivingAdvice({ system: 'ABS & Fahrstabilität', urgency: 'Grün', source: 'Wal33D/dtc-database (MIT)' }), /^nur nach Prüfung \(Bremsen/);
-  const text = factsMessage({ entries: [{ ...P0420, source: 'Wal33D/dtc-database (MIT)', urgency: 'Rot' }], manufacturerName: null }, ['P0420'], 'P0420');
-  assert.match(text, /Dringlichkeit: automatisch abgeleitet, nicht geprüft/);
+  assert.match(drivingAdvice({ system: 'ABS & Fahrstabilität', urgency: 'Grün', source: 'Wal33D/dtc-database (MIT)' }), /keine fachlich geprüfte Einschätzung/);
+  const text = factsMessage({ entries: [{ ...P0420, reviewStatus: 'pending', source: 'Wal33D/dtc-database (MIT)', urgency: 'Rot' }], manufacturerName: null }, ['P0420'], 'P0420');
+  assert.match(text, /Dringlichkeit: nicht fachlich freigegeben/);
   assert.doesNotMatch(text, /Dringlichkeit: Rot/);
 });
 
@@ -234,4 +234,37 @@ test('Abschalter sperrt den Chat ohne Gateway-Aufruf', async () => {
     assert.equal(res.status, 503);
     assert.match((await res.json()).error, /vorübergehend abgeschaltet/);
   } finally { close(); }
+});
+
+test('Hängender Gateway-Aufruf wird auch ohne Abort-Unterstützung begrenzt', async () => {
+  const app = await serve({ limits:{first:30,idle:20,total:100,lookup:10}, fetchImpl:()=>new Promise(()=>{}) });
+  try { const res=await ask(app.url,valid); assert.equal(res.status,504); assert.match((await res.json()).error,/zu lange/); }
+  finally { app.close(); }
+});
+
+test('Gesamtdauer bleibt begrenzt, obwohl regelmäßig Antwortteile kommen', async () => {
+  let timer;
+  const stream=new ReadableStream({start(c){timer=setInterval(()=>c.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"A"}}]}\n\n')),5);},cancel(){clearInterval(timer);}});
+  const app=await serve({limits:{first:100,idle:100,total:70,lookup:20},fetchImpl:async()=>new Response(stream,{headers:{'content-type':'text/event-stream'}})});
+  try {const out=await lines(await ask(app.url,valid));assert.ok(out.some(p=>p.delta));assert.match(out.at(-1).error,/zu lange/);}
+  finally {clearInterval(timer);app.close();}
+});
+
+test('Denkphasen verlängern das Limit für den ersten Antworttext nicht', async () => {
+  let timer;
+  const stream=new ReadableStream({start(c){timer=setInterval(()=>c.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"reasoning_content":"intern"}}]}\n\n')),5);},cancel(){clearInterval(timer);}});
+  const app=await serve({limits:{first:40,idle:100,total:200,lookup:20},fetchImpl:async()=>new Response(stream,{headers:{'content-type':'text/event-stream'}})});
+  try {const out=await lines(await ask(app.url,valid));assert.match(out.at(-1).error,/zu lange/);assert.ok(!out.some(p=>p.delta));}
+  finally {clearInterval(timer);app.close();}
+});
+
+test('Hängende Datenbankabfrage führt begrenzt zum erkennbaren Fallback', async () => {
+  const app=await serve({limits:{first:200,idle:100,total:300,lookup:20},lookupCodes:()=>new Promise(()=>{}),fetchImpl:async()=>sse('Antwort')});
+  try {const out=await lines(await ask(app.url,valid));assert.equal(out[0].dataUnavailable,true);assert.equal(out.at(-1).done,true);}
+  finally {app.close();}
+});
+
+test('Fehlende oder veraltete Freigabe schaltet Empfehlungen aus', () => {
+  assert.match(drivingAdvice({...P0420,reviewStatus:'pending'}),/keine fachlich geprüfte Einschätzung/);
+  assert.match(drivingAdvice({...P0420,reviewedHash:'anderer-stand'}),/keine fachlich geprüfte Einschätzung/);
 });

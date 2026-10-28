@@ -6,7 +6,7 @@
 // Einträge mit anderer Quelle (z. B. "redaktionell") werden nie verändert.
 //
 // Manuell: npm run update-codes
-import { createHash } from 'node:crypto';
+import { contentHash } from './review-content.js';
 import { fileURLToPath } from 'node:url';
 import { pool, migrate, withTransaction } from './db.js';
 import { importData } from './seed.js';
@@ -24,7 +24,6 @@ const GENERIC_RANGE = /^(P0|P2|P3[4-9A-F]|[BCU][03])/;
 const UPDATABLE = `${REPO}%`;
 
 // Prüfwert über den erzeugten Inhalt ohne Quellangabe, damit ein neuer Quellstand allein keine Änderung auslöst.
-const contentHash = ({ source, ...content }) => createHash('sha256').update(JSON.stringify(content)).digest('hex');
 
 async function fetchText(url) {
   const response = await fetch(url, {

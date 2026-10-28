@@ -146,12 +146,14 @@ import { safetySignals } from './safety-signals.js?v=2';
     const started = Date.now();
     const pending = message('assistant', 'Denkt nach …');
     pending.item.classList.add('is-pending');
-    const tick = () => pending.update(`Denkt nach … ${Math.round((Date.now() - started) / 1000)} s\nDas kann 1–2 Minuten dauern.`);
+    const tick = () => pending.update(`Denkt nach … ${Math.round((Date.now() - started) / 1000)} s\nAntwortbeginn innerhalb von 60 Sekunden, insgesamt höchstens 2 Minuten.`);
     tick();
     const ticker = setInterval(tick, 1000);
     let reply = null, answer = '', dataNotice = false;
     controller = new AbortController();
-    let timeout = setTimeout(() => controller.abort(), 190000);
+    let firstTimer = setTimeout(() => controller.abort(), 65000);
+    const totalTimer = setTimeout(() => controller.abort(), 125000);
+    let idleTimer;
     try {
       let recent = history.slice(-10);
       while (recent.length && recent.reduce((n, m) => n + m.content.length, question.length) > 11000) recent = recent.slice(2);
@@ -164,8 +166,9 @@ import { safetySignals } from './safety-signals.js?v=2';
       }
       let sources = [], finished = false;
       for await (const part of events(response)) {
-        // Bis zum ersten Lebenszeichen gilt die lange Wartezeit, danach 70 s je Pause (die Quellenzeile kommt sofort).
-        if (part.delta || part.thinking) { clearTimeout(timeout); timeout = setTimeout(() => controller.abort(), 70000); }
+        // Denkphasen setzen nur die Pausengrenze zurück; Antwortbeginn und Gesamtdauer bleiben fest begrenzt.
+        if (part.delta || part.thinking) { clearTimeout(idleTimer); idleTimer = setTimeout(() => controller.abort(), 25000); }
+        if (part.delta?.trim()) clearTimeout(firstTimer);
         if (part.sources) sources = part.sources;
         // Datenbasis nicht erreichbar: Hinweis sofort und vor dem ersten Antworttext (KI-Richtlinie, Abschnitt 5).
         if (part.dataUnavailable && !dataNotice) { dataNotice = true; pending.notice('Datenbasis gerade nicht erreichbar – diese Antwort beruht nicht auf den Projektdaten.'); }
@@ -193,7 +196,7 @@ import { safetySignals } from './safety-signals.js?v=2';
         : reason.name === 'AbortError' ? 'Die Antwort dauert zu lange. Bitte versuche es erneut.' : reason.message || 'Keine Verbindung zur KI. Bitte versuche es später erneut.';
       error.hidden = false; status.textContent = cancelled ? 'Abgebrochen' : 'Bitte erneut versuchen';
     } finally {
-      clearTimeout(timeout); clearInterval(ticker); busy = false; reset.disabled = false; input.readOnly = false;
+      clearTimeout(firstTimer); clearTimeout(totalTimer); clearTimeout(idleTimer); clearInterval(ticker); busy = false; reset.disabled = false; input.readOnly = false;
       send.textContent = 'Senden →'; send.classList.remove('is-cancel'); log.removeAttribute('aria-busy'); input.focus({ preventScroll: true });
     }
   });

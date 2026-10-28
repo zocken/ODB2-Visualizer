@@ -1,3 +1,4 @@
+import { isReviewed } from './review-policy.js?v=1';
 const categoryNames={P:'Antrieb',B:'Karosserie',C:'Fahrwerk',U:'Netzwerk'};
 const form=document.querySelector('#code-form'), input=document.querySelector('#code-input'), suggestions=document.querySelector('#code-suggestions'), suggestionList=document.querySelector('#suggestion-list'), result=document.querySelector('#result');
 const byId=id=>document.getElementById(id);
@@ -16,7 +17,7 @@ const PAGE_SIZE=40;
 // Schematic locations represent the system named by the code, not a confirmed defective part.
 function normalize(d){
   const v=d.vehicle||d;
-  return {code:d.code,title:d.title,titleEn:d.titleEn||null,source:d.source||'redaktionell',system:d.system,urgency:d.urgency,explanation:d.explanation,causes:d.causes,location:d.location,
+  return {reviewStatus:d.reviewStatus,reviewedBy:d.reviewedBy,reviewedAt:d.reviewedAt,reviewedHash:d.reviewedHash,contentHash:d.contentHash,code:d.code,title:d.title,titleEn:d.titleEn||null,source:d.source||'redaktionell',system:d.system,urgency:d.urgency,explanation:d.explanation,causes:d.causes,location:d.location,
     category:categoryNames[d.code[0]],origin:d.manufacturer?.name?`herstellerspezifisch · ${d.manufacturer.name}`:d.code[1]==='0'?'Standardcode':'herstellerspezifisch',
     vehicle:{active:v.active||[],context:v.context||[],labels:v.labels||[]}};
 }
@@ -215,6 +216,7 @@ function safetyFor(c){const hit=SAFETY.find(([re])=>re.test(c.system));return hi
 
 function adviceFor(c,details){
   const firstCheck=details[0]?.check||'Sichtprüfung am betroffenen System durchführen';
+  if(!isReviewed(c)) return {verdict:'Nicht geprüft',title:'Keine fachliche Freigabe',text:'Für diesen Inhaltsstand liegt keine fachliche Freigabe vor. Eine Einschätzung zur Weiterfahrt ist nicht möglich. Bei Warnzeichen sicher anhalten und fachliche Hilfe hinzuziehen.',steps:['Warnleuchten und Fahrzeugmeldungen beachten.','Keine Reparaturentscheidung allein aus diesem Code ableiten.','Fachwerkstatt hinzuziehen.']};
   const safety=safetyFor(c);
   if(safety) return {verdict:'Nur nach Prüfung',title:`Sicherheitsrelevant: ${safety.area}`,text:safety.text,steps:['Auf Warnleuchten und spürbare Veränderungen achten.',firstCheck,'Fachwerkstatt hinzuziehen, im Zweifel abschleppen lassen.']};
   // Importierte Einträge: Dringlichkeit ist nur automatisch abgeleitet, daher keine Einschätzung nach Farbe (KI-Richtlinie, Abschnitt 6).
@@ -247,7 +249,7 @@ function showError(message,alternatives=[]){
 function renderDataNotes(c){
   const edited=c.source==='redaktionell', sha=c.source.match(/Stand (\w+)/)?.[1];
   byId('r-basis').textContent=edited?'SAE J2012 / ISO 15031-6':'Wal33D/dtc-database (MIT)';
-  byId('r-stand').textContent=edited?'Redaktionell geprüft · 16.10.2026':`Automatisch übersetzt · nicht redaktionell geprüft${sha?` · Quellstand ${sha}`:''}`;
+  byId('r-stand').textContent=isReviewed(c)?`Fachlich freigegeben · ${new Date(c.reviewedAt).toLocaleDateString('de-DE')}`:`Nicht fachlich freigegeben${sha?` · Quellstand ${sha}`:''}`;
   byId('r-limit').textContent=c.origin.startsWith('herstellerspezifisch · ')?'Herstellerangabe · nicht modellgenau':'Nicht fahrzeugspezifisch';
 }
 
@@ -279,7 +281,7 @@ async function showCode(code,{scroll=true}={}){
   activeCode=c.code; hideError(); closeSuggestions(); result.hidden=false; byId('empty-state').hidden=true;
   byId('r-code').textContent=c.code; byId('r-category').textContent=`${c.code[0]} · ${c.category}`; byId('r-origin').textContent=c.origin;
   // Importierte Einträge zeigen keine automatisch abgeleitete Dringlichkeitsfarbe (KI-Richtlinie, Abschnitt 6).
-  if(c.source!=='redaktionell'){byId('r-urgency').textContent='Dringlichkeit nicht geprüft';byId('r-urgency').className='urgency unchecked';}
+  if(!isReviewed(c)){byId('r-urgency').textContent='Dringlichkeit nicht geprüft';byId('r-urgency').className='urgency unchecked';}
   else{byId('r-urgency').textContent=`${c.urgency} · ${c.urgency==='Rot'?'Dringend prüfen':c.urgency==='Grün'?'Beobachten':'Zeitnah prüfen'}`; byId('r-urgency').className=`urgency ${c.urgency==='Rot'?'red':c.urgency==='Grün'?'green':'amber'}`;}
   byId('r-title').textContent=c.title; byId('system-icon').textContent={P:'⚙',B:'◇',C:'◉',U:'⌁'}[c.code[0]]; byId('r-system').textContent=c.system; byId('r-system-copy').textContent=`Der Code gehört zum Bereich ${c.category} und betrifft ${c.system.toLowerCase()}.`; byId('r-location').textContent=`Typischer Bereich: ${c.location}`;
   byId('r-explanation').textContent=c.explanation;

@@ -1,6 +1,6 @@
 {
   "name": "obd2-klartext",
-  "version": "12.0.0",
+  "version": "12.1.0",
   "private": true,
   "description": "OBD2 Klartext-Assistent mit PostgreSQL-Datenbasis",
   "type": "module",
@@ -13,10 +13,18 @@
     "seed": "node server/seed.js",
     "build:static": "node server/build-static.js",
     "update-codes": "node server/update-codes.js",
-    "test": "node --test"
+    "test": "node --test",
+    "review-code": "node server/review-code.js",
+    "verify-release": "node tools/verify-release.js",
+    "test:ui": "node tools/ui-tests.js",
+    "evaluate-model": "node tools/evaluate-model.js"
   },
   "dependencies": {
     "express": "^5.1.0",
     "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.13",
+    "playwright": "^1.64.1"
   }
 }

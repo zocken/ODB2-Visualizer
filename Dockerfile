@@ -9,6 +9,8 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY server ./server
 COPY db ./db
 COPY dist ./dist
+COPY tools ./tools
+RUN node server/build-static.js
 
 USER node
 EXPOSE 8080

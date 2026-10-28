@@ -3,7 +3,8 @@ import { pool } from './db.js';
 
 const CONTEXT_SQL = `
   SELECT DISTINCT ON (d.code) d.code, d.title, d.title_en AS "titleEn", d.system, d.urgency, d.explanation,
-         d.location, d.source, m.name AS manufacturer,
+         d.location, d.source, d.review_status AS "reviewStatus", CASE WHEN length(trim(d.reviewed_by))>0 THEN 'hinterlegt' END AS "reviewedBy",
+         d.reviewed_at AS "reviewedAt", d.reviewed_hash AS "reviewedHash", d.content_hash AS "contentHash", m.name AS manufacturer,
          COALESCE((SELECT array_agg(cause ORDER BY position) FROM dtc_causes WHERE dtc_id = d.id), '{}') AS causes
   FROM dtc_codes d
   LEFT JOIN manufacturers m ON m.id = d.manufacturer_id

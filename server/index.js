@@ -1,4 +1,5 @@
 import express from 'express';
+import { addVersionRoute } from './version.js';
 import { fileURLToPath } from 'node:url';
 import { pool, migrate } from './db.js';
 import { seed, seedFiles } from './seed.js';
@@ -11,7 +12,8 @@ const PORT = Number(process.env.PORT || 8080);
 const CODE_PATTERN = /^[PBCU][0-9A-F]{4}$/;
 
 const DETAIL_SQL = `
-  SELECT d.code, d.title, d.title_en AS "titleEn", d.system, d.urgency, d.explanation, d.location, d.source,
+  SELECT d.code, d.title, d.title_en AS "titleEn", d.system, d.urgency, d.explanation, d.location, d.source, d.review_status AS "reviewStatus", CASE WHEN length(trim(d.reviewed_by))>0 THEN 'hinterlegt' END AS "reviewedBy",
+         d.reviewed_at AS "reviewedAt", d.reviewed_hash AS "reviewedHash", d.content_hash AS "contentHash",
          d.vehicle_labels AS labels,
          CASE WHEN m.id IS NULL THEN NULL ELSE json_build_object('slug', m.slug, 'name', m.name) END AS manufacturer,
          COALESCE((SELECT array_agg(cause ORDER BY position) FROM dtc_causes WHERE dtc_id = d.id), '{}') AS causes,
@@ -25,6 +27,7 @@ const DETAIL_SQL = `
 
 const app = express();
 app.disable('x-powered-by');
+addVersionRoute(app);
 
 app.get('/api/health', async (_req, res) => {
   const { rows: [{ count }] } = await pool.query('SELECT count(*)::int AS count FROM dtc_codes WHERE manufacturer_id IS NULL AND source_removed_at IS NULL');
