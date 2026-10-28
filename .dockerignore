@@ -7,4 +7,3 @@ dist/data
 *.md
 .openai
 db/source
-tools

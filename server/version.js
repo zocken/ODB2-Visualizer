@@ -13,6 +13,8 @@ export function releaseInfo(root = fileURLToPath(new URL('../', import.meta.url)
     const absolute = path.join(root, relative);
     for (const item of readdirSync(absolute, { withFileTypes: true }).sort((a,b) => a.name.localeCompare(b.name, 'en'))) {
       const name = path.posix.join(relative, item.name);
+      // Match intentional runtime exclusions in .dockerignore.
+      if (name === 'db/source' || name.endsWith('.md')) continue;
       if (item.isDirectory()) visit(name);
       else if (item.isFile() && name !== 'dist/release.json') { hash.update(name); hash.update('\0'); hash.update(bytes(name)); }
     }

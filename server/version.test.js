@@ -17,3 +17,30 @@ test('Releasekennung ist reproduzierbar und der Prüfaufruf erkennt falsche Stä
       new URL(target).pathname==='/chat.js' ? new Response('abweichende Datei') : fetch(target,init)}),/abweichender Inhalt/);
   }finally {await new Promise(r=>server.close(r));}
 });
+
+
+test('Releasekennung entspricht dem gefilterten Docker-Laufzeitpaket', async()=>{
+  const fs=await import('node:fs/promises');
+  const path=await import('node:path');
+  const os=await import('node:os');
+  const {fileURLToPath}=await import('node:url');
+  const source=fileURLToPath(new URL('../',import.meta.url));
+  const target=await fs.mkdtemp(path.join(os.tmpdir(),'obd2-build-test-'));
+  try {
+    for(const name of ['server','dist','db','package.json','package-lock.json']){
+      await fs.cp(path.join(source,name),path.join(target,name),{recursive:true,filter:p=>{
+        const relative=path.relative(source,p).split(path.sep).join('/');
+        return relative!=='db/source'&&!relative.endsWith('.md');
+      }});
+    }
+    assert.deepEqual(releaseInfo(target),releaseInfo(source));
+    const ignore=(await fs.readFile(new URL('../.dockerignore',import.meta.url),'utf8')).split(/\r?\n/).map(s=>s.trim());
+    assert.ok(!ignore.includes('tools'),'tools muss im Docker-Buildkontext verfügbar sein');
+    const dockerfile=await fs.readFile(new URL('../Dockerfile',import.meta.url),'utf8');
+    assert.match(dockerfile,/COPY tools \.\/tools/);
+  } finally {
+    assert.equal(path.dirname(path.resolve(target)),path.resolve(os.tmpdir()));
+    assert.ok(path.basename(target).startsWith('obd2-build-test-'));
+    await fs.rm(target,{recursive:true,force:true});
+  }
+});
