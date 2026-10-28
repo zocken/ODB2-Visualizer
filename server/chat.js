@@ -28,7 +28,9 @@ const DRIVING = {
   Gelb: 'meist möglich, solange keine starken Symptome oder roten Warnleuchten auftreten. Hohe Belastung vermeiden und zeitnah prüfen lassen.',
   Grün: 'meist möglich, wenn das Fahrzeug normal fährt und keine weiteren Warnzeichen auftreten. Nach einigen Fahrten erneut auslesen.',
 };
-export const drivingAdvice = (e) => SAFETY.find(([re]) => re.test(e.system))?.[1] ?? DRIVING[e.urgency];
+// Importierte Einträge haben nur eine automatisch abgeleitete Dringlichkeit; ohne fachliche Prüfung keine Einschätzung nach Farbe (Abschnitt 6).
+const UNCHECKED = 'keine fachlich geprüfte Einschätzung vorhanden (automatisch importierter Eintrag). Bei Warnleuchten, spürbaren Veränderungen oder Unsicherheit nicht weiterfahren und fachlich prüfen lassen.';
+export const drivingAdvice = (e) => SAFETY.find(([re]) => re.test(e.system))?.[1] ?? (e.source && e.source !== 'redaktionell' ? UNCHECKED : DRIVING[e.urgency]);
 const FIRST_TOKEN_MS = 180000; // Wartezeit bis zum Antwortbeginn (ohne Streaming: bis zur ganzen Antwort, lokal ~100 s)
 const IDLE_MS = 60000; // längste Pause zwischen zwei Antwortteilen
 const MAX_TOKENS = 2048; // Reasoning-Modelle zählen die Denkphase mit; 768 reichte dann oft nicht für die Antwort
@@ -54,7 +56,7 @@ export function factsMessage({ entries, manufacturerName, unavailable }, codes, 
   if (contextCode) lines.push(`Auf der Seite gerade angezeigter Code: ${contextCode}.`);
   for (const e of entries) {
     lines.push('', `${e.code} – ${e.title}${e.manufacturer ? ` (herstellerspezifisch, ${e.manufacturer})` : ' (Standardcode)'}`,
-      `System: ${e.system}; Dringlichkeit: ${e.urgency}; typischer Einbauort: ${e.location}`,
+      `System: ${e.system}; Dringlichkeit: ${e.source !== 'redaktionell' ? 'automatisch abgeleitet, nicht geprüft – nicht als Einstufung nennen' : e.urgency}; typischer Einbauort: ${e.location}`,
       `Erklärung: ${e.explanation}`);
     if (e.causes.length) lines.push(`Mögliche Ursachen: ${e.causes.join('; ')}`);
     const driving = drivingAdvice(e);
@@ -128,6 +130,8 @@ export function createChatRouter({
   gatewayUrl = process.env.LM_GATEWAY_URL,
   gatewayKey = process.env.LM_GATEWAY_KEY,
   model = process.env.LM_MODEL || DEFAULT_MODEL,
+  // Abschalter nach KI-Richtlinie, Abschnitt 13: CHAT_DISABLED=true sperrt den Chat ohne Codeänderung.
+  disabled = process.env.CHAT_DISABLED === 'true',
   lookupCodes = async () => ({ entries: [], manufacturerName: null }),
   fetchImpl = globalThis.fetch,
   clock = Date.now,
@@ -158,6 +162,7 @@ export function createChatRouter({
     const { code: shown, manufacturer: maker } = req.body.context ?? {};
     const contextCode = typeof shown === 'string' && CODE.test(shown) ? shown : null;
     const manufacturer = typeof maker === 'string' && SLUG.test(maker) ? maker : null;
+    if (disabled) return fail(503, 'Der KI-Assistent ist vorübergehend abgeschaltet. Die Code-Erklärungen und Sicherheitshinweise der Seite gelten weiterhin.');
     if (!gatewayUrl || !gatewayKey) return fail(503, 'Der KI-Chat ist noch nicht eingerichtet. Bitte versuche es später erneut.');
     const now = clock();
     for (const [ip, calls] of visitors) if (calls.at(-1) <= now - 60000) visitors.delete(ip);

@@ -217,6 +217,8 @@ function adviceFor(c,details){
   const firstCheck=details[0]?.check||'Sichtprüfung am betroffenen System durchführen';
   const safety=safetyFor(c);
   if(safety) return {verdict:'Nur nach Prüfung',title:`Sicherheitsrelevant: ${safety.area}`,text:safety.text,steps:['Auf Warnleuchten und spürbare Veränderungen achten.',firstCheck,'Fachwerkstatt hinzuziehen, im Zweifel abschleppen lassen.']};
+  // Importierte Einträge: Dringlichkeit ist nur automatisch abgeleitet, daher keine Einschätzung nach Farbe (KI-Richtlinie, Abschnitt 6).
+  if(c.source!=='redaktionell') return {verdict:'Nicht geprüft',title:'Keine geprüfte Einschätzung',text:'Für diesen automatisch importierten Code liegt keine fachlich geprüfte Einschätzung zur Weiterfahrt vor. Bei Warnleuchten, spürbaren Veränderungen oder Unsicherheit nicht weiterfahren und fachlich prüfen lassen.',steps:['Auf Warnleuchten und spürbare Veränderungen achten.',firstCheck,'Fehlerspeicher und betroffenes System fachlich prüfen lassen.']};
   if(c.urgency==='Rot') return {verdict:'Nur eingeschränkt',title:'Vorsichtig reagieren',text:'Starke Belastung vermeiden. Bei deutlichen Symptomen, roter oder blinkender Warnleuchte sicher anhalten.',steps:[firstCheck,'Belastung und längere Fahrten vermeiden.','Fehlerspeicher und betroffenes System zeitnah fachlich prüfen lassen.']};
   if(c.urgency==='Grün') return {verdict:'Meist möglich',title:'Weiterfahrt meist möglich',text:'Wenn das Fahrzeug normal fährt und keine weiteren Warnzeichen auftreten, ist eine vorsichtige Weiterfahrt meist möglich.',steps:[firstCheck,'Nach einigen Fahrzyklen erneut auslesen.','Bei wiederkehrendem Code Werkstatttermin planen.']};
   return {verdict:'Meist möglich',title:'Zeitnah prüfen lassen',text:'Eine vorsichtige Weiterfahrt ist meist möglich, solange keine starken Symptome oder roten Warnleuchten auftreten.',steps:[firstCheck,'Hohe Belastung nach Möglichkeit vermeiden.','Ursache zeitnah systematisch prüfen lassen.']};
@@ -276,7 +278,9 @@ async function showCode(code,{scroll=true}={}){
   const details=causeDetailsFor(c), a=adviceFor(c,details);
   activeCode=c.code; hideError(); closeSuggestions(); result.hidden=false; byId('empty-state').hidden=true;
   byId('r-code').textContent=c.code; byId('r-category').textContent=`${c.code[0]} · ${c.category}`; byId('r-origin').textContent=c.origin;
-  byId('r-urgency').textContent=`${c.urgency} · ${c.urgency==='Rot'?'Dringend prüfen':c.urgency==='Grün'?'Beobachten':'Zeitnah prüfen'}`; byId('r-urgency').className=`urgency ${c.urgency==='Rot'?'red':c.urgency==='Grün'?'green':'amber'}`;
+  // Importierte Einträge zeigen keine automatisch abgeleitete Dringlichkeitsfarbe (KI-Richtlinie, Abschnitt 6).
+  if(c.source!=='redaktionell'){byId('r-urgency').textContent='Dringlichkeit nicht geprüft';byId('r-urgency').className='urgency unchecked';}
+  else{byId('r-urgency').textContent=`${c.urgency} · ${c.urgency==='Rot'?'Dringend prüfen':c.urgency==='Grün'?'Beobachten':'Zeitnah prüfen'}`; byId('r-urgency').className=`urgency ${c.urgency==='Rot'?'red':c.urgency==='Grün'?'green':'amber'}`;}
   byId('r-title').textContent=c.title; byId('system-icon').textContent={P:'⚙',B:'◇',C:'◉',U:'⌁'}[c.code[0]]; byId('r-system').textContent=c.system; byId('r-system-copy').textContent=`Der Code gehört zum Bereich ${c.category} und betrifft ${c.system.toLowerCase()}.`; byId('r-location').textContent=`Typischer Bereich: ${c.location}`;
   byId('r-explanation').textContent=c.explanation;
   byId('r-causes').replaceChildren(...details.map(item=>{const li=document.createElement('li'),rank=document.createElement('b'),cause=document.createElement('span');rank.textContent=item.rank;cause.textContent=item.cause;li.append(rank,cause);return li}));

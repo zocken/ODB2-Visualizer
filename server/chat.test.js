@@ -218,3 +218,20 @@ test('Modell ist konfigurierbar', async () => {
   const { url, close } = await serve({ model: 'test-modell', fetchImpl: async (_u, init) => { model = JSON.parse(init.body).model; return sse('ok'); } });
   try { await (await ask(url, valid)).text(); assert.equal(model, 'test-modell'); } finally { close(); }
 });
+
+test('Importierte Einträge: keine Einschätzung nach automatisch abgeleiteter Farbe', () => {
+  assert.match(drivingAdvice({ system: 'Tankentlüftung', urgency: 'Grün', source: 'Wal33D/dtc-database (MIT)' }), /keine fachlich geprüfte Einschätzung/);
+  assert.match(drivingAdvice({ system: 'ABS & Fahrstabilität', urgency: 'Grün', source: 'Wal33D/dtc-database (MIT)' }), /^nur nach Prüfung \(Bremsen/);
+  const text = factsMessage({ entries: [{ ...P0420, source: 'Wal33D/dtc-database (MIT)', urgency: 'Rot' }], manufacturerName: null }, ['P0420'], 'P0420');
+  assert.match(text, /Dringlichkeit: automatisch abgeleitet, nicht geprüft/);
+  assert.doesNotMatch(text, /Dringlichkeit: Rot/);
+});
+
+test('Abschalter sperrt den Chat ohne Gateway-Aufruf', async () => {
+  const { url, close } = await serve({ disabled: true, fetchImpl: () => { throw Error('must not run'); } });
+  try {
+    const res = await ask(url, valid);
+    assert.equal(res.status, 503);
+    assert.match((await res.json()).error, /vorübergehend abgeschaltet/);
+  } finally { close(); }
+});

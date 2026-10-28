@@ -97,3 +97,4 @@
 [hidden]{display:none!important}
 .suggestion.is-highlighted{background:#dfe8dc;outline:2px solid #72ad33;outline-offset:-2px}
 .verdict-note{display:block;margin-top:3px;font-size:10px;letter-spacing:.04em;text-transform:none;color:#4d6a3a}
+.urgency.unchecked{background:#e6e8e2;border-color:#9aa59d;color:#3f4a44}
