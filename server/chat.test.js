@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
-import { createChatRouter, codesFor, factsMessage, withoutThinkTags, drivingAdvice, explicitlyRequestsResearch, DEFAULT_MODEL } from './chat.js';
+import { createChatRouter, codesFor, factsMessage, withoutThinkTags, drivingAdvice, explicitlyRequestsResearch, parseResearchDecision, DEFAULT_MODEL } from './chat.js';
 
 async function fixture(options, run) {
   const app = express();
@@ -272,11 +272,6 @@ test('Fehlende oder veraltete Freigabe schaltet Empfehlungen aus', () => {
 test('Modell entscheidet über Webrecherche und erhält das MCP-Ergebnis', async () => {
   const requests = [];
   let query;
-  const toolCall = {
-    id: 'research-1',
-    type: 'function',
-    function: { name: 'research_vehicle_web', arguments: JSON.stringify({ query: 'AGR Ventil aktuelle Informationen' }) },
-  };
   const app = await serve({
     researchWeb: async value => {
       query = value;
@@ -285,7 +280,7 @@ test('Modell entscheidet über Webrecherche und erhält das MCP-Ergebnis', async
     fetchImpl: async (_url, init) => {
       const body = JSON.parse(init.body); requests.push(body);
       return requests.length === 1
-        ? Response.json({ choices: [{ finish_reason: 'tool_calls', message: { role: 'assistant', content: null, tool_calls: [toolCall] } }] })
+        ? Response.json({ choices: [{ message: { content: '{"use_research":true,"query":"AGR Ventil aktuelle Informationen"}' } }] })
         : sse('Antwort mit Recherche');
     },
   });
@@ -293,62 +288,59 @@ test('Modell entscheidet über Webrecherche und erhält das MCP-Ergebnis', async
     const out = await lines(await ask(app.url, { messages: [{ role: 'user', content: 'Was macht ein AGR-Ventil und gibt es neue Erkenntnisse?' }] }));
     assert.equal(query, 'AGR Ventil aktuelle Informationen');
     assert.equal(requests[0].stream, false);
-    assert.equal(requests[0].tool_choice, 'auto');
-    assert.equal(requests[0].tools[0].function.name, 'research_vehicle_web');
-    assert.equal(requests[1].messages.at(-2).role, 'assistant');
-    assert.equal(requests[1].messages.at(-1).role, 'tool');
-    assert.match(requests[1].messages.at(-1).content, /AGR-Fachinformation/);
+    assert.equal(requests[0].max_tokens, 512);
+    assert.equal(requests[0].tools, undefined);
+    assert.match(requests[1].messages[0].content, /AGR-Fachinformation/);
     assert.deepEqual(out[0].webSources, [{ title: 'AGR-Fachinformation', url: 'https://example.org/agr', domain: 'example.org' }]);
     assert.equal(out.filter(part => part.delta).map(part => part.delta).join(''), 'Antwort mit Recherche');
     assert.deepEqual(out.at(-1), { done: true });
   } finally { app.close(); }
 });
 
-test('Modell kann ohne Webrecherche direkt antworten', async () => {
-  let searched = false, request;
+test('Modell kann ohne Webrecherche antworten', async () => {
+  let searched = false;
+  const requests = [];
   const app = await serve({
     researchWeb: async () => { searched = true; return { results: [] }; },
     fetchImpl: async (_url, init) => {
-      request = JSON.parse(init.body);
-      return Response.json({ choices: [{ message: { content: 'Direkte Antwort' } }] });
+      requests.push(JSON.parse(init.body));
+      return requests.length === 1
+        ? Response.json({ choices: [{ message: { content: '{"use_research":false,"query":""}' } }] })
+        : sse('Direkte Antwort');
     },
   });
   try {
     const out = await lines(await ask(app.url, { messages: [{ role: 'user', content: 'Hallo' }] }));
     assert.equal(searched, false);
-    assert.equal(request.stream, false);
+    assert.equal(requests[0].stream, false);
+    assert.equal(requests[1].stream, true);
     assert.equal(out.find(part => part.delta).delta, 'Direkte Antwort');
   } finally { app.close(); }
 });
 
-test('ausdrückliche Bitte um aktuelle Quellen erzwingt den Rechercheaufruf', async () => {
-  const requests = [];
-  const toolCall = {
-    id: 'forced-research',
-    type: 'function',
-    function: { name: 'research_vehicle_web', arguments: JSON.stringify({ query: 'HU Änderungen Deutschland 2026' }) },
-  };
+test('ausdrückliche Bitte um aktuelle Quellen wird nicht ohne Recherche beantwortet', async () => {
+  let searched = false;
   const app = await serve({
-    researchWeb: async query => ({ query, results: [{ title: 'Quelle', url: 'https://example.org/hu', domain: 'example.org', snippet: 'Aktuelle Information' }] }),
-    fetchImpl: async (_url, init) => {
-      const body = JSON.parse(init.body); requests.push(body);
-      if (requests.length === 1) return Response.json({ choices: [{ message: { content: 'unbelegte Antwort' } }] });
-      if (requests.length === 2) return Response.json({ choices: [{ message: { role: 'assistant', content: null, tool_calls: [toolCall] } }] });
-      return sse('Belegte Antwort');
-    },
+    researchWeb: async () => { searched = true; return { results: [] }; },
+    fetchImpl: async () => Response.json({ choices: [{ message: { content: '{"use_research":false,"query":""}' } }] }),
   });
+  const original = console.error; console.error = () => {};
   try {
-    const out = await lines(await ask(app.url, { messages: [{ role: 'user', content: 'Recherchiere aktuelle HU-Änderungen und nenne Quellen.' }] }));
-    assert.equal(requests.length, 3);
-    assert.equal(requests[0].tool_choice, 'auto');
-    assert.deepEqual(requests[1].tool_choice, { type: 'function', function: { name: 'research_vehicle_web' } });
-    assert.equal(out.filter(part => part.delta).map(part => part.delta).join(''), 'Belegte Antwort');
-    assert.equal(out[0].webSources[0].domain, 'example.org');
-  } finally { app.close(); }
+    const response = await ask(app.url, { messages: [{ role: 'user', content: 'Recherchiere aktuelle HU-Änderungen und nenne Quellen.' }] });
+    assert.equal(response.status, 503);
+    assert.equal(searched, false);
+  } finally { console.error = original; app.close(); }
 });
 
 test('erkennt ausdrücklichen Recherchebedarf konservativ', () => {
   assert.equal(explicitlyRequestsResearch('Recherchiere bitte aktuelle Änderungen und nenne Quellen.'), true);
   assert.equal(explicitlyRequestsResearch('Was bedeutet ein AGR-Ventil grundsätzlich?'), false);
   assert.equal(explicitlyRequestsResearch('Hallo'), false);
+});
+
+test('validiert die JSON-Rechercheentscheidung', () => {
+  assert.deepEqual(parseResearchDecision('{"use_research":true,"query":"  HU   2026  "}'), { useResearch: true, query: 'HU 2026' });
+  const fence = String.fromCharCode(96).repeat(3);
+  assert.deepEqual(parseResearchDecision(fence + 'json\n{"use_research":false,"query":"ignorieren"}\n' + fence), { useResearch: false, query: '' });
+  assert.throws(() => parseResearchDecision('{"use_research":true,"query":"x"}'), /Ungültige Rechercheanfrage/);
 });
