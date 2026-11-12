@@ -30,6 +30,8 @@ const CODE = /^[PBCU][0-9A-F]{4}$/;
 const CODE_IN_TEXT = /\b[PBCU][0-9A-F]{4}\b/gi;
 const SLUG = /^[a-z0-9-]{1,40}$/;
 const MAX_CODES = 3;
+const EXPLICIT_RESEARCH = /\b(recherchier\w*|websuche|internet(?:suche|recherche)|aktuell\w*|neueste\w*|heute|quellen?\s*(?:nennen|angeben)?|beleg\w*|stand\s+20\d{2})\b/i;
+export const explicitlyRequestsResearch = text => EXPLICIT_RESEARCH.test(String(text || ''));
 // Gleiche Weiterfahrt-Einschätzung wie auf der Ergebnisseite (dist/app.js, SAFETY und adviceFor), damit Chat und Seite übereinstimmen.
 // Sicherheitsrelevante Systeme gehen der Dringlichkeitsfarbe vor (KI-Richtlinie, Abschnitt 4).
 const SAFETY = [
@@ -210,7 +212,7 @@ export function createChatRouter({
       const system = `${SYSTEM}${researchWeb ? ` ${RESEARCH_SYSTEM}` : ''}${context ? `\n\n${context}` : ''}`;
       let modelMessages = [{ role: 'system', content: system },
         ...messages.map(({ role, content }) => ({ role, content }))];
-      const request = (stream, requestMessages = modelMessages, tools = null) => fetchImpl(`${gatewayUrl.replace(/\/$/, '')}/v1/chat/completions`, {
+      const request = (stream, requestMessages = modelMessages, tools = null, toolChoice = 'auto') => fetchImpl(`${gatewayUrl.replace(/\/$/, '')}/v1/chat/completions`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${gatewayKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -219,7 +221,7 @@ export function createChatRouter({
           messages: requestMessages,
           max_tokens: MAX_TOKENS,
           stream,
-          ...(tools && { tools, tool_choice: 'auto' }),
+          ...(tools && { tools, tool_choice: toolChoice }),
         }),
         signal: controller.signal,
       });
@@ -233,9 +235,20 @@ export function createChatRouter({
           console.error(`Chat-Gateway antwortet bei Werkzeugauswahl mit HTTP ${decision.status}.`);
           return fail(503, 'Die KI ist momentan nicht erreichbar. Bitte versuche es später erneut.');
         }
-        const data = await decision.json();
-        const assistant = data.choices?.[0]?.message || {};
-        const toolCall = assistant.tool_calls?.find(call => call?.function?.name === WEB_RESEARCH_DEFINITION.function.name);
+        let data = await decision.json();
+        let assistant = data.choices?.[0]?.message || {};
+        let toolCall = assistant.tool_calls?.find(call => call?.function?.name === WEB_RESEARCH_DEFINITION.function.name);
+        // Bei ausdrücklicher Bitte um Aktualität/Quellen darf keine scheinbar recherchierte Antwort ohne Werkzeug entstehen.
+        if (!toolCall && explicitlyRequestsResearch(messages.at(-1).content)) {
+          const forced = await abortable(request(false, modelMessages, [WEB_RESEARCH_DEFINITION], {
+            type: 'function', function: { name: WEB_RESEARCH_DEFINITION.function.name },
+          }), controller.signal);
+          if (!forced.ok) throw new Error('Recherche-Werkzeug konnte nicht ausgewählt werden');
+          data = await forced.json();
+          assistant = data.choices?.[0]?.message || {};
+          toolCall = assistant.tool_calls?.find(call => call?.function?.name === WEB_RESEARCH_DEFINITION.function.name);
+          if (!toolCall) throw new Error('Modell hat den erforderlichen Rechercheaufruf nicht geliefert');
+        }
         if (!toolCall) {
           upstream = Response.json(data);
         } else {
@@ -247,6 +260,10 @@ export function createChatRouter({
           const researchTimer = setTimeout(() => researchController.abort(), limits.research);
           try {
             research = await abortable(abortable(researchWeb(query), researchController.signal), controller.signal);
+            if (!Array.isArray(research.results) || !research.results.length) {
+              researchUnavailable = true;
+              research = { ...research, results: [], error: 'Keine verwertbaren Suchtreffer gefunden.' };
+            }
             webSources = (Array.isArray(research.results) ? research.results : []).slice(0, 5)
               .flatMap(({ title, url, domain }) => {
                 try {

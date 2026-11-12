@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
-import { createChatRouter, codesFor, factsMessage, withoutThinkTags, drivingAdvice, DEFAULT_MODEL } from './chat.js';
+import { createChatRouter, codesFor, factsMessage, withoutThinkTags, drivingAdvice, explicitlyRequestsResearch, DEFAULT_MODEL } from './chat.js';
 
 async function fixture(options, run) {
   const app = express();
@@ -319,4 +319,36 @@ test('Modell kann ohne Webrecherche direkt antworten', async () => {
     assert.equal(request.stream, false);
     assert.equal(out.find(part => part.delta).delta, 'Direkte Antwort');
   } finally { app.close(); }
+});
+
+test('ausdrückliche Bitte um aktuelle Quellen erzwingt den Rechercheaufruf', async () => {
+  const requests = [];
+  const toolCall = {
+    id: 'forced-research',
+    type: 'function',
+    function: { name: 'research_vehicle_web', arguments: JSON.stringify({ query: 'HU Änderungen Deutschland 2026' }) },
+  };
+  const app = await serve({
+    researchWeb: async query => ({ query, results: [{ title: 'Quelle', url: 'https://example.org/hu', domain: 'example.org', snippet: 'Aktuelle Information' }] }),
+    fetchImpl: async (_url, init) => {
+      const body = JSON.parse(init.body); requests.push(body);
+      if (requests.length === 1) return Response.json({ choices: [{ message: { content: 'unbelegte Antwort' } }] });
+      if (requests.length === 2) return Response.json({ choices: [{ message: { role: 'assistant', content: null, tool_calls: [toolCall] } }] });
+      return sse('Belegte Antwort');
+    },
+  });
+  try {
+    const out = await lines(await ask(app.url, { messages: [{ role: 'user', content: 'Recherchiere aktuelle HU-Änderungen und nenne Quellen.' }] }));
+    assert.equal(requests.length, 3);
+    assert.equal(requests[0].tool_choice, 'auto');
+    assert.deepEqual(requests[1].tool_choice, { type: 'function', function: { name: 'research_vehicle_web' } });
+    assert.equal(out.filter(part => part.delta).map(part => part.delta).join(''), 'Belegte Antwort');
+    assert.equal(out[0].webSources[0].domain, 'example.org');
+  } finally { app.close(); }
+});
+
+test('erkennt ausdrücklichen Recherchebedarf konservativ', () => {
+  assert.equal(explicitlyRequestsResearch('Recherchiere bitte aktuelle Änderungen und nenne Quellen.'), true);
+  assert.equal(explicitlyRequestsResearch('Was bedeutet ein AGR-Ventil grundsätzlich?'), false);
+  assert.equal(explicitlyRequestsResearch('Hallo'), false);
 });
