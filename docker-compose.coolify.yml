@@ -29,8 +29,23 @@ services:
       LM_GATEWAY_KEY: ${LM_GATEWAY_KEY:-}
       LM_MODEL: ${LM_MODEL:-}
       CHAT_DISABLED: ${CHAT_DISABLED:-false}
+      MCP_URL: http://mcp:8090/mcp
     expose:
       - "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      mcp:
+        condition: service_healthy
+
+  mcp:
+    build: .
+    command: ["node", "mcp/server.js"]
+    environment:
+      PORT: 8090
+      DATABASE_URL: postgres://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@db:5432/obd2
+    expose:
+      - "8090"
     depends_on:
       db:
         condition: service_healthy

@@ -20,8 +20,23 @@ services:
     build: .
     environment:
       DATABASE_URL: postgres://obd2:${POSTGRES_PASSWORD:-obd2-local}@db:5432/obd2
+      MCP_URL: http://mcp:8090/mcp
     ports:
       - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      mcp:
+        condition: service_healthy
+
+  mcp:
+    build: .
+    command: ["node", "mcp/server.js"]
+    environment:
+      PORT: 8090
+      DATABASE_URL: postgres://obd2:${POSTGRES_PASSWORD:-obd2-local}@db:5432/obd2
+    expose:
+      - "8090"
     depends_on:
       db:
         condition: service_healthy

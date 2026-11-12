@@ -7,6 +7,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY server ./server
+COPY mcp ./mcp
 COPY db ./db
 COPY dist ./dist
 COPY tools ./tools

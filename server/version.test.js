@@ -27,7 +27,7 @@ test('Releasekennung entspricht dem gefilterten Docker-Laufzeitpaket', async()=>
   const source=fileURLToPath(new URL('../',import.meta.url));
   const target=await fs.mkdtemp(path.join(os.tmpdir(),'obd2-build-test-'));
   try {
-    for(const name of ['server','dist','db','package.json','package-lock.json']){
+    for(const name of ['server','mcp','dist','db','package.json','package-lock.json']){
       await fs.cp(path.join(source,name),path.join(target,name),{recursive:true,filter:p=>{
         const relative=path.relative(source,p).split(path.sep).join('/');
         return relative!=='db/source'&&!relative.endsWith('.md');
@@ -38,6 +38,7 @@ test('Releasekennung entspricht dem gefilterten Docker-Laufzeitpaket', async()=>
     assert.ok(!ignore.includes('tools'),'tools muss im Docker-Buildkontext verfügbar sein');
     const dockerfile=await fs.readFile(new URL('../Dockerfile',import.meta.url),'utf8');
     assert.match(dockerfile,/COPY tools \.\/tools/);
+    assert.match(dockerfile,/COPY mcp \.\/mcp/);
   } finally {
     assert.equal(path.dirname(path.resolve(target)),path.resolve(os.tmpdir()));
     assert.ok(path.basename(target).startsWith('obd2-build-test-'));

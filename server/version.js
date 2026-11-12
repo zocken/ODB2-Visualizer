@@ -19,7 +19,7 @@ export function releaseInfo(root = fileURLToPath(new URL('../', import.meta.url)
       else if (item.isFile() && name !== 'dist/release.json') { hash.update(name); hash.update('\0'); hash.update(bytes(name)); }
     }
   };
-  for (const dir of ['server','dist','db']) visit(dir);
+  for (const dir of ['server','mcp','dist','db']) visit(dir);
   hash.update(bytes('package-lock.json'));
   const { version } = JSON.parse(readFileSync(path.join(root,'package.json'),'utf8'));
   return Object.freeze({ version, revision: hash.digest('hex'), schema: 1 });

@@ -10,6 +10,7 @@
   },
   "scripts": {
     "start": "node server/index.js",
+    "start:mcp": "node mcp/server.js",
     "seed": "node server/seed.js",
     "build:static": "node server/build-static.js",
     "update-codes": "node server/update-codes.js",
@@ -20,8 +21,10 @@
     "evaluate-model": "node tools/evaluate-model.js"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "express": "^5.1.0",
-    "pg": "^8.16.0"
+    "pg": "^8.16.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.13",
