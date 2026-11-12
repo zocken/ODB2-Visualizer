@@ -1,8 +1,28 @@
 use_default_settings:
   engines:
     keep_only:
+      - bing
       - duckduckgo
+      - mojeek
+      - qwant
+      - startpage
       - wikipedia
+
+# Einige dieser Engines sind im SearXNG-Standard deaktiviert.
+engines:
+  - name: bing
+    disabled: false
+  - name: mojeek
+    disabled: false
+    inactive: false
+  - name: qwant
+    disabled: false
+  - name: startpage
+    disabled: false
+    inactive: false
+  - name: wikipedia
+    display_type:
+      - list
 
 general:
   debug: false
