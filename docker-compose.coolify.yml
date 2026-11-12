@@ -54,11 +54,11 @@ services:
         condition: service_started
 
   search:
-    image: searxng/searxng:latest
+    build:
+      context: .
+      dockerfile: searxng/Dockerfile
     environment:
       SEARXNG_SECRET: ${SERVICE_PASSWORD_SEARXNG}
-    volumes:
-      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
     expose:
       - "8080"
 
