@@ -7,6 +7,7 @@ use_default_settings:
 general:
   debug: false
   instance_name: OBD2 Klartext Recherche
+  contact_url: https://obd2.traders-ai-signals.de/impressum.html
 
 search:
   safe_search: 1
