@@ -4,6 +4,12 @@ Deutschsprachige Web-App zur verständlichen Einordnung von OBD2-Fehlercodes. Di
 
 Ab Version 12 kommen die Codes aus einer PostgreSQL-Datenbank. Das Schema ist auf herstellerunabhängige Codes ausgelegt und kann später um herstellerspezifische Codes je Marke erweitert werden.
 
+## Präsentationslinks
+
+1. [Präsentationslink 1](https://drive.google.com/file/d/1LJNsfIzHwv6ptmPAV00zzwnv66gAkC9j/view?usp=drive_link)
+2. [Präsentationslink 2](https://drive.google.com/file/d/1_Gc020yfRNVU1q633AHCEIWMZCBeoe6X/view?usp=drive_link)
+3. [Präsentationslink 3](https://drive.google.com/open?id=1NGTGzie3z8jVETWvRoObHsXlT0U0hv_Q&usp=drive_copy)
+
 ## Projektstruktur
 
 - `dist/` – Frontend (`index.html`, `app.js`, `styles.css`, `vehicle.css`, 3D-Ansicht `vehicle-view.js`, `vehicle3d.js`, `vehicle3d-details.js`, `vendor/three`)
