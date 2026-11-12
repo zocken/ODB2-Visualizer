@@ -1,4 +1,4 @@
-export const CHAT_LIMITS = Object.freeze({ first: 60_000, idle: 20_000, total: 120_000, lookup: 3_000 });
+export const CHAT_LIMITS = Object.freeze({ first: 60_000, idle: 20_000, total: 120_000, lookup: 3_000, research: 10_000 });
 
 // Also bounds promises which ignore AbortSignal (for example a pending database query).
 export function abortable(promise, signal) {

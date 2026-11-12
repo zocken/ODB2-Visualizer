@@ -54,6 +54,20 @@ import { safetySignals } from './safety-signals.js?v=2';
         note.textContent = `Grundlage: ${list.map((s) => `${s.code}${s.manufacturer ? ` (${s.manufacturer})` : ''}`).join(', ')} aus der Datenbasis`;
         item.append(note);
       },
+      webSources(list) {
+        if (!list.length) return;
+        const note = document.createElement('small');
+        note.className = 'ai-chat-sources';
+        note.append(document.createTextNode('Webquellen: '));
+        list.forEach((source, index) => {
+          if (index) note.append(document.createTextNode(' · '));
+          const link = document.createElement('a');
+          link.href = source.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+          link.textContent = source.domain || source.title;
+          note.append(link);
+        });
+        item.append(note);
+      },
     };
   }
   const greeting = () => message('assistant', 'Hallo! Was möchtest du über einen Fehlercode oder dein Fahrzeug wissen?');
@@ -164,14 +178,16 @@ import { safetySignals } from './safety-signals.js?v=2';
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Die Antwort konnte nicht geladen werden.');
       }
-      let sources = [], finished = false;
+      let sources = [], webSources = [], finished = false;
       for await (const part of events(response)) {
         // Denkphasen setzen nur die Pausengrenze zurück; Antwortbeginn und Gesamtdauer bleiben fest begrenzt.
         if (part.delta || part.thinking) { clearTimeout(idleTimer); idleTimer = setTimeout(() => controller.abort(), 25000); }
         if (part.delta?.trim()) clearTimeout(firstTimer);
         if (part.sources) sources = part.sources;
+        if (part.webSources) webSources = part.webSources;
         // Datenbasis nicht erreichbar: Hinweis sofort und vor dem ersten Antworttext (KI-Richtlinie, Abschnitt 5).
         if (part.dataUnavailable && !dataNotice) { dataNotice = true; pending.notice('Datenbasis gerade nicht erreichbar – diese Antwort beruht nicht auf den Projektdaten.'); }
+        if (part.researchUnavailable) pending.notice('Webrecherche gerade nicht erreichbar – die Antwort enthält keine aktuellen Webquellen.');
         if (part.error) throw new Error(part.error);
         if (part.delta) {
           if (!reply) { clearInterval(ticker); reply = pending; pending.item.classList.remove('is-pending'); status.textContent = 'Die KI antwortet …'; }
@@ -181,6 +197,7 @@ import { safetySignals } from './safety-signals.js?v=2';
       }
       if (!finished || !answer.trim()) throw new Error('Die KI hat keine Antwort geliefert.');
       reply.sources(sources);
+      reply.webSources(webSources);
       history.push({ role: 'user', content: question }, { role: 'assistant', content: answer.trim().slice(0, 4000) });
       if (history.length > 10) history.splice(0, history.length - 10);
       input.value = ''; status.textContent = 'Antwort erhalten';

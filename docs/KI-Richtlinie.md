@@ -93,6 +93,7 @@ Für den vorgesehenen Betrieb gilt:
 - Chatdaten werden nicht zum Modelltraining verwendet.
 - Zugangsschlüssel bleiben serverseitig.
 - Übertragungen zwischen öffentlich erreichbaren Systemen werden verschlüsselt.
+- Für eine vom Modell angeforderte Webrecherche wird nur eine sachliche, personenbezugsfreie Suchanfrage an die fest konfigurierten Suchdienste übermittelt; vollständige Chatnachrichten werden nicht weitergegeben.
 
 Diese Anforderungen müssen für die gesamte Verarbeitungskette geprüft werden, einschließlich Hosting, Weiterleitungsdienst, Modellserver und Fehlerprotokollen. Technische Metadaten zur Missbrauchsabwehr werden auf das erforderliche Maß und eine festgelegte Speicherdauer begrenzt.
 
@@ -100,7 +101,7 @@ Diese Anforderungen müssen für die gesamte Verarbeitungskette geprüft werden,
 
 ## 8. Technische Begrenzung des Assistenten
 
-Der öffentliche KI-Assistent erhält keine Berechtigungen zum Ausführen von Shellbefehlen, Ändern von Dateien, Steuern von Fahrzeugen oder eigenständigen Aufrufen beliebiger externer Dienste.
+Der öffentliche KI-Assistent erhält keine Berechtigungen zum Ausführen von Shellbefehlen, Ändern von Dateien, Steuern von Fahrzeugen oder eigenständigen Aufrufen beliebiger externer Dienste. Er darf ausschließlich die vom Backend angebotenen, begrenzten MCP-Werkzeuge anfordern. Das Backend prüft Werkzeugname und Argumente, führt höchstens einen Webrechercheaufruf pro Antwort aus und gibt dem Modell keinen freien Netzwerkzugriff.
 
 Anfragen und Antworten werden hinsichtlich Umfang, Laufzeit und Auslastung begrenzt. Modellausgaben werden als nicht vertrauenswürdiger Inhalt behandelt und nicht als ausführbarer Programmcode oder ungeprüftes HTML verarbeitet.
 

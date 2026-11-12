@@ -1,0 +1,22 @@
+use_default_settings:
+  engines:
+    keep_only:
+      - duckduckgo
+      - wikipedia
+
+general:
+  debug: false
+  instance_name: OBD2 Klartext Recherche
+
+search:
+  safe_search: 1
+  formats:
+    - html
+    - json
+
+server:
+  bind_address: 0.0.0.0
+  port: 8080
+  limiter: false
+  public_instance: false
+  image_proxy: false

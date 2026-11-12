@@ -44,11 +44,23 @@ services:
     environment:
       PORT: 8090
       DATABASE_URL: postgres://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@db:5432/obd2
+      SEARXNG_URL: http://search:8080
     expose:
       - "8090"
     depends_on:
       db:
         condition: service_healthy
+      search:
+        condition: service_started
+
+  search:
+    image: searxng/searxng:latest
+    environment:
+      SEARXNG_SECRET: ${SERVICE_PASSWORD_SEARXNG}
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+    expose:
+      - "8080"
 
 volumes:
   obd2-db-data:

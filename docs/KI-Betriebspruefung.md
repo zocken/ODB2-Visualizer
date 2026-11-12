@@ -23,6 +23,7 @@ LM Studio und der Weiterleitungsdienst laufen auf einem eigenen Rechner, auf den
 | Weiterleitung (`LM_GATEWAY_URL`, SSH-Tunnel) | Wird Anfrageinhalt protokolliert? Verschlüsselt (HTTPS bzw. SSH)? | |
 | LM Studio | Protokolliert der Server Prompts/Antworten (Developer-Logs, ausführliche Protokollierung)? Wo und wie lange werden Logs gespeichert? Gespeicherte Chats in der LM-Studio-Oberfläche betreffen den Server nicht, trotzdem prüfen | |
 | Modelltraining | Keine Übermittlung an Dritte; LM Studio lokal ohne Telemetrie zu Prompts? | |
+| Webrecherche | SearXNG-Protokollierung prüfen; nur DuckDuckGo/Wikipedia aktiv; vollständiger Chat wird nicht versendet; Suchtreffer werden sichtbar verlinkt | |
 | Missbrauchsabwehr | IP-Adressen nur im Arbeitsspeicher, nach ca. einer Minute verworfen (im Code umgesetzt) | erfüllt |
 
 Ergebnisse, die von der Datenschutzerklärung abweichen, erfordern eine Anpassung der Datenschutzerklärung (Abschnitt 7, letzter Absatz).

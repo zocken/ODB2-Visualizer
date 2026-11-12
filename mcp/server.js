@@ -5,7 +5,8 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { pool } from '../server/db.js';
 import { lookupCodes } from '../server/code-context.js';
-import { registerObdTools } from './tools.js';
+import { registerObdTools, registerResearchTools } from './tools.js';
+import { searchVehicleWeb } from './web-search.js';
 
 const PORT = Number(process.env.PORT || 8090);
 const app = express();
@@ -17,13 +18,14 @@ app.use(express.json({ limit: '32kb' }));
 function createServer() {
   const server = new McpServer({ name: 'obd2-klartext', version: '1.0.0' });
   registerObdTools(server, { lookup: lookupCodes });
+  registerResearchTools(server, { search: searchVehicleWeb });
   return server;
 }
 
 app.get(['/health', '/api/health'], async (_req, res) => {
   try {
     await pool.query('SELECT 1');
-    res.json({ ok: true, protocol: 'mcp', tools: ['lookup_obd_codes'] });
+    res.json({ ok: true, protocol: 'mcp', tools: ['lookup_obd_codes', 'research_vehicle_web'] });
   } catch {
     res.status(503).json({ ok: false });
   }

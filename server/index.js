@@ -6,7 +6,7 @@ import { seed, seedFiles } from './seed.js';
 import { recentUpdates, scheduleUpdates } from './update-codes.js';
 import { recordEvents, usageSummary } from './usage.js';
 import { createChatRouter } from './chat.js';
-import { lookupCodesViaMcp } from './mcp-client.js';
+import { lookupCodesViaMcp, researchWebViaMcp } from './mcp-client.js';
 
 const PORT = Number(process.env.PORT || 8080);
 const CODE_PATTERN = /^[PBCU][0-9A-F]{4}$/;
@@ -98,7 +98,7 @@ app.get('/api/codes/:code', async (req, res) => {
   res.status(404).json({ error: 'Code nicht in der Datenbasis', alternatives: alternatives.map((r) => r.code) });
 });
 
-app.use('/api/chat', createChatRouter({ lookupCodes: lookupCodesViaMcp }));
+app.use('/api/chat', createChatRouter({ lookupCodes: lookupCodesViaMcp, researchWeb: researchWebViaMcp }));
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Unbekannter Endpunkt' }));
 app.use(express.static(fileURLToPath(new URL('../dist', import.meta.url)), { extensions: ['html'] }));
 

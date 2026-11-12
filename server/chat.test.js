@@ -268,3 +268,55 @@ test('Fehlende oder veraltete Freigabe schaltet Empfehlungen aus', () => {
   assert.match(drivingAdvice({...P0420,reviewStatus:'pending'}),/keine fachlich geprüfte Einschätzung/);
   assert.match(drivingAdvice({...P0420,reviewedHash:'anderer-stand'}),/keine fachlich geprüfte Einschätzung/);
 });
+
+test('Modell entscheidet über Webrecherche und erhält das MCP-Ergebnis', async () => {
+  const requests = [];
+  let query;
+  const toolCall = {
+    id: 'research-1',
+    type: 'function',
+    function: { name: 'research_vehicle_web', arguments: JSON.stringify({ query: 'AGR Ventil aktuelle Informationen' }) },
+  };
+  const app = await serve({
+    researchWeb: async value => {
+      query = value;
+      return { query: value, results: [{ title: 'AGR-Fachinformation', url: 'https://example.org/agr', domain: 'example.org', snippet: 'Das AGR-System führt Abgas zurück.' }] };
+    },
+    fetchImpl: async (_url, init) => {
+      const body = JSON.parse(init.body); requests.push(body);
+      return requests.length === 1
+        ? Response.json({ choices: [{ finish_reason: 'tool_calls', message: { role: 'assistant', content: null, tool_calls: [toolCall] } }] })
+        : sse('Antwort mit Recherche');
+    },
+  });
+  try {
+    const out = await lines(await ask(app.url, { messages: [{ role: 'user', content: 'Was macht ein AGR-Ventil und gibt es neue Erkenntnisse?' }] }));
+    assert.equal(query, 'AGR Ventil aktuelle Informationen');
+    assert.equal(requests[0].stream, false);
+    assert.equal(requests[0].tool_choice, 'auto');
+    assert.equal(requests[0].tools[0].function.name, 'research_vehicle_web');
+    assert.equal(requests[1].messages.at(-2).role, 'assistant');
+    assert.equal(requests[1].messages.at(-1).role, 'tool');
+    assert.match(requests[1].messages.at(-1).content, /AGR-Fachinformation/);
+    assert.deepEqual(out[0].webSources, [{ title: 'AGR-Fachinformation', url: 'https://example.org/agr', domain: 'example.org' }]);
+    assert.equal(out.filter(part => part.delta).map(part => part.delta).join(''), 'Antwort mit Recherche');
+    assert.deepEqual(out.at(-1), { done: true });
+  } finally { app.close(); }
+});
+
+test('Modell kann ohne Webrecherche direkt antworten', async () => {
+  let searched = false, request;
+  const app = await serve({
+    researchWeb: async () => { searched = true; return { results: [] }; },
+    fetchImpl: async (_url, init) => {
+      request = JSON.parse(init.body);
+      return Response.json({ choices: [{ message: { content: 'Direkte Antwort' } }] });
+    },
+  });
+  try {
+    const out = await lines(await ask(app.url, { messages: [{ role: 'user', content: 'Hallo' }] }));
+    assert.equal(searched, false);
+    assert.equal(request.stream, false);
+    assert.equal(out.find(part => part.delta).delta, 'Direkte Antwort');
+  } finally { app.close(); }
+});

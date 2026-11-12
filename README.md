@@ -148,7 +148,9 @@ Verbindliche Vorgaben: [KI-Richtlinie](docs/KI-Richtlinie.md) · Stand der Umset
 
 Am Seitenende steht ein kompakter KI-Chat. Browseranfragen gehen an `POST /api/chat`; ausschließlich das Backend verwendet `LM_GATEWAY_URL` und `LM_GATEWAY_KEY`. Beide Werte gehören in die Produktions-Laufzeitvariablen von Coolify, niemals in Browsercode oder ins Repository.
 
-**MCP-Pilot:** Die Code-Daten für den Chat werden über einen eigenen, nur intern erreichbaren MCP-Container bezogen. Der App-Server verbindet sich über Streamable HTTP (`MCP_URL`, in Docker Compose `http://mcp:8090/mcp`) und ruft das ausschließlich lesende Werkzeug `lookup_obd_codes` auf. Der MCP-Server verwendet dieselbe PostgreSQL-Datenbasis und dieselbe Herstellerpriorisierung wie die übrige App. Klassische API-Endpunkte bleiben bestehen; MCP ist die zusätzliche KI-Schnittstelle. Ist MCP nicht erreichbar, greift die vorhandene, deutlich gekennzeichnete Antwort ohne Projektdatenbasis. In dieser ersten Stufe entscheidet der App-Server anhand der genannten beziehungsweise angezeigten Codes deterministisch über den Werkzeugaufruf; das Sprachmodell erhält keine frei ausführbaren Werkzeuge.
+**MCP-Werkzeuge:** Die Code-Daten für den Chat werden über einen eigenen, nur intern erreichbaren MCP-Container bezogen. Der App-Server verbindet sich über Streamable HTTP (`MCP_URL`, in Docker Compose `http://mcp:8090/mcp`). `lookup_obd_codes` liest bis zu drei Codes aus PostgreSQL und wird weiterhin deterministisch vom App-Server aufgerufen. Zusätzlich kann das Modell selbst das ausschließlich lesende Werkzeug `research_vehicle_web` anfordern. Dieses übergibt genau eine begrenzte Suchanfrage an die interne SearXNG-Instanz; andere Werkzeuge, freie URLs oder Systemzugriffe stehen dem Modell nicht zur Verfügung.
+
+**Webrecherche ohne Such-API:** SearXNG läuft in einem eigenen, nicht öffentlich freigegebenen Container (`http://search:8080`). Aktiv sind ausschließlich DuckDuckGo und Wikipedia. Die Abfrage erfolgt per POST; an das Modell gehen höchstens fünf Treffer mit Titel, Kurztext, URL und Domain. Gefundene Seiten werden nicht automatisch geladen. Das Modell entscheidet in einer ersten, nicht gestreamten Runde, ob die Recherche nötig ist. Bei einem Werkzeugaufruf führt das Backend ihn über MCP aus und fragt das Modell anschließend mit dem Ergebnis erneut; verwendete Links erscheinen unter der Antwort. Pro Chatantwort ist höchstens ein Rechercheaufruf möglich.
 
 Der Chat ist erreichbar, solange die lokale KI und ihr SSH-Tunnel laufen. Bei einer getrennten Verbindung zeigt die Oberfläche eine verständliche Fehlermeldung. Gesprächsverläufe bleiben im Speicher des jeweiligen Browser-Tabs und werden vom Chat-Backend nicht gespeichert.
 
@@ -158,9 +160,9 @@ Der Chat ist erreichbar, solange die lokale KI und ihr SSH-Tunnel laufen. Bei ei
 
 **Sofortiger Sicherheitshinweis:** Enthält eine Chatfrage akute Gefahrenzeichen (Bremse ohne Wirkung, Lenkung schwergängig, Öldruckwarnung, Überhitzung/Dampf, Rauch/Brandgeruch, blinkende Motorkontrollleuchte, Kraftstoffgeruch/-austritt, Hochvolt-Warnung), zeigt der Browser sofort einen festen Hinweis unter der Frage – unabhängig von Erreichbarkeit und Antwortzeit der KI; er bleibt auch bei Fehlern stehen. Liste und Texte: `dist/safety-signals.js` (Tests: `server/safety-signals.test.js`); sie sind bewusst vorsichtig und brauchen noch eine fachliche Prüfung.
 
-**Hinweise im Chat:** Über dem Verlauf stehen vor der ersten Eingabe die Grenzen (keine Diagnose oder Freigabe), der Vorrang von Fahrzeugwarnungen und Herstellerangaben, die Bitte, keine personenbezogenen Daten einzugeben, sowie Links zum Datenschutz und zum Melden falscher Antworten.
+**Hinweise im Chat:** Über dem Verlauf stehen vor der ersten Eingabe die Grenzen (keine Diagnose oder Freigabe), der Vorrang von Fahrzeugwarnungen und Herstellerangaben, die mögliche Websuche, die Bitte, keine personenbezogenen Daten einzugeben, sowie Links zum Datenschutz und zum Melden falscher Antworten.
 
-**Streaming:** Der Server fragt das Gateway mit `stream: true` an und reicht die Antwort als NDJSON weiter (`{"sources":[…]}`, dann `{"delta":"…"}`-Teile, zum Schluss `{"done":true}` oder `{"error":"…"}`), sodass der Text sofort erscheint. Liefert das Gateway kein Streaming, wird die JSON-Antwort am Stück weitergegeben. Lehnt das Gateway `stream: true` ab, fragt der Server ohne Streaming erneut und merkt sich das bis zum nächsten Neustart. Reasoning-Modelle: Die Denkphase (`reasoning_content`) wird nicht weitergegeben, nur höchstens alle 5 s ein `{"thinking":true}` als Lebenszeichen; `<think>…</think>`-Blöcke im Antworttext werden ebenso herausgefiltert. Zeitgrenzen: 180 s bis zum ersten Lebenszeichen, 60 s zwischen zwei Teilen.
+**Streaming:** Ohne Recherchewerkzeug fragt der Server das Gateway direkt mit `stream: true` an. Mit aktiviertem Werkzeug entscheidet das Modell zunächst ohne Streaming über den Aufruf; die abschließende Antwort wird gestreamt. Das Backend reicht NDJSON weiter (`{"sources":[…],"webSources":[…]}`, dann `{"delta":"…"}`-Teile, zum Schluss `{"done":true}` oder `{"error":"…"}`). Lehnt das Gateway Streaming ab, folgt ein Versuch ohne Streaming. Denktext von Reasoning-Modellen wird nicht ausgegeben. Zeitgrenzen: 60 s bis zum ersten Antworttext, 20 s zwischen Teilen und 120 s insgesamt; Code-Lookup 3 s, Webrecherche 10 s.
 
 Tests: `npm test` (`server/chat.test.js`, ohne Datenbank und ohne echtes Gateway). Diese Tests nutzen simulierte Modellantworten; Prüfungen mit dem tatsächlich eingesetzten Modell werden getrennt dokumentiert (KI-Richtlinie, Abschnitt 10).
 
@@ -168,13 +170,13 @@ Tests: `npm test` (`server/chat.test.js`, ohne Datenbank und ohne echtes Gateway
 
 | | |
 |---|---|
-| Modell | `qwen3.8-flash-next` in LM Studio (Standard `DEFAULT_MODEL` in `server/chat.js`, änderbar über `LM_MODEL`); Reasoning-Modell |
+| Modell | `openai/gpt-oss-120b` in LM Studio (Standard `DEFAULT_MODEL` in `server/chat.js`, änderbar über `LM_MODEL`); Reasoning- und Tool-Calling-Modell |
 | Vorher | `devstral-small-2-24b-instruct-2512` (bis Oktober 2026) |
 | Herkunft, Nutzungsbedingungen | noch zu dokumentieren (Modellkarte und Lizenz des eingesetzten Modells) |
 | Betriebsumgebung | LM Studio auf einem selbst betriebenen Rechner, `Parallel 1` (Anfragen warten nacheinander) |
 | Datenweg | Browser → App-Server (Coolify, Hostinger, Frankfurt; HTTPS) → `LM_GATEWAY_URL` über SSH-Tunnel → LM Studio |
 | Systemanweisung | `SYSTEM` und `factsMessage` in `server/chat.js`; Freigabestand: Entwurf, nicht freigegeben |
-| Bekannte Grenzen | Antwortzeit meist 1–2 Minuten; keine fahrzeugspezifischen Daten; kann trotz Anweisung Fehler oder ungenaue Angaben enthalten; Sicherheitsvorgaben werden zusätzlich im Anwendungscode (Weiterfahrt-Regeln, Ausgabe nur als Text, Grenzen) umgesetzt |
+| Bekannte Grenzen | Recherche beruht auf Suchtreffer-Kurztexten und öffnet die Seiten nicht; Suchmaschinen können Anfragen begrenzen; keine fahrzeugspezifischen Daten; Modell und Webquellen können Fehler enthalten; Sicherheitsvorgaben werden zusätzlich im Anwendungscode umgesetzt |
 
 Ein Modellwechsel oder wesentliche Änderungen an der Systemanweisung brauchen eine erneute Prüfung.
 
