@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07110e"><meta name="robots" content="noindex"><meta name="referrer" content="no-referrer">
+  <title>Anmelden · OBD2 Klartext</title>
+  <link rel="stylesheet" href="styles.css?v=20"><link rel="stylesheet" href="konto.css?v=1">
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="./"><span class="brand-mark" aria-hidden="true">O₂</span><span>OBD2 <b>Klartext</b></span></a><span class="account-kicker">Dein Zugang</span></header>
+  <main class="auth-layout">
+    <section class="auth-intro"><p class="eyebrow">Fehler verstehen. Sicher reagieren.</p><h1>Dein Auto.<br>Deine Fragen.<br><em>Dein Zugang.</em></h1><p>Fehlercodes in verständlichem Klartext, eine anschauliche Systemansicht und der KI-Assistent – an einem Ort.</p><div class="auth-note"><span aria-hidden="true">↗</span><div><b>Mit bestätigter E-Mail-Adresse.</b><p>Registrieren, E-Mail öffnen, Konto aktivieren. Danach kannst du dich anmelden.</p></div></div></section>
+    <section class="account-card" aria-labelledby="auth-title">
+      <nav class="auth-tabs" aria-label="Zugang wählen"><a href="#anmelden" data-mode="anmelden">Anmelden</a><a href="#registrieren" data-mode="registrieren">Registrieren</a></nav>
+      <p id="auth-step" class="eyebrow">Willkommen zurück</p><h2 id="auth-title">Schön, dass du da bist.</h2><p id="auth-description" class="account-description">Melde dich mit deiner E-Mail-Adresse und deinem Passwort an.</p>
+      <p id="auth-status" class="account-message" role="status" tabindex="-1" hidden></p>
+      <form id="auth-form">
+        <div id="email-field" class="account-field"><label for="auth-email">E-Mail-Adresse</label><input id="auth-email" name="email" type="email" maxlength="254" autocomplete="email" required placeholder="du@beispiel.de"></div>
+        <div id="name-field" class="account-field" hidden><label for="auth-name">Anzeigename <span>(optional)</span></label><input id="auth-name" name="displayName" maxlength="80" autocomplete="nickname"></div>
+        <div id="password-field" class="account-field"><label for="auth-password">Passwort</label><input id="auth-password" name="password" type="password" autocomplete="current-password" maxlength="256" required><small id="password-help" hidden>15 bis 128 Zeichen. Eine längere Passphrase ist gut geeignet.</small></div>
+        <div id="confirm-field" class="account-field" hidden><label for="auth-confirm">Passwort wiederholen</label><input id="auth-confirm" name="confirmPassword" type="password" autocomplete="new-password" maxlength="256"></div>
+        <p id="registration-note" class="account-small" hidden>Wir schicken dir einen Bestätigungslink. Dein Konto wird erst nach Bestätigung deiner E-Mail-Adresse aktiv. Dein Passwort legst du bei der ersten Anmeldung fest. <a href="datenschutz.html#konto">Hinweise zum Datenschutz</a></p>
+        <button id="auth-submit" class="account-primary" type="submit">Anmelden <span aria-hidden="true">→</span></button>
+      </form>
+      <div class="account-links"><a href="#erster-zugang">Erste Anmeldung</a><a href="#vergessen">Passwort vergessen?</a><a href="#erneut">Bestätigung erneut senden</a></div>
+      <noscript>Für Anmeldung und Registrierung muss JavaScript aktiviert sein.</noscript>
+    </section>
+  </main>
+  <footer><span>OBD2 Klartext</span><span><a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a></span></footer>
+  <script type="module" src="anmelden.js?v=1"></script>
+</body></html>

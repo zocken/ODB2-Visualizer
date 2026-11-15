@@ -18,11 +18,13 @@
     "review-code": "node server/review-code.js",
     "verify-release": "node tools/verify-release.js",
     "test:ui": "node tools/ui-tests.js",
+    "test:auth-ui": "node tools/auth-ui-tests.js",
     "evaluate-model": "node tools/evaluate-model.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
     "express": "^5.1.0",
+    "nodemailer": "^10.5.0",
     "pg": "^8.16.0",
     "zod": "^4.6.7"
   },

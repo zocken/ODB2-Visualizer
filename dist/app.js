@@ -383,6 +383,7 @@ document.querySelector('.brand').addEventListener('click',event=>{
   const now=Date.now();
   logoClicks=[...logoClicks.filter(t=>now-t<3000),now];
   if(logoClicks.length<5)return;
+  if(window.obd2AccountRole!=='admin')return;
   event.preventDefault(); logoClicks=[];
   import('./stats.js?v=2').then(m=>m.openStats()).catch(()=>{});
 });

@@ -1,0 +1,57 @@
+import assert from 'node:assert/strict';
+import { mkdir } from 'node:fs/promises';
+import { chromium } from 'playwright';
+import { authFixture } from './auth-fixture.js';
+
+const f=await authFixture();let browser;
+const password='Meine sichere UI Testpassphrase!';
+await mkdir(new URL('../test-results/auth/',import.meta.url),{recursive:true});
+try{
+  browser=await chromium.launch({headless:true,...(process.env.BROWSER_CHANNEL?{channel:process.env.BROWSER_CHANNEL}:{})});
+  const page=await browser.newPage({viewport:{width:1440,height:1000}});
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(f.base);await page.waitForURL('**/anmelden.html');
+  await page.screenshot({path:new URL('../test-results/auth/login-desktop.png',import.meta.url).pathname.replace(/^\/([A-Za-z]:)/,'$1'),fullPage:true});
+  await page.getByRole('link',{name:'Registrieren',exact:true}).click();
+  await page.getByLabel('E-Mail-Adresse',{exact:true}).fill('user@example.test');
+  await page.locator('#auth-submit').click();
+  await page.waitForFunction(()=>document.querySelector('#auth-status').textContent.includes('erhältst du eine E-Mail'));
+  assert.equal(f.mails.length,1);
+  await page.goto(`${f.base}/anmelden.html#bestaetigen=${f.mails[0].token}`);
+  await page.getByRole('heading',{name:'Bestätige deine E-Mail-Adresse.'}).waitFor();
+  assert.equal(page.url(),`${f.base}/anmelden.html`);
+  assert.equal(await page.locator('#password-field').isVisible(),false);
+  await page.locator('#auth-submit').click();
+  await page.getByRole('heading',{name:'Dein Passwort. Dein Zugang.'}).waitFor();
+  await page.getByLabel('Anzeigename').fill('Testkonto');
+  await page.locator('#auth-password').fill(password);await page.locator('#auth-confirm').fill('Ein anderes Passwort!!');
+  await page.locator('#auth-submit').click();await page.getByText('Die Passwörter stimmen nicht überein.').waitFor();
+  await page.locator('#auth-confirm').fill(password);await page.locator('#auth-submit').click();
+  await page.waitForURL(`${f.base}/`);await page.locator('#account-bar').getByRole('link',{name:'Mein Konto',exact:true}).waitFor();
+  assert.equal(await page.locator('#account-bar').getByRole('link',{name:'Nutzerverwaltung'}).count(),0);
+  await page.locator('#account-bar').getByRole('link',{name:'Mein Konto',exact:true}).click();await page.getByRole('heading',{name:'Mein Konto',exact:true}).waitFor();
+  await page.getByText('user@example.test',{exact:true}).waitFor();
+  await page.locator('#account-bar').getByRole('button',{name:'Abmelden',exact:true}).click();await page.waitForURL('**/anmelden.html');
+  console.log('PASS: Browser-Registrierung, Passwortvergleich, Bestätigung, Anmeldung, Konto und Abmeldung.');
+
+  await f.request('/api/auth/register',{body:{email:'admin@example.test'}});
+  const verified=await f.request('/api/auth/verify',{body:{token:f.mails.at(-1).token}});
+  await f.request('/api/auth/set-password',{body:{token:(await verified.json()).setupToken,password}});
+  await page.getByLabel('E-Mail-Adresse',{exact:true}).fill('admin@example.test');await page.locator('#auth-password').fill(password);await page.locator('#auth-submit').click();
+  await page.waitForURL(`${f.base}/`);await page.getByRole('link',{name:'Nutzerverwaltung',exact:true}).click();
+  await page.getByRole('heading',{name:'Nutzerverwaltung',exact:true}).waitFor();await page.locator('.user-row').filter({hasText:'user@example.test'}).waitFor();
+  await page.locator('#admin-password').fill(password);
+  await page.locator('.user-row').filter({hasText:'user@example.test'}).getByRole('button',{name:'Sperren',exact:true}).click();
+  await page.getByText('Das Konto wurde aktualisiert. Bestehende Anmeldungen dieses Kontos wurden beendet.').waitFor();
+  await page.locator('.user-row').filter({hasText:'user@example.test'}).getByText('Gesperrt',{exact:true}).waitFor();
+  await page.screenshot({path:new URL('../test-results/auth/admin-desktop.png',import.meta.url).pathname.replace(/^\/([A-Za-z]:)/,'$1'),fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:new URL('../test-results/auth/admin-mobile.png',import.meta.url).pathname.replace(/^\/([A-Za-z]:)/,'$1'),fullPage:true});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await page.locator('#account-bar').getByRole('button',{name:'Abmelden',exact:true}).click();await page.waitForURL('**/anmelden.html');
+  await page.getByRole('link',{name:'Registrieren',exact:true}).click();
+  await page.screenshot({path:new URL('../test-results/auth/register-mobile.png',import.meta.url).pathname.replace(/^\/([A-Za-z]:)/,'$1'),fullPage:true});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  assert.deepEqual(errors,[]);
+  console.log('PASS: Adminverwaltung mit Passwortbestätigung, Kontosperre und Layout auf Desktop und Handy. Keine Browserfehler.');
+}finally{await browser?.close();await f.close();}

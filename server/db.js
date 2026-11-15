@@ -14,6 +14,7 @@ export const pool = new pg.Pool({
 export async function migrate() {
   const sql = await readFile(new URL('../db/schema.sql', import.meta.url), 'utf8');
   await pool.query(sql);
+  await pool.query(await readFile(new URL('../db/auth-schema.sql', import.meta.url), 'utf8'));
 }
 
 export async function withTransaction(fn) {

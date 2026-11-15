@@ -1,7 +1,10 @@
 import express from 'express';
 import { addVersionRoute } from './version.js';
 import { fileURLToPath } from 'node:url';
-import { pool, migrate } from './db.js';
+import { pool, migrate, withTransaction } from './db.js';
+import { createAuth, mountAuthProtection } from './auth.js';
+import { readAuthConfig } from './auth-security.js';
+import { createAuthMailer } from './auth-mail.js';
 import { seed, seedFiles } from './seed.js';
 import { recentUpdates, scheduleUpdates } from './update-codes.js';
 import { recordEvents, usageSummary } from './usage.js';
@@ -27,12 +30,22 @@ const DETAIL_SQL = `
 
 const app = express();
 app.disable('x-powered-by');
+app.set('trust proxy', 'loopback, uniquelocal');
+app.use((_req, res, next) => {
+  res.set('Referrer-Policy', 'no-referrer');
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('X-Frame-Options', 'DENY');
+  next();
+});
+const auth = createAuth({ pool, transaction: withTransaction, config: readAuthConfig(), mailer: createAuthMailer() });
 addVersionRoute(app);
 
 app.get('/api/health', async (_req, res) => {
   const { rows: [{ count }] } = await pool.query('SELECT count(*)::int AS count FROM dtc_codes WHERE manufacturer_id IS NULL AND source_removed_at IS NULL');
   res.json({ ok: true, genericCodes: count });
 });
+
+mountAuthProtection(app, auth);
 
 // Anonyme Nutzungsstatistik: Ereignisse zählen (sendBeacon schickt text/plain) und Zusammenfassung abrufen.
 // Hinter dem Coolify-Proxy liefert X-Forwarded-For die Absender-IP (nur für die Spam-Begrenzung im Speicher).
@@ -103,11 +116,17 @@ app.use('/api', (_req, res) => res.status(404).json({ error: 'Unbekannter Endpun
 app.use(express.static(fileURLToPath(new URL('../dist', import.meta.url)), { extensions: ['html'] }));
 
 app.use((error, _req, res, _next) => {
-  console.error(error);
+  if (error.type === 'entity.parse.failed') return res.status(400).json({ error: 'Ungültige Anfrage.' });
+  if (error.type === 'entity.too.large') return res.status(413).json({ error: 'Die Anfrage ist zu groß.' });
+  // Never log request bodies, mail transports, credentials, or authentication tokens.
+  console.error('Serverfehler:', error.code || error.name || 'Error');
   res.status(500).json({ error: 'Interner Fehler' });
 });
 
 await migrate();
+await auth.cleanup();
+const authCleanup = setInterval(() => auth.cleanup().catch(() => console.error('Kontenbereinigung fehlgeschlagen.')), 60 * 60 * 1000);
+authCleanup.unref();
 if (process.env.AUTO_SEED !== 'false') {
   const { rows: [{ count }] } = await pool.query('SELECT count(*)::int AS count FROM dtc_codes');
   if (count === 0) {

@@ -4,6 +4,27 @@ Deutschsprachige Web-App zur verständlichen Einordnung von OBD2-Fehlercodes. Di
 
 Ab Version 12 kommen die Codes aus einer PostgreSQL-Datenbank. Das Schema ist auf herstellerunabhängige Codes ausgelegt und kann später um herstellerspezifische Codes je Marke erweitert werden.
 
+## Anmeldung, Registrierung und Nutzerverwaltung
+
+Der Serverbetrieb erfordert ein bestätigtes Benutzerkonto. Registrierung und Anmeldung stehen unter `/anmelden.html`, Kontodaten und Passwortänderung unter `/konto.html`, die Nutzerverwaltung für Administratoren unter `/nutzer.html`. Statistik und Aktualisierungsprotokoll sind ebenfalls nur für Administratoren zugänglich. Gesundheitsprüfung, Releasekennung, Anmeldung und rechtliche Seiten bleiben öffentlich. Die separate statische GitHub-Pages-Demo enthält weiterhin nur öffentliche Beispieldaten; sie unterstützt keine Konten und schützt keine vertraulichen Inhalte.
+
+**Einrichtung:**
+
+1. `PUBLIC_APP_URL` auf die öffentliche Adresse ohne Unterpfad setzen (Produktion: HTTPS, zum Beispiel `https://obd2.example.de`).
+2. `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` und `SMTP_FROM` als Laufzeitvariablen konfigurieren. Port 465 verwendet direkt TLS; andere Ports verlangen STARTTLS. Zugangsdaten gehören ausschließlich in die Laufzeitkonfiguration. Ohne Versandkonfiguration funktionieren Anmeldung bestehender Konten und Kontoänderungen weiter; Registrierung und Wiederherstellung melden, dass der Versand nicht eingerichtet ist.
+3. Die eigene E-Mail-Adresse in `AUTH_ADMIN_EMAILS` eintragen. Dieses Konto regulär registrieren und über die erhaltene E-Mail aktivieren. Es bekommt dabei die Administratorrolle. Es gibt kein Standardpasswort und keine automatische Übernahme des ersten registrierten Kontos. Die Variable wird nur bei der ersten Bestätigung eines Kontos ausgewertet; bestehende Rollen werden damit nicht überschrieben.
+4. Anwendung starten. Die Kontentabellen werden beim Serverstart automatisch und ohne Änderung vorhandener OBD2-Daten angelegt.
+
+**Double-Opt-in und erste Anmeldung:** Zuerst nur die E-Mail-Adresse registrieren. Der Link in der E-Mail gilt 24 Stunden. Erst beim ausdrücklichen Bestätigen wird das Konto aktiviert; zu diesem Zeitpunkt hat das Konto noch kein Passwort. Das Öffnen des Links allein aktiviert noch kein Konto. Anschließend führt die App zur ersten Anmeldung: Hier legt der Nutzer sein Passwort (15–128 Zeichen) fest und wird direkt angemeldet. Dieser Schritt erfordert einen einmaligen, 30 Minuten gültigen Zugangslink, der nur nach erfolgreicher E-Mail-Bestätigung ausgegeben wird. Wird der Vorgang unterbrochen, kann unter „Erste Anmeldung“ ein neuer Link per E-Mail angefordert werden. Ein Nutzer mit bereits gesetztem Passwort kann diesen Vorgang nicht erneut ausführen. Ein neuer Bestätigungs- oder Zugangslink macht den jeweiligen alten Link ungültig. Passwörter aus einer Registrierungsanfrage werden niemals übernommen; eine Vorregistrierung einer fremden Adresse hinterlegt so kein Angreiferpasswort.
+
+**Kontoverwaltung:** Administratoren können nach E-Mail oder Anzeigename suchen, bestätigte Konten zu Administratoren machen, Konten sperren/entsperren und löschen. Änderungen erfordern das aktuelle Administratorpasswort und beenden die Sitzungen des betroffenen Kontos. Das eigene Administratorkonto ist hier gegen Änderung und Löschung gesperrt. Eine Datenbanksperre schützt zusätzlich vor dem gleichzeitigen Entfernen aller aktiven Administratoren. Unbestätigte Konten lassen sich in der Verwaltung nicht freischalten oder zu Administratoren machen.
+
+**Sicherheit und Aufbewahrung:** Passwörter liegen als gesalzene scrypt-Hashes mit N=131072, r=8, p=1 vor. Maximal zwei Passwortberechnungen laufen gleichzeitig. Sitzungen sind zufällige, serverseitig gespeicherte Kennungen, höchstens 24 Stunden gültig, als HttpOnly-/SameSite=Lax-Cookie mit Secure und `__Host-`-Präfix bei HTTPS. Gespeichert werden ausschließlich Hashes der Sitzungs- und Mailtokens. Änderungen erfordern den korrekten Origin; Rate-Limits liegen für alle Instanzen gemeinsam in PostgreSQL. Bestätigungs- und Reset-Tokens stehen im URL-Fragment, werden im Browser direkt aus der Adressleiste entfernt und werden weder an Seitenaufruf-Logs noch als Referrer übertragen. Zugriffstokens und Passwörter werden von der App nicht protokolliert. Sperren, Rollenwechsel und Passwortänderungen widerrufen bestehende Sitzungen sofort. Wiederherstellungslinks gelten 30 Minuten und sind einmalig verwendbar.
+
+Abgelaufene Sitzungen und Links, noch nicht durch eine erste Anmeldung abgeschlossene Konten nach sieben Tagen und Rate-Limit-Einträge nach einem Tag werden beim Start und stündlich bereinigt. Personenbezogene Kontodaten müssen bei der Datensicherung berücksichtigt werden. TLS-Terminierung und die Vertrauensgrenzen des Reverse-Proxys bleiben Teil der Betriebskonfiguration.
+
+Prüfung: `npm test` und `npm run test:auth-ui` (Playwright/Chromium oder `BROWSER_CHANNEL=msedge`). Diese Tests verwenden ausschließlich simulierte E-Mails und eine separate temporäre Datenbank. Sie versenden keine echten Nachrichten.
+
 ## Präsentationslinks
 
 1. [Präsentationslink 1](https://drive.google.com/file/d/1LJNsfIzHwv6ptmPAV00zzwnv66gAkC9j/view?usp=drive_link)

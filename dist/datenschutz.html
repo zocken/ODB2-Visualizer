@@ -36,7 +36,7 @@
     <h1>Datenschutz</h1>
 
     <div class="summary">
-      <p><b>Kurz gesagt:</b> Keine Cookies, kein Tracking, keine Werbung, keine Konten. Die Nutzungsstatistik besteht nur aus anonymen Tageszählern. Fragen an den KI-Assistenten werden auf einem eigenen Rechner beantwortet, nicht bei einem KI-Anbieter, und von der App nicht gespeichert. Bei allgemeinen oder aktuellen Fahrzeugfragen kann eine verkürzte, vom Modell formulierte Suchanfrage über die eigene Metasuche an externe Suchmaschinen übermittelt werden.</p>
+      <p><b>Kurz gesagt:</b> Die App verwendet Benutzerkonten mit bestätigter E-Mail-Adresse und ein technisch notwendiges Anmelde-Cookie. Keine Werbung und kein Werbetracking. Die Nutzungsstatistik besteht nur aus anonymen Tageszählern. Fragen an den KI-Assistenten werden auf einem eigenen Rechner beantwortet, nicht bei einem KI-Anbieter, und von der App nicht gespeichert. Bei allgemeinen oder aktuellen Fahrzeugfragen kann eine verkürzte, vom Modell formulierte Suchanfrage über die eigene Metasuche an externe Suchmaschinen übermittelt werden.</p>
     </div>
 
     <h2>1. Verantwortlicher</h2>
@@ -52,7 +52,13 @@
 
     <h2>3. Aufruf der App</h2>
     <p>Beim Aufruf überträgt dein Browser technisch notwendige Daten, insbesondere deine IP-Adresse, Datum und Uhrzeit, die aufgerufene Adresse sowie Browser- und Gerätetyp. Ohne sie kann die Seite nicht ausgeliefert werden.</p>
-    <p>Die App selbst speichert keine IP-Adressen. Sie hält die IP-Adresse nur kurz im Arbeitsspeicher (rund eine Minute), um zu viele Anfragen in kurzer Zeit an Statistik und KI-Assistent zu begrenzen (Schutz vor Missbrauch und Überlastung, Art. 6 Abs. 1 lit. f DSGVO). Danach wird sie verworfen.</p>
+    <p>Für Statistik und KI-Assistent hält die App die IP-Adresse kurz im Arbeitsspeicher, um zu viele Anfragen in kurzer Zeit zu begrenzen. Für Registrierung, Anmeldung und Kontoverwaltung speichert sie zeitlich begrenzte Zähler unter einem aus IP-Adresse, E-Mail-Adresse oder interner Kontokennung abgeleiteten Hashwert. Die Zähler werden nach einem Tag im nächsten stündlichen Bereinigungslauf gelöscht. Sie dienen dem Schutz vor Missbrauch und Überlastung (Art. 6 Abs. 1 lit. f DSGVO).</p>
+
+    <h2 id="konto">Benutzerkonto und E-Mail-Bestätigung</h2>
+    <p>Für die Nutzung im Serverbetrieb registrierst du zunächst deine E-Mail-Adresse. Wir senden dir über den eingerichteten SMTP-Mailserver eine E-Mail mit einem Bestätigungslink. Erst wenn du über diesen Link deine E-Mail-Adresse ausdrücklich bestätigst, wird dein Konto aktiv. Dein Passwort legst du anschließend bei deiner ersten Anmeldung fest. Der Bestätigungslink gilt 24 Stunden; der einmalige Link für die erste Anmeldung gilt 30 Minuten und kann bei Bedarf erneut per E-Mail angefordert werden. Noch nicht durch eine erste Anmeldung abgeschlossene Registrierungen werden nach sieben Tagen im nächsten Bereinigungslauf gelöscht. Ein Anzeigename ist freiwillig.</p>
+    <p>Gespeichert werden E-Mail-Adresse, gegebenenfalls Anzeigename, ein gesalzener Passwort-Hash, Rolle und Sperrstatus sowie Zeitpunkte der Registrierung, Bestätigung und letzten Anmeldung. Sitzungen und E-Mail-Links werden serverseitig nur als Hashwerte mit Ablaufzeit gespeichert. Dein Passwort wird nicht im Klartext gespeichert und nicht per E-Mail versendet.</p>
+    <p>Über „Passwort vergessen“ kannst du eine E-Mail mit einem einmaligen, 30 Minuten gültigen Wiederherstellungslink anfordern. Eine Passwortänderung beendet alle bestehenden Sitzungen. Administratoren können Konten einsehen, Rollen zuweisen, Zugänge sperren und Konten löschen. Kontodaten werden bis zur Löschung des Kontos aufbewahrt. Für Auskunft, Berichtigung oder Löschung kannst du dich an den oben genannten Verantwortlichen wenden.</p>
+    <p>Die Verarbeitung dient der Bereitstellung und Absicherung deines angefragten Zugangs (Art. 6 Abs. 1 lit. b und f DSGVO). Die Bestätigung bezieht sich auf die Registrierung; sie ist keine Einwilligung in Werbung oder einen Newsletter. Der E-Mail-Versand übermittelt deine Adresse und die jeweilige Kontonachricht an den Mailserver und die an der Zustellung beteiligten Mailanbieter.</p>
 
     <h2>4. Anonyme Nutzungsstatistik</h2>
     <p>Um zu sehen, wie die App genutzt wird und welche Codes noch fehlen, zählt sie je Tag:</p>
@@ -71,17 +77,18 @@
     <p>Rechtsgrundlage ist die Bereitstellung der von dir angefragten Funktion (Art. 6 Abs. 1 lit. b DSGVO). Bitte gib im Chat keine personenbezogenen Daten wie Namen, Kennzeichen oder Fahrgestellnummern ein; sie werden für die Antwort nicht benötigt.</p>
 
     <h2>6. Speicherung im Browser</h2>
-    <p>Die App setzt keine Cookies. Sie merkt sich lediglich im lokalen Speicher deines Browsers (localStorage), ob du die Fahrzeugansicht in 3D oder 2D gewählt hast. Dieser Wert verlässt dein Gerät nicht und dient nur der von dir gewünschten Darstellung (§ 25 Abs. 2 Nr. 2 TDDDG). Du kannst ihn jederzeit über die Browsereinstellungen löschen.</p>
+    <p>Für deine Anmeldung setzt die App ein technisch notwendiges Cookie mit einer zufälligen Sitzungskennung (bei HTTPS: <code>__Host-obd2_session</code>). Es ist für JavaScript nicht lesbar, wird bei HTTPS nur verschlüsselt übertragen und gilt höchstens 24 Stunden. Abmelden beendet die zugehörige Sitzung. Das Cookie dient ausschließlich der von dir gewünschten Anmeldung (§ 25 Abs. 2 Nr. 2 TDDDG), nicht der Nutzungsstatistik.</p>
+    <p>Im lokalen Speicher deines Browsers (localStorage) merkt sich die App außerdem, ob du die Fahrzeugansicht in 3D oder 2D gewählt hast. Dieser Wert verlässt dein Gerät nicht und dient nur der von dir gewünschten Darstellung. Du kannst ihn jederzeit über die Browsereinstellungen löschen.</p>
 
     <h2>7. Externe Dienste und Links</h2>
     <p>Schriften, Grafikbibliotheken und alle übrigen Bestandteile werden vom Server der App geladen; es werden keine Inhalte von Drittanbietern in die Seite eingebunden. Bei einer Webrecherche übermittelt die eigene Metasuche den Suchbegriff an die in Abschnitt 5 genannten Suchdienste. Links zu Treffern und anderen externen Seiten werden erst beim Anklicken in deinem Browser aufgerufen; dort gelten die Datenschutzhinweise des jeweiligen Anbieters.</p>
-    <p>Eine statische Kopie der App ohne Server-Funktionen ist auf GitHub Pages (zocken.github.io) erreichbar. Diese Kopie wird von GitHub Inc. bereitgestellt; dort gilt zusätzlich die <a href="https://docs.github.com/de/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">Datenschutzerklärung von GitHub</a>. Statistik und KI-Assistent sind dort nicht aktiv.</p>
+    <p>Eine statische Demonstration der App ohne Server-Funktionen ist auf GitHub Pages (zocken.github.io) erreichbar. Diese Kopie wird von GitHub Inc. bereitgestellt; dort gilt zusätzlich die <a href="https://docs.github.com/de/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">Datenschutzerklärung von GitHub</a>. Benutzerkonten, Anmelde-Cookies, Statistik und KI-Assistent sind dort nicht aktiv.</p>
 
     <h2>8. Deine Rechte</h2>
-    <p>Du hast das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch gegen Verarbeitungen auf Grundlage berechtigter Interessen (Art. 21). Wende dich dafür an die oben genannte E-Mail-Adresse. Da die App kaum personenbezogene Daten speichert, wird eine Auskunft in der Regel ergeben, dass keine Daten zu dir vorliegen.</p>
+    <p>Du hast das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch gegen Verarbeitungen auf Grundlage berechtigter Interessen (Art. 21). Wende dich dafür an die oben genannte E-Mail-Adresse.</p>
     <p>Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren, zum Beispiel bei der Landesbeauftragten für Datenschutz und Informationsfreiheit Nordrhein-Westfalen, Kavalleriestraße 2–4, 40213 Düsseldorf.</p>
 
-    <p class="stand">Stand: Oktober 2026</p>
+    <p class="stand">Stand: November 2026</p>
   </main>
 
   <footer><span>OBD2 Klartext</span><span><a href="./">Zur App</a> · <a href="impressum.html">Impressum</a></span></footer>

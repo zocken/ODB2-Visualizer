@@ -22,6 +22,13 @@ services:
     build: .
     environment:
       DATABASE_URL: postgres://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@db:5432/obd2
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:?Öffentliche HTTPS-Adresse der App setzen}
+      AUTH_ADMIN_EMAILS: ${AUTH_ADMIN_EMAILS:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
       AUTO_UPDATE: ${AUTO_UPDATE:-true}
       UPDATE_HOUR: ${UPDATE_HOUR:-3}
       UPDATE_TIMEZONE: ${UPDATE_TIMEZONE:-Europe/Berlin}

@@ -15,13 +15,15 @@ export async function verifyRelease(base, { expected = releaseInfo(), fetchImpl 
   if (actual.revision !== expected.revision || actual.version !== expected.version) throw new Error('Veröffentlichter Stand entspricht nicht der geprüften Arbeitskopie.');
   if (!staticOnly && !(await (await get('api/health')).json()).ok) throw new Error('Backend nicht bereit.');
   const html = await (await get('')).text();
-  for (const name of ['app.js','chat.js','safety-signals.js','review-policy.js']) {
+  for (const name of ['app.js','chat.js','safety-signals.js','review-policy.js','anmelden.js','account-api.js','konto.js','nutzer.js']) {
     const remote = Buffer.from(await (await get(name)).arrayBuffer());
     const local = await readFile(new URL(`../dist/${name}`, import.meta.url));
     const digest = bytes => createHash('sha256').update(bytes.toString('utf8').replace(/\r\n/g,'\n')).digest('hex');
     if (digest(remote) !== digest(local)) throw new Error(`${name}: abweichender Inhalt`);
   }
-  if (!/type="module"[^>]+src="chat\.js/.test(html) || !/type="module"[^>]+src="app\.js/.test(html)) throw new Error('Moduleinbindung fehlt.');
+  if (!staticOnly && /id="auth-form"/.test(html)) {
+    if (!/type="module"[^>]+src="anmelden\.js/.test(html)) throw new Error('Anmeldemodul fehlt.');
+  } else if (!/type="module"[^>]+src="chat\.js/.test(html) || !/type="module"[^>]+src="app\.js/.test(html)) throw new Error('Moduleinbindung fehlt.');
   return actual;
 }
 
