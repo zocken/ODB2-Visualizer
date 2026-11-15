@@ -12,6 +12,7 @@ app.get('/api/manufacturers', (_q,r) => r.json([]));
 app.get('/api/codes', (_q,r) => r.json([]));
 app.get('/api/codes/P0300', (_q,r) => r.json({ code:'P0300', title:'Fehlzündung',system:'Motor',urgency:'Grün',source:'redaktionell',explanation:'Testeintrag',causes:[],location:'Motor', reviewStatus:approved?'approved':'pending',reviewedBy:'Test-Prüfer',reviewedAt:'2026-10-28',contentHash:'test-hash',reviewedHash:'test-hash' }));
 app.post('/api/events', (_q,r) => r.sendStatus(204));
+app.get('/api/chat/models', (_q,r) => r.json({ models:[{id:'test-model',name:'Testmodell'}],defaultModel:'test-model' }));
 app.post('/api/chat', (_q,r) => {
   r.set('Content-Type','application/x-ndjson');
   if (mode === 'failure') return r.status(503).end(JSON.stringify({error:'Testausfall'}));
@@ -35,7 +36,7 @@ try {
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const url=`http://127.0.0.1:${server.address().port}`;
   const wait=async fn=>page.waitForFunction(fn,null,{timeout:5000});
-  const fresh=async()=>{await page.goto(url);await page.waitForFunction(()=>document.querySelector('#ai-chat-log')?.textContent.includes('Hallo!'));};
+  const fresh=async()=>{await page.goto(url);await page.waitForFunction(()=>document.querySelector('#ai-chat-log')?.textContent.includes('Hallo!') && document.querySelector('#ai-chat-model')?.value==='test-model');};
   const submit=async text=>{await page.locator('#ai-chat-input').fill(text);await page.locator('#ai-chat-send').click();};
   await fresh();
   await submit('Ich kann nicht mehr bremsen.');

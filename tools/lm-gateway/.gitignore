@@ -1,0 +1,6 @@
+gateway-key.txt
+lm-token.txt
+tunnel-key*
+*.pid
+*.log
+*.before-*

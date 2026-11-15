@@ -170,7 +170,7 @@ Tests: `npm test` (`server/chat.test.js`, ohne Datenbank und ohne echtes Gateway
 
 | | |
 |---|---|
-| Modell | `openai/gpt-oss-120b` in LM Studio (Standard `DEFAULT_MODEL` in `server/chat.js`, änderbar über `LM_MODEL`); Reasoning-Modell; Rechercheentscheidung derzeit per validiertem JSON statt nativem Tool-Call |
+| Modell | Unter dem Chat auswählbar aus den geladenen Sprachmodellen in LM Studio. `LM_MODEL` bleibt der Serverstandard für ältere Aufrufer; Rechercheentscheidung derzeit per validiertem JSON statt nativem Tool-Call. |
 | Vorher | `devstral-small-2-24b-instruct-2512` (bis Oktober 2026) |
 | Herkunft, Nutzungsbedingungen | noch zu dokumentieren (Modellkarte und Lizenz des eingesetzten Modells) |
 | Betriebsumgebung | LM Studio auf einem selbst betriebenen Rechner, `Parallel 1` (Anfragen warten nacheinander) |
@@ -180,7 +180,11 @@ Tests: `npm test` (`server/chat.test.js`, ohne Datenbank und ohne echtes Gateway
 
 Ein Modellwechsel oder wesentliche Änderungen an der Systemanweisung brauchen eine erneute Prüfung.
 
-Grenzen: sechs Anfragen je Besucher und Minute, 18 insgesamt je Minute, zwei laufende Anfragen, 2.000 Zeichen pro neuer Frage und 2.048 Ausgabetokens (Denkphase eingeschlossen). Der Server setzt Modell und Systemanweisung fest; Clients können keine Systemrollen oder Tools übergeben. Der Verlauf ist auf wenige Nachrichten begrenzt. Ein neuer Chat setzt den Verlauf zurück.
+Grenzen: sechs Anfragen je Besucher und Minute, 18 insgesamt je Minute, zwei laufende Anfragen, 2.000 Zeichen pro neuer Frage und 2.048 Ausgabetokens (Denkphase eingeschlossen). Der Server prüft die Modellauswahl gegen die private Liste geladener Modelle und setzt die Systemanweisung fest; Clients können keine Systemrollen oder Tools übergeben. Der Verlauf ist auf wenige Nachrichten begrenzt. Ein neuer Chat oder Modellwechsel setzt den Verlauf zurück.
+
+Die Auswahl steht unter dem Fragefeld, kann aktualisiert werden und merkt sich im Browser ausschließlich die Modellkennung. Bei mehreren geladenen Modellen ohne passenden gespeicherten oder konfigurierten Standard ist eine bewusste Auswahl erforderlich. Eine entladene Auswahl wird nicht stillschweigend durch ein anderes Modell ersetzt. `GET /api/chat/models` liefert nur Kennung und Anzeigename; Gateway- und LM-Studio-Schlüssel bleiben serverseitig. Die Prüfung beim Antworten verwendet eine kurz zwischengespeicherte Liste; das Gateway prüft die konkrete geladene Instanz nochmals unmittelbar vor dem Modellaufruf.
+
+Der lokale Gateway-Code unter `tools/lm-gateway/` unterstützt explizite geladene Instanzen und die bisherige Einmodell-Konfiguration. Nur die Quellmodule in das bestehende private Gateway-Verzeichnis übernehmen und den Gateway-/SSH-Supervisor kontrolliert neu starten; Schlüsseldateien nicht ins Repository kopieren. LM Studio und seine Modelle können dabei weiterlaufen. Das Laden eines Modells stellt keine fachliche Freigabe seiner Fahrzeugantworten dar; Modellherkunft, Version und inhaltliche Bewertung bleiben nach der KI-Richtlinie zu dokumentieren.
 
 Backend-Tests: `node --test server/chat.test.js`.
 

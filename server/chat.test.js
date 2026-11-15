@@ -9,11 +9,50 @@ async function fixture(options, run) {
   const server = await new Promise(resolve => { const server = app.listen(0, '127.0.0.1', () => resolve(server)); });
   const url = `http://127.0.0.1:${server.address().port}/api/chat`;
   const send = (body, headers = {}) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
+  send.models = () => fetch(url + '/models');
   try { await run(send); } finally { await new Promise(resolve => server.close(resolve)); }
 }
 const valid = { messages: [{ role: 'user', content: 'Was bedeutet P0300?' }] };
 
-test('uses server credentials, fixed model and system prompt; streams only the answer text', async () => {
+test('lists loaded models without credentials and requires an explicit choice when ambiguous', async () => {
+  await fixture({ gatewayUrl:'http://gateway',gatewayKey:'secret',getLoadedModels:async()=>[{id:'a',name:'A'},{id:'b',name:'B'}] }, async send => {
+    const response=await send.models(); assert.equal(response.status,200);
+    const body=await response.json(); assert.equal(body.defaultModel,null);
+    assert.deepEqual(body.models.map(m=>m.id),['a','b']); assert.doesNotMatch(JSON.stringify(body),/secret|gateway/);
+  });
+});
+
+test('uses the selected loaded model for research and final answer with strict gateway matching', async () => {
+  let calls=0;
+  await fixture({ gatewayUrl:'http://gateway',gatewayKey:'secret',getLoadedModels:async()=>[{id:'a'},{id:'b'}],researchWeb:async()=>({results:[]}),fetchImpl:async(_url,options)=>{
+    const body=JSON.parse(options.body); assert.equal(body.model,'b'); assert.equal(body.require_model_match,true);calls++;
+    return Response.json({choices:[{message:{content:calls===1?'\u007b"use_research":false,"query":""}':'Antwort'}}]});
+  }}, async send => {
+    const response=await send({...valid,model:'b'});assert.equal(response.status,200);assert.match(await response.text(),/Antwort/);assert.equal(calls,2);
+  });
+});
+
+test('rejects unlisted, unloaded and malformed model choices before context or inference', async () => {
+  await fixture({gatewayUrl:'http://gateway',gatewayKey:'secret',getLoadedModels:async()=>[{id:'a'}],lookupCodes:()=>{throw Error('must not look up');},fetchImpl:()=>{throw Error('must not infer');}},async send=>{
+    for(const model of ['missing','http://evil.example/model'])assert.equal((await send({...valid,model})).status,409);
+    for(const model of [null,{},[],5,'','x'.repeat(201)])assert.equal((await send({...valid,model})).status,400);
+  });
+});
+
+test('model inventory failures are bounded to a generic response and allow retry', async()=>{
+  await fixture({gatewayUrl:'http://gateway',gatewayKey:'secret',getLoadedModels:async()=>{throw Error('secret internal URL');}},async send=>{
+    for(const response of [await send.models(),await send({...valid,model:'a'})]){assert.equal(response.status,503);assert.doesNotMatch(await response.text(),/secret|internal|URL/);}
+  });
+});
+
+test('unusable model tool decisions are not reported as a network outage',async()=>{
+  await fixture({gatewayUrl:'http://gateway',gatewayKey:'secret',researchWeb:async()=>({results:[]}),fetchImpl:async()=>Response.json({choices:[{message:{content:'not json'}}]})},async send=>{
+    const response=await send(valid);assert.equal(response.status,502);
+    const text=await response.text();assert.match(text,/Modell/);assert.doesNotMatch(text,/nicht erreichbar|secret|SyntaxError/);
+  });
+});
+
+test('uses server credentials, default model and system prompt; streams only the answer text', async () => {
   await fixture({ gatewayUrl: 'http://gateway', gatewayKey: 'secret', fetchImpl: async (url, options) => {
     assert.equal(url, 'http://gateway/v1/chat/completions');
     assert.equal(options.headers.Authorization, 'Bearer secret');
@@ -24,7 +63,7 @@ test('uses server credentials, fixed model and system prompt; streams only the a
     assert.equal(body.max_tokens, 2048); assert.equal(body.stream, true);
     return Response.json({ choices: [{ message: { content: 'Antwort', reasoning_content: 'private reasoning' } }], debug: 'secret' });
   } }, async send => {
-    const result = await send({ ...valid, model: 'other', max_tokens: 99999 });
+    const result = await send({ ...valid, max_tokens: 99999 });
     assert.equal(result.status, 200); assert.equal(result.headers.get('cache-control'), 'no-store');
     const text = await result.text();
     assert.deepEqual(text.trim().split('\n').map(l => JSON.parse(l)), [{ sources: [] }, { delta: 'Antwort' }, { done: true }]);

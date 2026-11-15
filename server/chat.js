@@ -1,6 +1,7 @@
 import express from 'express';
 import { isReviewed } from '../dist/review-policy.js';
 import { CHAT_LIMITS, abortable, boundedParts } from './deadline.js';
+import { createModelCatalog } from './model-catalog.js';
 
 // Modell laut LM Studio; über LM_MODEL änderbar. Ein Wechsel braucht laut KI-Richtlinie (Abschnitt 9) eine erneute Prüfung.
 export const DEFAULT_MODEL = 'openai/gpt-oss-120b';
@@ -152,8 +153,10 @@ export function createChatRouter({
   fetchImpl = globalThis.fetch,
   clock = Date.now,
   limits = CHAT_LIMITS,
+  getLoadedModels,
 } = {}) {
   const router = express.Router();
+  const listModels = getLoadedModels || createModelCatalog({ gatewayUrl, gatewayKey, fetchImpl, clock });
   let active = 0;
   let streaming = true; // false, sobald das Gateway Streaming abgelehnt hat
   let globalCalls = [];
@@ -164,6 +167,16 @@ export function createChatRouter({
     for (const [ip, calls] of visitors) if (calls.at(-1) <= now - 60000) visitors.delete(ip);
   }, 15000).unref();
   router.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
+  router.get('/models', async (_req, res) => {
+    if (disabled || !gatewayUrl || !gatewayKey) return res.status(503).json({ error: 'Die Modellauswahl ist momentan nicht verfügbar.' });
+    try {
+      const models = await listModels();
+      const defaultModel = models.some(item => item.id === model) ? model : models.length === 1 ? models[0].id : null;
+      res.json({ models, defaultModel });
+    } catch {
+      res.status(503).json({ error: 'Die Modellliste ist momentan nicht erreichbar. Bitte erneut laden.' });
+    }
+  });
   router.post('/', express.json({ limit: '16kb' }), async (req, res) => {
     const fail = (status, error) => res.status(status).json({ error });
     const origin = req.get('origin');
@@ -181,6 +194,17 @@ export function createChatRouter({
     const manufacturer = typeof maker === 'string' && SLUG.test(maker) ? maker : null;
     if (disabled) return fail(503, 'Der KI-Assistent ist vorübergehend abgeschaltet. Die Code-Erklärungen und Sicherheitshinweise der Seite gelten weiterhin.');
     if (!gatewayUrl || !gatewayKey) return fail(503, 'Der KI-Chat ist noch nicht eingerichtet. Bitte versuche es später erneut.');
+    const selected = req.body.model;
+    if (selected !== undefined && (typeof selected !== 'string' || !selected.trim() || selected.length > 200)) return fail(400, 'Bitte wähle ein gültiges Modell.');
+    let selectedModel = model;
+    if (selected !== undefined) {
+      try {
+        if (!(await listModels()).some(item => item.id === selected)) return fail(409, 'Dieses Modell ist nicht mehr geladen. Bitte aktualisiere die Modellauswahl.');
+        selectedModel = selected;
+      } catch {
+        return fail(503, 'Die Modellliste ist momentan nicht erreichbar. Bitte erneut laden.');
+      }
+    }
     const now = clock();
     for (const [ip, calls] of visitors) if (calls.at(-1) <= now - 60000) visitors.delete(ip);
     globalCalls = globalCalls.filter(t => t > now - 60000);
@@ -214,7 +238,8 @@ export function createChatRouter({
         method: 'POST',
         headers: { Authorization: `Bearer ${gatewayKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model,
+          model: selectedModel,
+          ...(selected !== undefined && { require_model_match: true }),
           // Nur eine Systemnachricht: Manche Modellvorlagen lehnen eine zweite ab.
           messages: requestMessages,
           max_tokens: maxTokens,
@@ -233,10 +258,16 @@ export function createChatRouter({
         if (decision.status === 429) { res.set('Retry-After', '15'); return fail(429, 'Die KI ist gerade ausgelastet. Bitte versuche es gleich noch einmal.'); }
         if (!decision.ok) {
           console.error(`Chat-Gateway antwortet bei Werkzeugauswahl mit HTTP ${decision.status}.`);
+          if (decision.status === 409) return fail(409, 'Bitte aktualisiere die Modellauswahl und wähle ein geladenes Modell.');
           return fail(503, 'Die KI ist momentan nicht erreichbar. Bitte versuche es später erneut.');
         }
-        const data = await decision.json();
-        const choice = parseResearchDecision(data.choices?.[0]?.message?.content);
+        let choice;
+        try {
+          const data = await decision.json();
+          choice = parseResearchDecision(data.choices?.[0]?.message?.content);
+        } catch {
+          return fail(502, 'Das gewählte KI-Modell hat keine verwertbare Antwort geliefert. Bitte versuche es erneut oder wähle ein anderes Modell.');
+        }
         if (explicitlyRequestsResearch(messages.at(-1).content) && !choice.useResearch) {
           throw new Error('Modell hat ausdrücklichen Recherchebedarf nicht erkannt');
         }
@@ -280,6 +311,7 @@ export function createChatRouter({
       if (upstream.status === 429) { res.set('Retry-After', '15'); return fail(429, 'Die KI ist gerade ausgelastet. Bitte versuche es gleich noch einmal.'); }
       if (!upstream.ok) {
         console.error(`Chat-Gateway antwortet mit HTTP ${upstream.status}.`);
+        if (upstream.status === 409) return fail(409, 'Bitte aktualisiere die Modellauswahl und wähle ein geladenes Modell.');
         return fail(503, 'Die KI ist momentan nicht erreichbar. Bitte versuche es später erneut.');
       }
       // Antwort als NDJSON: zuerst die verwendeten Datenbankeinträge, dann Textteile, zum Schluss done.

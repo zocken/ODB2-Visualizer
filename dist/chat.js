@@ -9,8 +9,15 @@ import { safetySignals } from './safety-signals.js?v=2';
   const reset = document.querySelector('#ai-chat-reset');
   const status = document.querySelector('#ai-chat-status');
   const error = document.querySelector('#ai-chat-error');
+  const modelSelect = document.querySelector('#ai-chat-model');
+  const modelRefresh = document.querySelector('#ai-chat-model-refresh');
+  const modelHelp = document.querySelector('#ai-chat-model-help');
   const history = [];
   let busy = false;
+  let loadingModels = false, selectedModel = '';
+  const modelStorageKey = 'obd2-chat-model';
+  const savedModel = () => { try { return localStorage.getItem(modelStorageKey) || ''; } catch { return ''; } };
+  const rememberModel = id => { try { localStorage.setItem(modelStorageKey, id); } catch {} };
   // Render basic emphasis with DOM nodes; model output is never inserted as HTML.
   function render(body, text) {
     const emphasis = /\*\*([^*\n]+)\*\*|\*([^*\n]+)\*/g;
@@ -24,11 +31,11 @@ import { safetySignals } from './safety-signals.js?v=2';
     }
     body.append(document.createTextNode(text.slice(position)));
   }
-  function message(role, text) {
+  function message(role, text, modelName = '') {
     const item = document.createElement('div');
     item.className = `ai-chat-message ai-chat-message--${role}`;
     const label = document.createElement('strong');
-    label.textContent = role === 'user' ? 'Du' : 'KI-Assistent';
+    label.textContent = role === 'user' ? 'Du' : modelName ? `KI-Assistent · ${modelName}` : 'KI-Assistent';
     const body = document.createElement('p');
     render(body, text);
     item.append(label, body); log.append(item); log.scrollTop = log.scrollHeight;
@@ -72,9 +79,49 @@ import { safetySignals } from './safety-signals.js?v=2';
   }
   const greeting = () => message('assistant', 'Hallo! Was möchtest du über einen Fehlercode oder dein Fahrzeug wissen?');
   greeting();
+  const resetConversation = () => {
+    history.length = 0; log.replaceChildren(); greeting(); error.hidden = true;
+  };
+  async function loadModels() {
+    if (busy || loadingModels || !modelSelect) return;
+    loadingModels = true; modelSelect.disabled = true; modelRefresh.disabled = true;
+    const preferred = selectedModel || savedModel();
+    modelHelp.textContent = 'Geladene Modelle werden abgerufen …';
+    try {
+      const response = await fetch('/api/chat/models', { cache: 'no-store', signal: AbortSignal.timeout(6000) });
+      if (!response.ok) throw new Error('Die Modellliste ist momentan nicht erreichbar. Bitte erneut laden.');
+      const data = await response.json();
+      if (!Array.isArray(data.models)) throw new Error('Die Modellliste konnte nicht gelesen werden.');
+      const placeholder = document.createElement('option'); placeholder.value = '';
+      placeholder.textContent = data.models.length ? 'Modell auswählen' : 'Kein Sprachmodell geladen';
+      modelSelect.replaceChildren(placeholder, ...data.models.map(item => {
+        const option = document.createElement('option'); option.value = item.id;
+        option.textContent = item.name && item.name !== item.id ? `${item.name} · ${item.id}` : item.id;
+        return option;
+      }));
+      selectedModel = data.models.some(item => item.id === preferred) ? preferred : !preferred ? data.defaultModel || '' : '';
+      modelSelect.value = selectedModel;
+      if (selectedModel) rememberModel(selectedModel);
+      modelHelp.textContent = data.models.length ? preferred && !selectedModel
+        ? 'Das bisherige Modell ist nicht mehr geladen. Bitte wähle ein Modell.'
+        : 'Ein Modellwechsel startet ein neues Gespräch.' : 'Lade ein Sprachmodell und aktualisiere die Liste.';
+    } catch (reason) {
+      selectedModel = ''; modelSelect.replaceChildren(new Option('Modellliste nicht erreichbar', ''));
+      modelHelp.textContent = reason.message || 'Die Modellliste ist momentan nicht erreichbar.';
+    } finally {
+      loadingModels = false; modelSelect.disabled = busy || modelSelect.options.length <= 1; modelRefresh.disabled = busy;
+    }
+  }
+  modelRefresh?.addEventListener('click', loadModels);
+  modelSelect?.addEventListener('change', () => {
+    if (busy) return;
+    selectedModel = modelSelect.value; rememberModel(selectedModel); resetConversation();
+    status.textContent = selectedModel ? 'Modell ausgewählt · neues Gespräch' : 'Bitte ein Modell auswählen';
+  });
+  loadModels();
   reset.addEventListener('click', () => {
     if (busy) return;
-    history.length = 0; log.replaceChildren(); greeting(); error.hidden = true;
+    resetConversation();
     status.textContent = 'Neues Gespräch'; input.focus();
   });
   input.addEventListener('keydown', event => {
@@ -140,6 +187,9 @@ import { safetySignals } from './safety-signals.js?v=2';
     if (!question) return;
     if (question.length > 2000) { error.textContent = 'Bitte kürze deine Frage auf 2.000 Zeichen.'; error.hidden = false; return; }
     busy = true; cancelled = false; error.hidden = true; reset.disabled = true;
+    const requestModel = modelSelect?.value || '';
+    if (modelSelect) modelSelect.disabled = true;
+    if (modelRefresh) modelRefresh.disabled = true;
     input.readOnly = true; send.textContent = 'Abbrechen'; send.classList.add('is-cancel');
     status.textContent = 'Die KI denkt nach …'; log.setAttribute('aria-busy', 'true');
     const userMessage = message('user', question);
@@ -158,7 +208,7 @@ import { safetySignals } from './safety-signals.js?v=2';
     }
     // Warteblase im Verlauf, bis der erste Text kommt; lokale Modelle brauchen dafür oft eine Minute oder länger.
     const started = Date.now();
-    const pending = message('assistant', 'Denkt nach …');
+    const pending = message('assistant', 'Denkt nach …', requestModel);
     pending.item.classList.add('is-pending');
     const tick = () => pending.update(`Denkt nach … ${Math.round((Date.now() - started) / 1000)} s\nAntwortbeginn innerhalb von 60 Sekunden, insgesamt höchstens 2 Minuten.`);
     tick();
@@ -169,10 +219,11 @@ import { safetySignals } from './safety-signals.js?v=2';
     const totalTimer = setTimeout(() => controller.abort(), 125000);
     let idleTimer;
     try {
+      if (!requestModel) throw new Error('Bitte wähle unter dem Eingabefeld ein geladenes KI-Modell.');
       let recent = history.slice(-10);
       while (recent.length && recent.reduce((n, m) => n + m.content.length, question.length) > 11000) recent = recent.slice(2);
       const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [...recent, { role: 'user', content: question }], context: window.obd2ChatContext?.() }),
+        body: JSON.stringify({ model: requestModel, messages: [...recent, { role: 'user', content: question }], context: window.obd2ChatContext?.() }),
         signal: controller.signal });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
@@ -215,6 +266,8 @@ import { safetySignals } from './safety-signals.js?v=2';
     } finally {
       clearTimeout(firstTimer); clearTimeout(totalTimer); clearTimeout(idleTimer); clearInterval(ticker); busy = false; reset.disabled = false; input.readOnly = false;
       send.textContent = 'Senden →'; send.classList.remove('is-cancel'); log.removeAttribute('aria-busy'); input.focus({ preventScroll: true });
+      if (modelSelect) modelSelect.disabled = loadingModels || modelSelect.options.length <= 1;
+      if (modelRefresh) modelRefresh.disabled = loadingModels;
     }
   });
 })();
