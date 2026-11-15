@@ -9,8 +9,8 @@ async function change(user,body,remove=false){
   if(busy)return;busy=true;
   document.querySelectorAll('.user-controls button').forEach(button=>button.disabled=true);
   try{
-    await api(`api/admin/users/${user.id}`,{method:remove?'DELETE':'PATCH',body:JSON.stringify({...body,currentPassword})});
-    $('admin-password').value='';await load();showMessage('users-status',remove?'Das Konto wurde gelöscht.':'Das Konto wurde aktualisiert. Bestehende Anmeldungen dieses Kontos wurden beendet.');
+    await api(`api/admin/users/${user.id}`,{method:remove?'DELETE':'PATCH',body:JSON.stringify({...body,currentPassword,code:$('admin-mfa-code').value.trim()})});
+    $('admin-password').value='';$('admin-mfa-code').value='';await load();showMessage('users-status',remove?'Das Konto wurde gelöscht.':'Das Konto wurde aktualisiert. Bestehende Anmeldungen dieses Kontos wurden beendet.');
   }catch(error){showMessage('users-status',error.message,true);}
   finally{busy=false;document.querySelectorAll('.user-controls button').forEach(button=>button.disabled=false);}
 }
@@ -24,6 +24,7 @@ async function load(){
     if(user.displayName)info.append(element('p',user.displayName));
     info.append(element('span',user.disabledAt?'Gesperrt':!user.verifiedAt?'Bestätigung ausstehend':user.passwordSet?'Bestätigt':'Erste Anmeldung ausstehend','user-badge'));
     info.append(element('span',user.role==='admin'?'Administrator':'Nutzer','user-badge'));
+    info.append(element('span',user.twoFactorEnabled?'2FA aktiv':'2FA nicht aktiviert','user-badge'));
     info.append(element('p',`Registriert: ${new Date(user.createdAt).toLocaleDateString('de-DE')} · Letzte Anmeldung: ${user.lastLoginAt?new Date(user.lastLoginAt).toLocaleString('de-DE'):'Noch keine'}`));
     row.append(info);
     if(user.id===me.id)info.append(element('p','Dein Konto · Änderungen hier gesperrt'));
@@ -43,5 +44,5 @@ async function safeLoad(){try{await load();}catch(error){showMessage('users-stat
 $('user-search').addEventListener('submit',event=>{event.preventDefault();offset=0;safeLoad();});
 $('users-prev').addEventListener('click',()=>{offset=Math.max(0,offset-50);safeLoad();});
 $('users-next').addEventListener('click',()=>{offset+=50;safeLoad();});
-try{me=await currentUser();fillAccountBar(me);if(me.role!=='admin'){location.replace('konto.html');}else await load();}
+try{me=await currentUser();fillAccountBar(me);$('admin-mfa-field').hidden=!me.twoFactorEnabled;if(me.role!=='admin'){location.replace('konto.html');}else await load();}
 catch(error){showMessage('users-status',error.message,true);}

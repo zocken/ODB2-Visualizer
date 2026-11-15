@@ -1,13 +1,14 @@
 import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { posix } from 'node:path';
+import { createMfa } from './auth-mfa.js';
 import { checkPassword, digest, hashPassword, newToken, normalizeEmail, validPassword, validToken } from './auth-security.js';
 
 const SESSION_SECONDS = 24 * 60 * 60;
 const UUID = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 const genericMailMessage = 'Wenn die Adresse für diesen Vorgang infrage kommt, erhältst du eine E-Mail. Bitte prüfe auch deinen Spam-Ordner.';
 const publicUser = row => ({ id: row.id, email: row.email, displayName: row.display_name, role: row.role,
-  verifiedAt: row.verified_at, passwordSet: Boolean(row.password_hash), disabledAt: row.disabled_at, createdAt: row.created_at, lastLoginAt: row.last_login_at });
+  verifiedAt: row.verified_at, passwordSet: Boolean(row.password_hash), twoFactorEnabled: Boolean(row.mfa_enabled_at), disabledAt: row.disabled_at, createdAt: row.created_at, lastLoginAt: row.last_login_at });
 function problem(status, message) { return Object.assign(new Error(message), { status, publicMessage: message }); }
 
 export function createAuth({ pool, transaction, mailer, config }) {
@@ -44,7 +45,8 @@ export function createAuth({ pool, transaction, mailer, config }) {
     if (validToken(raw)) {
       const tokenHash = digest(raw);
       const { rows: [user] } = await pool.query(`SELECT u.* FROM auth_users u JOIN auth_sessions s ON s.user_id = u.id
-        WHERE s.token_hash = $1 AND s.expires_at > now() AND u.verified_at IS NOT NULL AND u.password_hash IS NOT NULL AND u.disabled_at IS NULL`, [tokenHash]);
+        WHERE s.token_hash = $1 AND s.expires_at > now() AND u.verified_at IS NOT NULL AND u.password_hash IS NOT NULL AND u.disabled_at IS NULL
+        AND (u.mfa_enabled_at IS NULL OR s.mfa_verified)`, [tokenHash]);
       if (user) { req.authUser = user; req.authSessionHash = tokenHash; }
     }
     next();
@@ -53,6 +55,22 @@ export function createAuth({ pool, transaction, mailer, config }) {
   const requireAdmin = (req, res, next) => !req.authUser ? requireUser(req, res, next)
     : req.authUser.role === 'admin' ? next() : res.status(403).json({ error: 'Nur Administratoren haben hier Zugriff.' });
   router.use(loadSession);
+  async function issueSession(tx,user,req,mfaVerified=false) {
+    const sessionToken=newToken();
+    if(req.authSessionHash)await tx.query('DELETE FROM auth_sessions WHERE token_hash=$1',[req.authSessionHash]);
+    await tx.query(`INSERT INTO auth_sessions(token_hash,user_id,expires_at,mfa_verified) VALUES($1,$2,now()+$3*interval '1 second',$4)`,[digest(sessionToken),user.id,SESSION_SECONDS,mfaVerified]);
+    await tx.query('UPDATE auth_users SET last_login_at=now() WHERE id=$1',[user.id]);
+    return {sessionToken,user:publicUser(user)};
+  }
+  function finishLogin(res,result) {
+    if(result.sessionToken){
+      res.cookie(cookieName,result.sessionToken,{...cookieOptions,maxAge:SESSION_SECONDS*1000});
+      return res.json({user:result.user});
+    }
+    res.json(result);
+  }
+  const mfa=createMfa({pool,transaction,config,limit,requireUser,issueSession,finishLogin});
+  router.use('/mfa',mfa.router);
   router.get('/me', (req, res) => res.json({ user: req.authUser ? publicUser(req.authUser) : null, registrationAvailable: mailer.ready }));
 
   async function sendLink(email, kind) {
@@ -107,6 +125,7 @@ export function createAuth({ pool, transaction, mailer, config }) {
       const displayName = typeof req.body.displayName === 'string' ? req.body.displayName.trim().slice(0, 80) : '';
       const { rows: [candidate] } = await pool.query('SELECT user_id FROM auth_tokens WHERE token_hash=$1 AND kind=$2 AND expires_at>now()', [digest(token), kind]);
       if (!candidate) throw problem(400, 'Dieser Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link an.');
+      if(kind==='reset')await limit(req,'mfa-reset-user',candidate.user_id,10,900);
       const passwordHash = await hashPassword(password);
       const sessionToken=kind==='setup'?newToken():null;
       const activated=await transaction(async tx => {
@@ -114,6 +133,10 @@ export function createAuth({ pool, transaction, mailer, config }) {
           WHERE t.token_hash=$1 AND t.kind=$2 AND t.expires_at>now() FOR UPDATE OF u`, [digest(token), kind]);
         if (!user || user.disabled_at || !user.verified_at || (kind==='setup' ? user.password_hash : !user.password_hash)) {
           throw problem(400, 'Dieser Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link an.');
+        }
+        if(kind==='setup' && user.mfa_enabled_at)throw problem(400,'Bitte verwende die reguläre Anmeldung mit 2FA.');
+        if(kind==='reset' && user.mfa_enabled_at){
+          if(!await mfa.consume(tx,user,req.body?.code))throw problem(400,'Für dieses Konto ist ein aktueller 2FA-Code oder Wiederherstellungscode erforderlich.');
         }
         // Recheck after acquiring the user lock: a concurrent request may have consumed the token.
         const consumed = await tx.query('DELETE FROM auth_tokens WHERE token_hash=$1 AND expires_at>now() RETURNING user_id', [digest(token)]);
@@ -123,6 +146,7 @@ export function createAuth({ pool, transaction, mailer, config }) {
             [passwordHash, displayName, user.id]);
         } else await tx.query('UPDATE auth_users SET password_hash=$1 WHERE id=$2', [passwordHash, user.id]);
         await tx.query('DELETE FROM auth_sessions WHERE user_id=$1', [user.id]);
+        await tx.query('DELETE FROM auth_mfa_challenges WHERE user_id=$1',[user.id]);
         if (kind==='setup') {
           await tx.query(`INSERT INTO auth_sessions(token_hash,user_id,expires_at) VALUES($1,$2,now()+$3*interval '1 second')`,[digest(sessionToken),user.id,SESSION_SECONDS]);
           return publicUser({...user,password_hash:passwordHash,display_name:displayName});
@@ -139,17 +163,14 @@ export function createAuth({ pool, transaction, mailer, config }) {
     const { rows: [user] } = email ? await pool.query('SELECT * FROM auth_users WHERE email=$1', [email]) : { rows: [] };
     const matches = await checkPassword(req.body?.password, user?.password_hash);
     if (!matches || !user?.verified_at || user.disabled_at) throw problem(401, 'Anmeldung nicht möglich. Prüfe E-Mail und Passwort sowie die Bestätigung deiner E-Mail-Adresse.');
-    const token = newToken();
-    await transaction(async tx => {
+    const result=await transaction(async tx => {
       // Account state may have changed while scrypt was running.
       const { rows: [current] } = await tx.query('SELECT * FROM auth_users WHERE id=$1 FOR UPDATE', [user.id]);
       if (!current?.verified_at || current.disabled_at || current.password_hash !== user.password_hash) throw problem(401, 'Bitte melde dich erneut an.');
-      if (req.authSessionHash) await tx.query('DELETE FROM auth_sessions WHERE token_hash=$1', [req.authSessionHash]);
-      await tx.query(`INSERT INTO auth_sessions(token_hash,user_id,expires_at) VALUES($1,$2,now()+$3*interval '1 second')`, [digest(token), user.id, SESSION_SECONDS]);
-      await tx.query('UPDATE auth_users SET last_login_at=now() WHERE id=$1', [user.id]);
+      if(current.mfa_enabled_at)return mfa.challenge(tx,current);
+      return issueSession(tx,current,req);
     });
-    res.cookie(cookieName, token, { ...cookieOptions, maxAge: SESSION_SECONDS * 1000 });
-    res.json({ user: publicUser(user) });
+    finishLogin(res,result);
   });
   router.post('/logout', async (req, res) => {
     if (req.authSessionHash) await pool.query('DELETE FROM auth_sessions WHERE token_hash=$1', [req.authSessionHash]);
@@ -162,10 +183,14 @@ export function createAuth({ pool, transaction, mailer, config }) {
     if (!await checkPassword(currentPassword, req.authUser.password_hash)) throw problem(400, 'Das aktuelle Passwort stimmt nicht.');
     const encoded = await hashPassword(password);
     await transaction(async tx => {
+      const current=(await tx.query('SELECT * FROM auth_users WHERE id=$1 FOR UPDATE',[req.authUser.id])).rows[0];
+      if(!current||current.disabled_at||current.password_hash!==req.authUser.password_hash)throw problem(409,'Das Konto wurde geändert. Bitte melde dich neu an.');
+      if(!await mfa.consume(tx,current,req.body?.code))throw problem(400,'Bitte gib einen aktuellen 2FA-Code oder Wiederherstellungscode ein.');
       const result = await tx.query('UPDATE auth_users SET password_hash=$1 WHERE id=$2 AND password_hash=$3 AND disabled_at IS NULL RETURNING id', [encoded, req.authUser.id, req.authUser.password_hash]);
       if (!result.rows.length) throw problem(409, 'Das Konto wurde zwischenzeitlich geändert. Bitte melde dich neu an.');
       await tx.query('DELETE FROM auth_sessions WHERE user_id=$1', [req.authUser.id]);
       await tx.query("DELETE FROM auth_tokens WHERE user_id=$1 AND kind='reset'", [req.authUser.id]);
+      await tx.query('DELETE FROM auth_mfa_challenges WHERE user_id=$1',[req.authUser.id]);
     });
     res.clearCookie(cookieName, cookieOptions).json({ message: 'Passwort geändert. Alle Sitzungen wurden beendet. Bitte melde dich neu an.' });
   });
@@ -176,7 +201,7 @@ export function createAuth({ pool, transaction, mailer, config }) {
   adminRouter.get('/users', async (req, res) => {
     const search = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 100) : '';
     const offset = Math.min(Math.max(Number.parseInt(req.query.offset, 10) || 0, 0), 1000000);
-    const { rows } = await pool.query(`SELECT id,email,display_name,role,verified_at,disabled_at,created_at,last_login_at
+    const { rows } = await pool.query(`SELECT id,email,display_name,role,verified_at,disabled_at,created_at,last_login_at,mfa_enabled_at
       ,(password_hash IS NOT NULL) AS password_set FROM auth_users WHERE strpos(email,$1)>0 OR strpos(lower(display_name),$1)>0 ORDER BY created_at DESC,id LIMIT 51 OFFSET $2`, [search.toLowerCase(), offset]);
     res.set('Cache-Control', 'no-store').json({ users: rows.slice(0, 50).map(row=>({...publicUser(row),passwordSet:row.password_set})), hasMore: rows.length > 50 });
   });
@@ -189,6 +214,7 @@ export function createAuth({ pool, transaction, mailer, config }) {
       await tx.query('SELECT id FROM auth_admin_guard WHERE id=1 FOR UPDATE');
       const { rows: [actor] } = await tx.query('SELECT * FROM auth_users WHERE id=$1 FOR UPDATE', [req.authUser.id]);
       if (!actor || actor.role !== 'admin' || actor.disabled_at || actor.password_hash !== req.authUser.password_hash) throw problem(403, 'Deine Berechtigung hat sich geändert. Bitte melde dich neu an.');
+      if(!await mfa.consume(tx,actor,req.body?.code))throw problem(400,'Bitte bestätige die Änderung mit einem aktuellen 2FA-Code oder Wiederherstellungscode.');
       const { rows: [target] } = await tx.query('SELECT * FROM auth_users WHERE id=$1 FOR UPDATE', [req.params.id]);
       if (!target) throw problem(404, 'Dieses Konto wurde nicht gefunden.');
       const role = req.body?.role ?? target.role;
@@ -202,6 +228,7 @@ export function createAuth({ pool, transaction, mailer, config }) {
       if (remove) { await tx.query('DELETE FROM auth_users WHERE id=$1', [target.id]); return; }
       const { rows: [updated] } = await tx.query(`UPDATE auth_users SET role=$1,disabled_at=CASE WHEN $2 THEN COALESCE(disabled_at,now()) ELSE NULL END WHERE id=$3 RETURNING *`, [role, disabled, target.id]);
       await tx.query('DELETE FROM auth_sessions WHERE user_id=$1', [target.id]);
+      await tx.query('DELETE FROM auth_mfa_challenges WHERE user_id=$1',[target.id]);
       if (disabled) await tx.query('DELETE FROM auth_tokens WHERE user_id=$1', [target.id]);
       return publicUser(updated);
     });
@@ -217,6 +244,8 @@ export function createAuth({ pool, transaction, mailer, config }) {
   router.use(errorHandler);
   adminRouter.use(errorHandler);
   async function cleanup() {
+    await pool.query('DELETE FROM auth_mfa_challenges WHERE expires_at<=now()');
+    await pool.query('UPDATE auth_users SET mfa_pending_secret=NULL,mfa_pending_expires=NULL WHERE mfa_pending_expires<=now()');
     await pool.query('DELETE FROM auth_sessions WHERE expires_at<=now()');
     await pool.query('DELETE FROM auth_tokens WHERE expires_at<=now()');
     await pool.query("DELETE FROM auth_users WHERE password_hash IS NULL AND created_at<now()-interval '7 days'");

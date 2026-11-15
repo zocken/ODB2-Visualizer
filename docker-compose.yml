@@ -23,6 +23,7 @@ services:
       NODE_ENV: development
       PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost:8080}
       AUTH_ADMIN_EMAILS: ${AUTH_ADMIN_EMAILS:-}
+      AUTH_ENCRYPTION_KEY: ${AUTH_ENCRYPTION_KEY:-}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}

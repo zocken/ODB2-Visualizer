@@ -15,7 +15,7 @@ export async function verifyRelease(base, { expected = releaseInfo(), fetchImpl 
   if (actual.revision !== expected.revision || actual.version !== expected.version) throw new Error('Veröffentlichter Stand entspricht nicht der geprüften Arbeitskopie.');
   if (!staticOnly && !(await (await get('api/health')).json()).ok) throw new Error('Backend nicht bereit.');
   const html = await (await get('')).text();
-  for (const name of ['app.js','chat.js','safety-signals.js','review-policy.js','anmelden.js','account-api.js','konto.js','nutzer.js']) {
+  for (const name of ['app.js','chat.js','safety-signals.js','review-policy.js','anmelden.js','account-api.js','konto.js','konto-mfa.js','nutzer.js']) {
     const remote = Buffer.from(await (await get(name)).arrayBuffer());
     const local = await readFile(new URL(`../dist/${name}`, import.meta.url));
     const digest = bytes => createHash('sha256').update(bytes.toString('utf8').replace(/\r\n/g,'\n')).digest('hex');

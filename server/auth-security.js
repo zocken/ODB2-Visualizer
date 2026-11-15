@@ -46,5 +46,10 @@ export function readAuthConfig(env = process.env) {
     if (!email) throw new Error('AUTH_ADMIN_EMAILS enthält eine ungültige E-Mail-Adresse.');
     return email;
   });
-  return { origin: url.origin, secure: url.protocol === 'https:', adminEmails };
+  const key=env.AUTH_ENCRYPTION_KEY;
+  if (key && (!/^[A-Za-z0-9+/]{43}=$/.test(key) || Buffer.from(key,'base64').length!==32)) {
+    throw new Error('AUTH_ENCRYPTION_KEY muss ein zufälliger 32-Byte-Schlüssel in Base64 sein.');
+  }
+  if (env.NODE_ENV==='production' && !key) throw new Error('AUTH_ENCRYPTION_KEY ist für 2FA in Produktion erforderlich.');
+  return { origin: url.origin, secure: url.protocol === 'https:', adminEmails, mfaKey:key?Buffer.from(key,'base64'):null };
 }

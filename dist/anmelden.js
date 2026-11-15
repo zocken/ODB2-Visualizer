@@ -8,23 +8,26 @@ const states = {
   bestaetigen: ['Schritt 2 von 2', 'Bestätige deine E-Mail-Adresse.', 'Aktiviere dein Konto. Dein Passwort legst du anschließend bei deiner ersten Anmeldung fest.', 'E-Mail-Adresse bestätigen', '/verify'],
   'erstes-passwort': ['Erste Anmeldung', 'Dein Passwort. Dein Zugang.', 'Deine E-Mail-Adresse ist bestätigt. Lege jetzt dein persönliches Passwort fest und melde dich zum ersten Mal an.', 'Passwort festlegen & anmelden', '/set-password'],
   zuruecksetzen: ['Neues Passwort', 'Wieder sicher anmelden.', 'Lege ein neues Passwort fest. Anschließend werden alle bisherigen Anmeldungen beendet.', 'Passwort speichern', '/reset-password'],
+  zweitfaktor: ['Zweiter Faktor', 'Bestätige deine Anmeldung.', 'Dein Passwort wurde geprüft. Gib jetzt deinen Authenticator-Code oder einen Wiederherstellungscode ein.', 'Anmeldung bestätigen', '/mfa/verify-login'],
 };
 let mode = 'anmelden', token = '', busy = false;
+let challenge='';
 let mailAvailable = true;
 function message(text, error = false) { const el=$('auth-status'); el.textContent=text; el.hidden=false; el.classList.toggle('is-error', error); el.focus(); }
-function render() {
+function render(nextMode) {
   const fragment = location.hash.slice(1);
   const match = /^(bestaetigen|erstes-passwort|zuruecksetzen)=([A-Za-z0-9_-]{43})$/.exec(fragment);
-  mode = match ? match[1] : (states[fragment] && !['bestaetigen', 'erstes-passwort', 'zuruecksetzen'].includes(fragment) ? fragment : 'anmelden');
+  mode = nextMode || (match ? match[1] : (states[fragment] && !['bestaetigen', 'erstes-passwort', 'zuruecksetzen','zweitfaktor'].includes(fragment) ? fragment : 'anmelden'));
+  if(mode!=='zweitfaktor')challenge='';
   token = match?.[2] || '';
   if (match) history.replaceState(null, '', location.pathname + location.search); // Keep the token only in this tab's memory.
-  $('auth-password').value=''; $('auth-confirm').value='';
+  $('auth-password').value=''; $('auth-confirm').value='';$('auth-mfa-code').value='';
   $('auth-status').hidden=true;
   const [step,title,description,submit] = states[mode];
   $('auth-step').textContent=step; $('auth-title').textContent=title; $('auth-description').textContent=description;
   $('auth-submit').textContent=submit; document.title=`${title} · OBD2 Klartext`;
   const activation = ['erstes-passwort','zuruecksetzen'].includes(mode), password = mode==='anmelden'||activation;
-  const hasToken=activation||mode==='bestaetigen';
+  const hasToken=activation||mode==='bestaetigen'||mode==='zweitfaktor';
   $('email-field').hidden=hasToken; $('auth-email').required=!hasToken; $('auth-email').disabled=hasToken;
   $('password-field').hidden=!password; $('auth-password').required=password; $('auth-password').disabled=!password;
   $('auth-password').autocomplete=activation?'new-password':'current-password';
@@ -32,6 +35,10 @@ function render() {
   $('confirm-field').hidden=!activation; $('auth-confirm').required=activation; $('auth-confirm').disabled=!activation;
   $('name-field').hidden=mode!=='erstes-passwort'; $('auth-name').disabled=mode!=='erstes-passwort';
   $('password-help').hidden=!activation; $('registration-note').hidden=mode!=='registrieren';
+  const showMfa=['zweitfaktor','zuruecksetzen'].includes(mode);
+  document.querySelector('.mfa-hint').hidden=mode==='zweitfaktor';
+  $('mfa-field').hidden=!showMfa;$('auth-mfa-code').disabled=!showMfa;$('auth-mfa-code').required=mode==='zweitfaktor';
+  $('mfa-code-label').textContent=mode==='zuruecksetzen'?'2FA-Code oder Wiederherstellungscode (falls aktiviert)':'2FA-Code oder Wiederherstellungscode';
   document.querySelectorAll('[data-mode]').forEach(link=>{if(link.dataset.mode===mode)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
   if (!mailAvailable && ['registrieren','erneut','vergessen','erster-zugang'].includes(mode)) message('Der E-Mail-Versand ist noch nicht eingerichtet. Bitte wende dich an den Betreiber.', true);
 }
@@ -49,10 +56,13 @@ $('auth-form').addEventListener('submit', async event => {
   try {
     const body=mode==='bestaetigen'?{token}:activation ? {token,password:$('auth-password').value,displayName:$('auth-name').value} : {email:$('auth-email').value};
     if(mode==='anmelden')body.password=$('auth-password').value;
+    if(mode==='zuruecksetzen')body.code=$('auth-mfa-code').value.trim();
+    if(mode==='zweitfaktor'){body.challenge=challenge;body.code=$('auth-mfa-code').value.trim();delete body.email;}
     const response=await fetch(`api/auth${states[mode][4]}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const data=await response.json().catch(()=>({error:'Die Anmeldung ist hier nicht verfügbar. Bitte nutze die Adresse der App mit Serverbetrieb.'}));
     if(!response.ok)throw new Error(data.error||'Die Anfrage konnte nicht abgeschlossen werden.');
-    if(submittedMode==='anmelden'||submittedMode==='erstes-passwort'){location.replace('./');return;}
+    if(data.requiresTwoFactor){challenge=data.challenge;render('zweitfaktor');$('auth-mfa-code').focus();return;}
+    if(submittedMode==='anmelden'||submittedMode==='erstes-passwort'||submittedMode==='zweitfaktor'){challenge='';location.replace('./');return;}
     if(submittedMode==='bestaetigen'){
       history.replaceState(null,'',`${location.pathname}#erstes-passwort=${data.setupToken}`);render();
       return;

@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { createAuth, mountAuthProtection } from '../server/auth.js';
 import { addVersionRoute } from '../server/version.js';
+import { randomBytes } from 'node:crypto';
 
 export async function authFixture({ secure = false } = {}) {
   const db = new PGlite();
@@ -11,7 +12,7 @@ export async function authFixture({ secure = false } = {}) {
   await db.exec(schema); await db.exec(schema);
   const mails = [];
   const mailer = { ready: true, fail: false, async send(mail) { if(this.fail)throw new Error('Synthetic SMTP failure');mails.push(mail); } };
-  const config = { origin: 'http://127.0.0.1', secure, adminEmails: ['admin@example.test'] };
+  const config = { origin: 'http://127.0.0.1', secure, adminEmails: ['admin@example.test'],mfaKey:randomBytes(32) };
   const auth=createAuth({pool:db,transaction:fn=>db.transaction(fn),mailer,config});
   const app=express();
   addVersionRoute(app);

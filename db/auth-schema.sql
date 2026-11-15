@@ -34,3 +34,20 @@ CREATE TABLE IF NOT EXISTS auth_rate_limits (
 -- Serialize admin mutations so concurrent requests cannot remove all administrators.
 CREATE TABLE IF NOT EXISTS auth_admin_guard (id integer PRIMARY KEY CHECK (id = 1));
 INSERT INTO auth_admin_guard(id) VALUES (1) ON CONFLICT DO NOTHING;
+
+-- TOTP-Geheimnisse sind mit einem separaten Laufzeitschlüssel verschlüsselt.
+ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS mfa_secret text;
+ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS mfa_enabled_at timestamptz;
+ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS mfa_last_counter bigint NOT NULL DEFAULT -1;
+ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS mfa_pending_secret text;
+ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS mfa_pending_expires timestamptz;
+ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS mfa_recovery_hashes text[] NOT NULL DEFAULT '{}';
+ALTER TABLE auth_sessions ADD COLUMN IF NOT EXISTS mfa_verified boolean NOT NULL DEFAULT false;
+CREATE TABLE IF NOT EXISTS auth_mfa_challenges (
+  token_hash text PRIMARY KEY,
+  user_id uuid NOT NULL UNIQUE REFERENCES auth_users(id) ON DELETE CASCADE,
+  credential_hash text NOT NULL,
+  factor_hash text NOT NULL,
+  expires_at timestamptz NOT NULL,
+  attempts integer NOT NULL DEFAULT 0
+);

@@ -4,7 +4,7 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07110e"><meta name="robots" content="noindex"><meta name="referrer" content="no-referrer">
   <title>Anmelden · OBD2 Klartext</title>
-  <link rel="stylesheet" href="styles.css?v=20"><link rel="stylesheet" href="konto.css?v=1">
+  <link rel="stylesheet" href="styles.css?v=20"><link rel="stylesheet" href="konto.css?v=2">
 </head>
 <body>
   <header class="topbar"><a class="brand" href="./"><span class="brand-mark" aria-hidden="true">O₂</span><span>OBD2 <b>Klartext</b></span></a><span class="account-kicker">Dein Zugang</span></header>
@@ -14,11 +14,13 @@
       <nav class="auth-tabs" aria-label="Zugang wählen"><a href="#anmelden" data-mode="anmelden">Anmelden</a><a href="#registrieren" data-mode="registrieren">Registrieren</a></nav>
       <p id="auth-step" class="eyebrow">Willkommen zurück</p><h2 id="auth-title">Schön, dass du da bist.</h2><p id="auth-description" class="account-description">Melde dich mit deiner E-Mail-Adresse und deinem Passwort an.</p>
       <p id="auth-status" class="account-message" role="status" tabindex="-1" hidden></p>
+      <aside class="mfa-hint" aria-label="Sicherheitsempfehlung"><b>Mehr Sicherheit mit 2FA</b><p>Die Zwei-Faktor-Authentifizierung schützt dein Konto zusätzlich zum Passwort. Wir empfehlen, sie nach der Anmeldung unter „Mein Konto“ zu aktivieren.</p></aside>
       <form id="auth-form">
         <div id="email-field" class="account-field"><label for="auth-email">E-Mail-Adresse</label><input id="auth-email" name="email" type="email" maxlength="254" autocomplete="email" required placeholder="du@beispiel.de"></div>
         <div id="name-field" class="account-field" hidden><label for="auth-name">Anzeigename <span>(optional)</span></label><input id="auth-name" name="displayName" maxlength="80" autocomplete="nickname"></div>
         <div id="password-field" class="account-field"><label for="auth-password">Passwort</label><input id="auth-password" name="password" type="password" autocomplete="current-password" maxlength="256" required><small id="password-help" hidden>15 bis 128 Zeichen. Eine längere Passphrase ist gut geeignet.</small></div>
         <div id="confirm-field" class="account-field" hidden><label for="auth-confirm">Passwort wiederholen</label><input id="auth-confirm" name="confirmPassword" type="password" autocomplete="new-password" maxlength="256"></div>
+        <div id="mfa-field" class="account-field" hidden><label id="mfa-code-label" for="auth-mfa-code">2FA-Code oder Wiederherstellungscode</label><input id="auth-mfa-code" name="code" type="text" autocomplete="one-time-code" maxlength="40" autocapitalize="off" spellcheck="false" aria-describedby="mfa-code-help" disabled><small id="mfa-code-help">Gib den aktuellen sechsstelligen Code deiner Authenticator-App oder einen unbenutzten Wiederherstellungscode ein.</small></div>
         <p id="registration-note" class="account-small" hidden>Wir schicken dir einen Bestätigungslink. Dein Konto wird erst nach Bestätigung deiner E-Mail-Adresse aktiv. Dein Passwort legst du bei der ersten Anmeldung fest. <a href="datenschutz.html#konto">Hinweise zum Datenschutz</a></p>
         <button id="auth-submit" class="account-primary" type="submit">Anmelden <span aria-hidden="true">→</span></button>
       </form>
@@ -27,5 +29,5 @@
     </section>
   </main>
   <footer><span>OBD2 Klartext</span><span><a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a></span></footer>
-  <script type="module" src="anmelden.js?v=1"></script>
+  <script type="module" src="anmelden.js?v=2"></script>
 </body></html>

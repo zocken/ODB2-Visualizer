@@ -22,7 +22,7 @@ export function fillAccountBar(user) {
   const bar=document.getElementById('account-bar');if(!bar)return;
   bar.replaceChildren();
   const name=document.createElement('span');name.className='account-name';name.textContent=user.displayName||user.email;bar.append(name);
-  for(const [label,href] of [['Mein Konto','konto.html'],...(user.role==='admin'?[['Nutzerverwaltung','nutzer.html']]:[])]){
+  for(const [label,href] of [['Mein Konto','konto.html'],...(!user.twoFactorEnabled?[['2FA aktivieren','konto.html#two-factor']]:[]),...(user.role==='admin'?[['Nutzerverwaltung','nutzer.html']]:[])]){
     const link=document.createElement('a');link.textContent=label;link.href=href;bar.append(link);
   }
   const button=document.createElement('button');button.type='button';button.textContent='Abmelden';

@@ -25,6 +25,18 @@ Abgelaufene Sitzungen und Links, noch nicht durch eine erste Anmeldung abgeschlo
 
 Prüfung: `npm test` und `npm run test:auth-ui` (Playwright/Chromium oder `BROWSER_CHANNEL=msedge`). Diese Tests verwenden ausschließlich simulierte E-Mails und eine separate temporäre Datenbank. Sie versenden keine echten Nachrichten.
 
+### Zwei-Faktor-Authentifizierung (2FA)
+
+Die Anmeldeseite empfiehlt sichtbar, 2FA zu verwenden; angemeldete Nutzer ohne 2FA finden zusätzlich „2FA aktivieren“ in der Navigation. Einrichtung unter „Mein Konto“: aktuelles Passwort bestätigen, den QR-Code mit einer TOTP-Authenticator-App scannen (alternativ den Schlüssel manuell übernehmen) und einen sechsstelligen Code bestätigen. Erst dann ist 2FA aktiv. Der Entwurf der Einrichtung verfällt nach zehn Minuten. Die Einrichtung ist freiwillig; Administratoren sehen den 2FA-Status der Konten, können deren zweiten Faktor jedoch nicht zurücksetzen.
+
+Beim nächsten Login wird nach dem Passwort zusätzlich ein aktueller Authenticator-Code oder einer der zehn Wiederherstellungscodes verlangt. Bis dahin wird keine Sitzung erzeugt. Eine Login-Anfrage gilt fünf Minuten und verfällt nach fünf falschen Codes; zusätzliche Rate-Limits gelten je IP und Konto. Jeder TOTP-Zeitschritt und jeder Wiederherstellungscode kann nur einmal verwendet werden. Die Codes werden nach dem Aktivieren einmalig angezeigt und können als Textdatei heruntergeladen werden. Neue Wiederherstellungscodes ersetzen alle bisherigen und erfordern Passwort plus zweiten Faktor. Auch Deaktivierung, Passwortänderung, Wiederherstellung eines Passworts und Änderungen durch einen Administrator mit aktivierter 2FA erfordern einen aktuellen zweiten Faktor. Ein E-Mail-Reset umgeht 2FA deshalb nicht. Die erste Passwortvergabe bei neuen Konten bleibt beim ersten Login.
+
+Für den Server ist `AUTH_ENCRYPTION_KEY` erforderlich: ein zufälliger 32-Byte-Schlüssel, in Base64 kodiert. Er bleibt ausschließlich in der Laufzeitkonfiguration und muss getrennt von Datenbank-Backups gesichert werden. Bereits eingerichtete Authenticator-Geheimnisse benötigen beim Wiederherstellen denselben Schlüssel. Ohne Konfiguration ist 2FA lokal nicht einrichtbar; der Produktivserver startet ohne diesen Schlüssel nicht. Niemals bei jedem Deployment neu erzeugen.
+
+Authenticator-Geheimnisse werden mit AES-256-GCM verschlüsselt und kryptografisch an das jeweilige Konto gebunden. Wiederherstellungscodes und Login-Anfragen liegen ausschließlich als Hashwerte vor. QR-Codes werden auf dem eigenen Server erzeugt; kein externer QR-Dienst erhält den Einrichtungsschlüssel. Aktivieren, Deaktivieren und Erneuern der Wiederherstellungscodes widerruft andere Sitzungen; Sitzungen ohne abgeschlossene 2FA bleiben für geschützte APIs gesperrt.
+
+Grundlagen: [OWASP zu Multifaktor-Authentifizierung](https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html), [TOTP nach RFC 6238](https://www.rfc-editor.org/rfc/rfc6238).
+
 ## Präsentationslinks
 
 1. [Präsentationslink 1](https://drive.google.com/file/d/1LJNsfIzHwv6ptmPAV00zzwnv66gAkC9j/view?usp=drive_link)
